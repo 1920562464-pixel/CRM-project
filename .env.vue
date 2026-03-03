@@ -1,0 +1,3 @@
+# Vue 环境变量
+VITE_VUE_APP_TITLE=瑞承健康 CRM
+VITE_VUE_PORT=3001

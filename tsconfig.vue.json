@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "jsx": "preserve",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src-vue/*"]
+    },
+    "skipLibCheck": true,
+    "strict": false
+  },
+  "include": ["src-vue/**/*.vue", "src-vue/**/*.ts", "src-vue/**/*.tsx", "src-vue/**/*.d.ts"],
+  "exclude": ["node_modules"]
+}

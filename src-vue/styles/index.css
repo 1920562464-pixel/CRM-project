@@ -1,0 +1,388 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 支付宝黑金会员风格主题色系 - 淡黄版本 */
+:root {
+  /* 主色调 - 金黄色 */
+  --primary: #B8860B;
+  --primary-light-3: #D4A84A;
+  --primary-light-5: #E6C87D;
+  --primary-light-7: #F0DDA8;
+  --primary-light-8: #F6E8C4;
+  --primary-light-9: #FAF3E3;
+  --primary-dark-2: #9A6F09;
+  --primary-dark-3: #7C5807;
+
+  /* 成功色 */
+  --success: #67C23A;
+  --success-light: #E1F3D8;
+  --success-lighter: #F0F9EB;
+  --success-dark: #529B2E;
+
+  /* 警告色 */
+  --warning: #E6A23C;
+  --warning-light: #F5DAB1;
+  --warning-lighter: #FAF6EC;
+  --warning-dark: #B88230;
+
+  /* 危险色 */
+  --danger: #F56C6C;
+  --danger-light: #FBC4C4;
+  --danger-lighter: #FEF0F0;
+  --danger-dark: #C85858;
+
+  /* 信息色 */
+  --info: #909399;
+  --info-light: #E9E9EB;
+  --info-lighter: #F4F4F5;
+  --info-dark: #73767A;
+
+  /* 背景色系 - 淡黄色系 */
+  --background: #FFFBF0;
+  --background-page: #FAF8F0;
+  --card: #FFFEF8;
+  --popover: #FFFEF8;
+
+  /* 文字色系 - 深色文字配合淡黄背景 */
+  --text-primary: #2C2416;
+  --text-regular: #5C4A32;
+  --text-secondary: #8B7355;
+  --text-placeholder: #A89578;
+  --text-disabled: #C4B5A0;
+
+  /* 边框色系 - 浅金棕色系 */
+  --border: #E8DCC8;
+  --border-light: #F0E6D4;
+  --border-lighter: #F5EDE0;
+  --border-dark: #D4C4B0;
+  --border-darker: #C4B5A0;
+
+  /* 填充色系 - 淡黄色系 */
+  --fill: #F5EDE0;
+  --fill-light: #FAF3E3;
+  --fill-lighter: #FEF8F0;
+  --fill-dark: #EDE5D8;
+  --fill-darker: #E5DCC8;
+
+  /* 阴影 - 金色光晕阴影 */
+  --shadow-light: 0px 0px 12px rgba(184, 134, 11, 0.08);
+  --shadow-base: 0px 4px 16px rgba(184, 134, 11, 0.1), 0px 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-dark: 0px 8px 24px rgba(184, 134, 11, 0.15), 0px 4px 12px rgba(0, 0, 0, 0.08);
+
+  /* 圆角 */
+  --radius: 4px;
+  --radius-small: 2px;
+  --radius-large: 8px;
+  --radius-round: 20px;
+  --radius-circle: 100%;
+
+  /* 过渡动画 */
+  --transition-duration: 0.3s;
+  --transition-duration-fast: 0.2s;
+  --transition-all: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+
+  /* 侧边栏 - 淡黄风格 */
+  --sidebar: #FFFBF0;
+  --sidebar-foreground: #2C2416;
+  --sidebar-primary: #B8860B;
+  --sidebar-primary-foreground: #FFFEF8;
+  --sidebar-accent: #FAF3E3;
+  --sidebar-accent-foreground: #2C2416;
+  --sidebar-border: #E8DCC8;
+  --sidebar-bg: #FAF8F0;
+
+  /* 字体 */
+  --font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+  --font-size: 14px;
+}
+
+/* 暗色模式 - 黑金风格（更深的黑色，更亮的金色） */
+.dark {
+  --primary: #D4A84A;
+  --primary-light-3: #E6C87D;
+  --primary-light-5: #F0DDA8;
+  --primary-light-7: #F6E8C4;
+  --primary-light-8: #FAF3E3;
+  --primary-light-9: #FEF8F0;
+
+  --background: #0D0D0D;
+  --background-page: #080808;
+  --card: #151515;
+  --popover: #1A1A1A;
+
+  --text-primary: #FAF3E3;
+  --text-regular: #E6DCC8;
+  --text-secondary: #B8A88E;
+  --text-placeholder: #7A6B52;
+  --text-disabled: #3D3528;
+
+  --border: #2A2A2A;
+  --border-light: #333333;
+  --border-lighter: #3D3D3D;
+  --border-dark: #1F1F1F;
+  --border-darker: #151515;
+
+  --fill: #1F1F1F;
+  --fill-light: #2A2A2A;
+  --fill-lighter: #333333;
+  --fill-dark: #151515;
+  --fill-darker: #0D0D0D;
+
+  --sidebar: #0D0D0D;
+  --sidebar-foreground: #FAF3E3;
+  --sidebar-primary: #D4A84A;
+  --sidebar-primary-foreground: #0D0D0D;
+  --sidebar-accent: #1A1A1A;
+  --sidebar-accent-foreground: #FAF3E3;
+  --sidebar-border: #2A2A2A;
+  --sidebar-bg: #080808;
+
+  --shadow-light: 0px 0px 12px rgba(212, 168, 74, 0.2);
+  --shadow-base: 0px 12px 32px 4px rgba(0, 0, 0, 0.5), 0px 8px 20px rgba(212, 168, 74, 0.15);
+  --shadow-dark: 0px 16px 48px 16px rgba(0, 0, 0, 0.7), 0px 12px 32px rgba(212, 168, 74, 0.2);
+}
+
+@layer base {
+  body {
+    background-color: var(--background);
+    color: var(--text-primary);
+    font-family: var(--font-family);
+    font-size: var(--font-size);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Element Plus 风格按钮 */
+@layer components {
+  .btn-primary {
+    background-color: var(--primary);
+    color: white;
+    border: 1px solid var(--primary);
+    transition: var(--transition-all);
+  }
+
+  .btn-primary:hover {
+    background-color: var(--primary-dark-2);
+    border-color: var(--primary-dark-2);
+  }
+
+  .btn-primary:active {
+    background-color: var(--primary);
+    border-color: var(--primary);
+  }
+
+  .btn-primary:focus {
+    outline: none;
+    ring: 2px;
+    ring-color: rgba(77, 112, 255, 0.5);
+  }
+
+  .btn-primary:disabled {
+    background-color: var(--text-disabled);
+    border-color: var(--text-disabled);
+    cursor: not-allowed;
+  }
+
+  .btn-success {
+    background-color: var(--success);
+    color: white;
+    border: 1px solid var(--success);
+    transition: var(--transition-all);
+  }
+
+  .btn-success:hover {
+    background-color: var(--success-dark);
+    border-color: var(--success-dark);
+  }
+
+  .btn-warning {
+    background-color: var(--warning);
+    color: white;
+    border: 1px solid var(--warning);
+    transition: var(--transition-all);
+  }
+
+  .btn-warning:hover {
+    background-color: var(--warning-dark);
+    border-color: var(--warning-dark);
+  }
+
+  .btn-danger {
+    background-color: var(--danger);
+    color: white;
+    border: 1px solid var(--danger);
+    transition: var(--transition-all);
+  }
+
+  .btn-danger:hover {
+    background-color: var(--danger-dark);
+    border-color: var(--danger-dark);
+  }
+
+  .btn-default {
+    background-color: white;
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    transition: var(--transition-all);
+  }
+
+  .btn-default:hover {
+    background-color: var(--fill-light);
+    border-color: var(--border-dark);
+  }
+
+  /* Input 样式 */
+  .input-base {
+    background-color: white;
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    transition: var(--transition-all);
+  }
+
+  .input-base::placeholder {
+    color: var(--text-placeholder);
+  }
+
+  .input-base:focus {
+    outline: none;
+    border-color: var(--primary);
+    ring: 1px;
+    ring-color: var(--primary);
+  }
+
+  .input-base:disabled {
+    background-color: var(--fill-light);
+    border-color: var(--border);
+    cursor: not-allowed;
+    color: var(--text-disabled);
+  }
+
+  /* Card 样式 */
+  .card-base {
+    background-color: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-light);
+  }
+
+  /* Badge 样式 */
+  .badge-success {
+    background-color: var(--success-lighter);
+    color: var(--success);
+    border: 1px solid var(--success);
+  }
+
+  .badge-warning {
+    background-color: var(--warning-lighter);
+    color: var(--warning);
+    border: 1px solid var(--warning);
+  }
+
+  .badge-danger {
+    background-color: var(--danger-lighter);
+    color: var(--danger);
+    border: 1px solid var(--danger);
+  }
+
+  .badge-info {
+    background-color: var(--info-lighter);
+    color: var(--info);
+    border: 1px solid var(--info);
+  }
+
+  .badge-primary {
+    background-color: var(--primary-light-9);
+    color: var(--primary);
+    border: 1px solid var(--primary);
+  }
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--fill-light);
+  border-radius: var(--radius);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-dark);
+  border-radius: var(--radius);
+  transition: background 0.3s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* 打印样式 */
+@media print {
+  body {
+    background: white !important;
+  }
+
+  nav,
+  aside,
+  .no-print {
+    display: none !important;
+  }
+
+  .modal-content {
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
+
+/* 动画 */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-from-top {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-from-bottom {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.slide-in-top {
+  animation: slide-in-from-top 0.3s ease-out;
+}
+
+.slide-in-bottom {
+  animation: slide-in-from-bottom 0.3s ease-out;
+}

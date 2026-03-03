@@ -1,0 +1,34 @@
+{
+  "name": "crm-project",
+  "version": "1.0.0",
+  "description": "Vue-based CRM System",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite --config vite.config.vue.ts",
+    "build": "vue-tsc --noEmit && vite build --config vite.config.vue.ts",
+    "preview": "vite preview --config vite.config.vue.ts"
+  },
+  "keywords": ["crm", "vue", "typescript"],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@vitejs/plugin-vue": "^6.0.4",
+    "lucide-vue-next": "^0.564.0",
+    "papaparse": "^5.5.3",
+    "pinia": "^3.0.4",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "vue": "^3.5.28",
+    "vue-router": "^4.6.4",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.1",
+    "@types/papaparse": "^5.3.14",
+    "autoprefixer": "^10.4.24",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.19",
+    "vue-tsc": "^3.2.4"
+  }
+}
