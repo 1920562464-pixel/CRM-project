@@ -204,7 +204,97 @@
     </div>
 
     <!-- Additional Info Section -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <!-- Alert Center (New) -->
+      <div class="p-6 rounded-xl shadow-sm" :style="{
+        background: 'var(--card)',
+        border: '1px solid var(--border)'
+      }">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold flex items-center gap-2" :style="{ color: 'var(--text-primary)' }">
+            <ShieldAlert :size="18" :style="{ color: '#ef4444' }" />
+            预警中心
+          </h3>
+          <span
+            v-if="alerts.length > 0"
+            class="text-xs px-2 py-1 rounded-full font-bold"
+            :style="{
+              background: 'rgba(239, 68, 68, 0.15)',
+              color: '#ef4444'
+            }"
+          >
+            {{ alerts.length }}项
+          </span>
+        </div>
+        <div class="space-y-3">
+          <!-- Alert Items -->
+          <div
+            v-for="alert in alerts.slice(0, 4)"
+            :key="alert.id"
+            @click="handleAlertClick(alert)"
+            class="p-3 rounded-lg cursor-pointer transition-all"
+            :style="{
+              background: 'var(--fill-light)',
+              border: '1px solid var(--border)'
+            }"
+            @mouseenter="$event.currentTarget.style.backgroundColor = 'var(--fill)'"
+            @mouseleave="$event.currentTarget.style.backgroundColor = 'var(--fill-light)'"
+          >
+            <div class="flex items-start gap-2">
+              <div
+                class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                :style="{
+                  background: alert.avatarColor,
+                  color: 'white'
+                }"
+              >
+                {{ alert.userName.charAt(0) }}
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5 mb-1">
+                  <span class="text-xs font-medium" :style="{ color: 'var(--text-primary)' }">
+                    {{ alert.userName }}
+                  </span>
+                  <span
+                    class="text-[9px] px-1.5 py-0.5 rounded font-medium"
+                    :style="{
+                      background: alert.typeBg,
+                      color: alert.typeColor
+                    }"
+                  >
+                    {{ alert.type }}
+                  </span>
+                </div>
+                <p class="text-[10px] leading-tight" :style="{ color: 'var(--text-secondary)' }">
+                  {{ alert.message }}
+                </p>
+              </div>
+            </div>
+          </div>
+          <!-- Empty State -->
+          <div
+            v-if="alerts.length === 0"
+            class="text-center py-4"
+          >
+            <CheckCircle :size="32" :style="{ color: '#16a34a', opacity: 0.5 }" />
+            <p class="text-xs mt-2" :style="{ color: 'var(--text-secondary)' }">暂无异常预警</p>
+          </div>
+          <!-- View All Link -->
+          <div
+            v-if="alerts.length > 0"
+            class="text-center pt-2"
+          >
+            <button
+              @click="handleQuickAction('查看全部预警')"
+              class="text-xs font-medium"
+              :style="{ color: isBlackGold.value ? '#B8860B' : '#4f46e5' }"
+            >
+              查看全部 →
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Quick Actions -->
       <div class="p-6 rounded-xl shadow-sm" :style="{
         background: 'var(--card)',
@@ -341,7 +431,9 @@ import {
   FileText,
   Target,
   Award,
-  Search
+  Search,
+  ShieldAlert,
+  CheckCircle
 } from 'lucide-vue-next'
 import StatCard from '../components/StatCard.vue'
 import TaskItem from '../components/TaskItem.vue'
@@ -379,6 +471,19 @@ interface StatItem {
   icon: any
   bg: string
   onClick?: () => void
+}
+
+// 预警数据类型
+interface AlertData {
+  id: string
+  userName: string
+  avatarColor: string
+  type: string
+  typeBg: string
+  typeColor: string
+  message: string
+  priority: 'high' | 'medium' | 'low'
+  userId: string
 }
 
 // State
@@ -465,7 +570,7 @@ const stats = computed(() => [
   {
     id: 'alerts',
     label: '异常预警',
-    value: '5',
+    value: String(alerts.value.length),
     trend: '-2',
     trendUp: false,
     icon: h(AlertTriangle, { size: 20, style: { color: '#ef4444' } }),
@@ -536,6 +641,80 @@ const handleStatClick = (stat: StatItem) => {
 
 const handleQuickAction = (action: string) => {
   alert(`打开${action}`)
+}
+
+// 预警数据计算
+const alerts = computed<AlertData[]>(() => {
+  // 模拟从系统检测到的异常数据
+  const mockAlerts: AlertData[] = [
+    {
+      id: '1',
+      userName: '王磊',
+      avatarColor: 'bg-indigo-500',
+      type: '血糖',
+      typeBg: 'bg-red-100',
+      typeColor: 'text-red-700',
+      message: '晚餐后血糖14.2，超出目标范围',
+      priority: 'high',
+      userId: '1'
+    },
+    {
+      id: '2',
+      userName: '张建国',
+      avatarColor: 'bg-blue-500',
+      type: '打卡',
+      typeBg: 'bg-orange-100',
+      typeColor: 'text-orange-700',
+      message: '连续3天未完成打卡任务',
+      priority: 'high',
+      userId: '3'
+    },
+    {
+      id: '3',
+      userName: '张建国',
+      avatarColor: 'bg-blue-500',
+      type: '衰老',
+      typeBg: 'bg-amber-100',
+      typeColor: 'text-amber-700',
+      message: '衰老指数2.4，需关注',
+      priority: 'medium',
+      userId: '3'
+    },
+    {
+      id: '4',
+      userName: '孙强',
+      avatarColor: 'bg-teal-500',
+      type: '任务',
+      typeBg: 'bg-red-100',
+      typeColor: 'text-red-700',
+      message: '完成率仅11%，严重偏低',
+      priority: 'high',
+      userId: '7'
+    },
+    {
+      id: '5',
+      userName: '刘伟',
+      avatarColor: 'bg-green-500',
+      type: '依从性',
+      typeBg: 'bg-orange-100',
+      typeColor: 'text-orange-700',
+      message: '依从性45%，低于警戒线',
+      priority: 'medium',
+      userId: '5'
+    }
+  ]
+
+  // 按优先级排序
+  return mockAlerts.sort((a, b) => {
+    const priorityOrder = { high: 0, medium: 1, low: 2 }
+    return priorityOrder[a.priority] - priorityOrder[b.priority]
+  })
+})
+
+// 处理预警点击
+const handleAlertClick = (alert: AlertData) => {
+  // 跳转到工作台并选中该用户
+  alert(`跳转到用户 ${alert.userName} 的详情页`)
 }
 
 const handleHealthClick = (item: string) => {

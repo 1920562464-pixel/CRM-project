@@ -118,14 +118,146 @@
 
         <!-- Right: Actions -->
         <div class="flex items-center gap-3">
-          <!-- BatchTaskProcessor 专用组件 -->
-          <template v-if="isBatchTaskProcessor">
-            <!-- 日历选择器 -->
-            <DatePickerButton
-              v-model="selectedCalendarDate"
-              :date-data="dateDataMap"
-            />
-          </template>
+          <!-- 预警中心横条 -->
+          <div class="relative">
+            <div
+              @click="showAlertCenter = !showAlertCenter"
+              class="flex items-center gap-3 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
+              style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2);"
+              @mouseenter="$event.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)'"
+              @mouseleave="$event.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)'"
+            >
+              <!-- 左侧：预警中心标题 -->
+              <div class="flex items-center gap-1.5">
+                <ShieldAlert :size="14" style="color: #ef4444;" />
+                <span class="text-xs font-bold" style="color: #ef4444;">预警中心</span>
+                <span v-if="alertCount > 0" class="px-1.5 py-0.5 text-[9px] font-semibold rounded-full" style="background-color: rgba(239, 68, 68, 0.2); color: #ef4444;">
+                  {{ alertCount }}项异常
+                </span>
+              </div>
+
+              <!-- 分隔线 -->
+              <div class="w-px h-4" style="background: rgba(239, 68, 68, 0.3);"></div>
+
+              <!-- 中间：最新预警信息 -->
+              <div v-if="alertList.length > 0" class="flex items-center gap-2 flex-1 min-w-0">
+                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0" :style="{ background: alertList[0].userColor, color: 'white' }">
+                  {{ alertList[0].userName.charAt(0) }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <span class="text-[10px] font-medium truncate" style="color: var(--text-primary);">
+                    {{ alertList[0].userName }}
+                  </span>
+                  <span class="text-[9px] truncate ml-1" style="color: var(--text-secondary);">
+                    {{ alertList[0].message }}
+                  </span>
+                </div>
+              </div>
+              <div v-else class="flex-1">
+                <span class="text-[10px]" style="color: var(--text-secondary);">暂无异常</span>
+              </div>
+
+              <!-- 右侧：展开按钮 -->
+              <ChevronDown
+                :size="14"
+                style="color: var(--text-secondary); transition: transform 0.2s ease;"
+                :style="{ transform: showAlertCenter ? 'rotate(180deg)' : 'rotate(0deg)' }"
+              />
+            </div>
+
+            <!-- 预警中心下拉面板 -->
+            <Transition enter-active-class="transition ease-out duration-200" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="transition ease-in duration-150" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
+              <div v-if="showAlertCenter" class="absolute right-0 mt-2 w-96 max-h-[500px z-50 rounded-xl overflow-hidden flex flex-col" style="background-color: var(--popover); border: 1px solid var(--border); box-shadow: var(--shadow-base);">
+                <!-- 头部 -->
+                <div class="flex items-center justify-between p-4" style="border-bottom: 1px solid var(--border);">
+                  <div class="flex items-center gap-2">
+                    <ShieldAlert :size="18" :style="{ color: '#ef4444' }" />
+                    <h3 class="font-semibold" style="color: var(--text-primary);">预警中心</h3>
+                    <span v-if="alertCount > 0" class="px-2 py-0.5 text-xs font-semibold rounded-full" style="background-color: rgba(239, 68, 68, 0.15); color: #ef4444;">
+                      {{ alertCount }}条预警
+                    </span>
+                  </div>
+                  <button
+                    @click="showAlertCenter = false"
+                    class="p-1 hover:bg-slate-100 rounded"
+                  >
+                    <X :size="16" />
+                  </button>
+                </div>
+
+                <!-- 预警列表 -->
+                <div class="flex-1 overflow-y-auto p-2">
+                  <!-- 空状态 -->
+                  <div
+                    v-if="alertList.length === 0"
+                    class="flex flex-col items-center justify-center py-12"
+                  >
+                    <CheckCircle :size="48" class="mb-3" style="color: '#16a34a', opacity: 0.5;" />
+                    <p class="text-sm" style="color: var(--text-secondary);">暂无预警</p>
+                    <p class="text-xs mt-1" style="color: var(--text-disabled);">所有用户数据正常</p>
+                  </div>
+
+                  <!-- 预警列表 -->
+                  <div v-else class="space-y-1">
+                    <div
+                      v-for="alert in alertList"
+                      :key="alert.id"
+                      @click="handleAlertClick(alert)"
+                      class="p-3 rounded-lg cursor-pointer transition-colors"
+                      style="border: 1px solid var(--border);"
+                      @mouseenter="$event.currentTarget.style.backgroundColor = 'var(--fill-light)'"
+                      @mouseleave="$event.currentTarget.style.backgroundColor = 'transparent'"
+                    >
+                      <div class="flex items-center gap-3">
+                        <!-- 用户头像 -->
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" :style="{ background: alert.userColor, color: 'white' }">
+                          {{ alert.userName.charAt(0) }}
+                        </div>
+
+                        <!-- 内容 -->
+                        <div class="flex-1 min-w-0">
+                          <div class="flex items-center gap-2 mb-1">
+                            <span class="text-sm font-medium" style="color: var(--text-primary);">
+                              {{ alert.userName }}
+                            </span>
+                            <span :class="`text-[10px] px-1.5 py-0.5 rounded font-medium ${alert.typeBg} ${alert.typeColor}`">
+                              {{ alert.type }}
+                            </span>
+                          </div>
+                          <p class="text-xs truncate" style="color: var(--text-secondary);">
+                            {{ alert.message }}
+                          </p>
+                        </div>
+
+                        <!-- 图标 -->
+                        <div :class="`p-1.5 rounded-lg ${alert.iconBg}`">
+                          <component :is="alert.icon" :size="14" :class="alert.iconColor" />
+                        </div>
+                      </div>
+
+                      <!-- 时间 -->
+                      <div class="flex items-center gap-1 mt-2 text-xs" style="color: var(--text-disabled);">
+                        <Clock :size="10" />
+                        {{ alert.timeAgo }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 底部 -->
+                <div class="p-3 rounded-b-xl" style="border-top: 1px solid var(--border); background-color: var(--fill-light);">
+                  <button
+                    @click="goToAlertList"
+                    class="w-full py-2 text-sm font-medium"
+                    :style="{ color: '#B8860B' }"
+                  >
+                    查看全部预警
+                  </button>
+                </div>
+              </div>
+            </Transition>
+          </div>
+
           <!-- 角色切换 -->
           <div class="relative">
             <button
@@ -221,6 +353,16 @@
             </Transition>
           </div>
 
+          <!-- BatchTaskProcessor 专用组件 -->
+          <template v-if="isBatchTaskProcessor">
+            <!-- 日历选择器 -->
+            <DatePickerButton
+              v-model="selectedCalendarDate"
+              :date-data="dateDataMap"
+            />
+          </template>
+
+          <!-- 通知中心 -->
           <div class="relative">
             <button
               @click="showNotificationCenter = !showNotificationCenter"
@@ -404,7 +546,7 @@
 <script setup lang="ts">
 import { ref, computed, provide } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { CheckCircle, XCircle, AlertCircle, Info, X, ChevronDown, Check, Clock, AlertTriangle, Inbox, ChevronUp, ChevronLeft, ArrowLeft } from 'lucide-vue-next'
+import { CheckCircle, XCircle, AlertCircle, Info, X, ChevronDown, Check, Clock, AlertTriangle, Inbox, ChevronUp, ChevronLeft, ArrowLeft, ShieldAlert } from 'lucide-vue-next'
 import { Activity, User, LayoutDashboard, Users, Monitor, Wallet, Box, Briefcase, ShoppingCart, Lock, Bell, BrainCircuit, BookOpen, ShoppingBag, Database, FileText, DollarSign, Receipt, Award, Link2, ListTodo } from 'lucide-vue-next'
 import { useToast } from './composables/useToast'
 import { useRole } from './composables/useRole'
@@ -424,6 +566,78 @@ const showThemePanel = ref(false)
 
 // 通知中心状态
 const showNotificationCenter = ref(false)
+
+// 预警中心状态
+const showAlertCenter = ref(false)
+
+// 预警数据类型
+interface AlertItem {
+  id: string
+  userName: string
+  userId: string
+  type: string
+  typeBg: string
+  typeColor: string
+  icon: any
+  iconBg: string
+  iconColor: string
+  message: string
+  timeAgo: string
+  priority: 'high' | 'medium' | 'low'
+  userColor: string
+}
+
+// 模拟预警数据
+const alertList = ref<AlertItem[]>([
+  {
+    id: '1',
+    userName: '王磊',
+    userId: '1',
+    type: '设备',
+    typeBg: 'bg-orange-100',
+    typeColor: 'text-orange-700',
+    icon: Clock,
+    iconBg: 'bg-orange-100',
+    iconColor: 'text-orange-600',
+    message: '超过3天未同步穿戴设备数据',
+    timeAgo: '今日',
+    priority: 'high',
+    userColor: 'rgb(79, 70, 229)'
+  },
+  {
+    id: '2',
+    userName: '张建国',
+    userId: '3',
+    type: '血糖',
+    typeBg: 'bg-red-100',
+    typeColor: 'text-red-700',
+    icon: Activity,
+    iconBg: 'bg-red-50',
+    iconColor: 'text-red-600',
+    message: '血糖9.5 mmol/L，超出目标范围',
+    timeAgo: '2小时前',
+    priority: 'high',
+    userColor: 'rgb(249, 115, 22)'
+  },
+  {
+    id: '3',
+    userName: '孙强',
+    userId: '5',
+    type: '任务',
+    typeBg: 'bg-amber-100',
+    typeColor: 'text-amber-700',
+    icon: AlertTriangle,
+    iconBg: 'bg-amber-50',
+    iconColor: 'text-amber-600',
+    message: '完成率11%，需重点关注',
+    timeAgo: '昨日',
+    priority: 'medium',
+    userColor: 'rgb(34, 197, 94)'
+  }
+])
+
+// 预警总数
+const alertCount = computed(() => alertList.value.length)
 
 // BatchTaskProcessor 专用状态
 const selectedCalendarDate = ref(new Date())
@@ -524,6 +738,22 @@ const markAllAsRead = () => {
 // 删除通知
 const deleteNotification = (id: string) => {
   notifications.value = notifications.value.filter(n => n.id !== id)
+}
+
+// 预警中心方法
+const handleAlertClick = (alert: AlertItem) => {
+  // 跳转到工作台内容并选中该用户
+  router.push({
+    path: '/batch-task-processor',
+    query: { userId: alert.userId }
+  })
+  showAlertCenter.value = false
+}
+
+const goToAlertList = () => {
+  // 可以跳转到完整的预警列表页面
+  router.push('/alerts')
+  showAlertCenter.value = false
 }
 
 // 路由

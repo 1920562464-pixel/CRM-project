@@ -9,20 +9,32 @@
       }">
         <!-- Search -->
         <div class="p-3" :style="{ borderBottom: '1px solid var(--border-light)' }">
-          <div class="relative">
-            <Search class="absolute left-2.5 top-1/2 -translate-y-1/2" :size="14" :style="{ color: 'var(--text-placeholder)' }" />
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="搜索用户..."
-              class="w-full pl-8 pr-3 py-2 text-xs rounded-lg focus:outline-none focus:ring-2"
-              :style="{
-                border: '1px solid var(--border)',
-                background: 'var(--background)',
-                color: 'var(--text-primary)',
-                '--tw-ring-color': isBlackGold.value ? 'rgba(184, 134, 11, 0.5)' : 'rgba(79, 70, 229, 0.5)'
-              }"
-            />
+          <div class="flex items-center gap-2">
+            <div class="relative flex-1">
+              <Search class="absolute left-2.5 top-1/2 -translate-y-1/2" :size="14" :style="{ color: 'var(--text-placeholder)' }" />
+              <input
+                v-model="searchQuery"
+                type="text"
+                placeholder="搜索用户..."
+                class="w-full pl-8 pr-3 py-2 text-xs rounded-lg focus:outline-none focus:ring-2"
+                :style="{
+                  border: '1px solid var(--border)',
+                  background: 'var(--background)',
+                  color: 'var(--text-primary)',
+                  '--tw-ring-color': isBlackGold.value ? 'rgba(184, 134, 11, 0.5)' : 'rgba(79, 70, 229, 0.5)'
+                }"
+              />
+            </div>
+            <button
+              @click="showAgingIndexInfo = true"
+              class="p-2 rounded-lg transition-colors flex-shrink-0"
+              style="color: var(--text-secondary);"
+              @mouseenter="$event.currentTarget.style.backgroundColor = 'var(--fill-light)'"
+              @mouseleave="$event.currentTarget.style.backgroundColor = 'transparent'"
+              title="衰老指数说明"
+            >
+              <HelpCircle :size="16" />
+            </button>
           </div>
         </div>
 
@@ -49,6 +61,40 @@
               {{ tab.count }}
             </span>
           </button>
+        </div>
+
+        <!-- Sort & View Options -->
+        <div class="px-3 py-2" style="border-bottom: '1px solid var(--border-light)';">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-[10px]" style="color: var(--text-secondary);">排序：</span>
+            <button
+              v-for="option in ['完成率', '衰老指数', '任务数']"
+              :key="option"
+              @click="toggleSort(option)"
+              class="px-2 py-1 text-[10px] rounded transition-colors"
+              :style="sortBy === option ? {
+                color: isBlackGold.value ? '#D4A84A' : '#4f46e5',
+                background: isBlackGold.value ? 'rgba(184, 134, 11, 0.1)' : '#eef2ff'
+              } : {
+                color: 'var(--text-secondary)'
+              }"
+            >
+              {{ option }}
+              <span v-if="sortBy === option" class="ml-1">{{ getSortIcon(option) }}</span>
+            </button>
+            <!-- 取消排序按钮 -->
+            <button
+              v-if="sortBy"
+              @click="clearSort"
+              class="px-2 py-1 text-[10px] rounded transition-colors"
+              style="color: var(--text-secondary);"
+              @mouseenter="$event.currentTarget.style.backgroundColor = 'var(--fill-light)'"
+              @mouseleave="$event.currentTarget.style.backgroundColor = 'transparent'"
+            >
+              取消排序
+              <X :size="10" class="inline ml-1" />
+            </button>
+          </div>
         </div>
 
         <!-- User List -->
@@ -221,17 +267,32 @@
                     查看档案
                   </button>
                   <button
-                    @click="openAIModal"
-                    class="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-1.5 transition-all"
+                    @click="sendReminder"
+                    :disabled="!selectedUser"
+                    class="px-3 py-1.5 text-sm text-white rounded-lg flex items-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    :style="{ background: isBlackGold.value ? 'linear-gradient(135deg, #D4A84A 0%, #B8860B 100%)' : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' }"
+                    @mouseenter="!disabled && ($event.currentTarget.style.filter = 'brightness(1.1)')"
+                    @mouseleave="!disabled && ($event.currentTarget.style.filter = 'brightness(1)')"
                   >
-                    <BrainCircuit :size="16" />
-                    AI处方
+                    <MessageSquare :size="16" />
+                    发送提醒
+                  </button>
+                  <button
+                    @click="quickMarkAllComplete"
+                    :disabled="!selectedUser || userData?.pendingTasks === 0"
+                    class="px-3 py-1.5 text-sm text-white rounded-lg flex items-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    :style="{ background: isBlackGold.value ? 'linear-gradient(135deg, #D4A84A 0%, #B8860B 100%)' : 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' }"
+                    @mouseenter="!disabled && ($event.currentTarget.style.filter = 'brightness(1.1)')"
+                    @mouseleave="!disabled && ($event.currentTarget.style.filter = 'brightness(1)')"
+                  >
+                    <Check :size="16" />
+                    快速完成
                   </button>
                 </div>
               </div>
 
               <!-- Quick Stats -->
-              <div class="grid grid-cols-5 gap-3 mt-3 pt-3 border-t border-slate-100">
+              <div class="grid grid-cols-6 gap-3 mt-3 pt-3 border-t border-slate-100">
                 <div class="text-center">
                   <p class="text-xl font-bold text-slate-800">{{ userData?.todayTasks || 0 }}</p>
                   <p class="text-xs text-slate-500 mt-1">今日任务</p>
@@ -254,6 +315,12 @@
                   </p>
                   <p class="text-xs text-slate-500 mt-1">代谢风险</p>
                 </div>
+                <div class="text-center">
+                  <p class="text-xl font-bold" :style="{ color: getAgingIndexColor(getUserAgingIndex()) }">
+                    {{ getUserAgingIndex().toFixed(1) }}
+                  </p>
+                  <p class="text-xs text-slate-500 mt-1">衰老指数</p>
+                </div>
               </div>
             </div>
 
@@ -274,6 +341,7 @@
 
             <!-- Main Content Grid -->
             <div class="grid grid-cols-12 gap-3">
+              <!-- Left Column: Health Dashboard (3 cols) -->
               <!-- Left Column: Health Dashboard (3 cols) -->
               <div class="col-span-12 md:col-span-3">
                 <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
@@ -372,6 +440,11 @@
                       </div>
                     </div>
                   </div>
+                </div>
+
+                <!-- Health Data Preview -->
+                <div class="mt-3">
+                  <HealthDataPreview :user-id="selectedUser" />
                 </div>
               </div>
 
@@ -703,6 +776,138 @@
       </div>
     </Teleport>
 
+    <!-- 衰老指数说明弹窗 -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition ease-out duration-200"
+        enter-from-class="opacity-0 scale-95"
+        enter-to-class="opacity-100 scale-100"
+        leave-active-class="transition ease-in duration-150"
+        leave-from-class="opacity-100 scale-100"
+        leave-to-class="opacity-0 scale-95"
+      >
+        <div
+          v-if="showAgingIndexInfo"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style="background-color: rgba(0, 0, 0, 0.5);"
+          @click.self="showAgingIndexInfo = false"
+        >
+          <div
+            class="w-full max-w-lg rounded-xl shadow-2xl"
+            style="background-color: var(--card);"
+          >
+            <!-- Header -->
+            <div class="flex items-center justify-between p-4" style="border-bottom: 1px solid var(--border);">
+              <div class="flex items-center gap-2">
+                <Info :size="20" :style="{ color: '#3b82f6' }" />
+                <h3 class="text-lg font-bold" style="color: var(--text-primary);">什么是衰老指数？</h3>
+              </div>
+              <button
+                @click="showAgingIndexInfo = false"
+                class="p-1 rounded-lg transition-colors"
+                style="color: var(--text-secondary);"
+                @mouseenter="$event.currentTarget.style.backgroundColor = 'var(--fill-light)'"
+                @mouseleave="$event.currentTarget.style.backgroundColor = 'transparent'"
+              >
+                <X :size="18" />
+              </button>
+            </div>
+
+            <!-- Content -->
+            <div class="p-4 space-y-4" style="color: var(--text-primary);">
+              <!-- 定义 -->
+              <div class="p-3 rounded-lg" style="background-color: var(--fill-light);">
+                <p class="text-sm font-medium mb-1" style="color: var(--text-primary);">
+                  📖 定义
+                </p>
+                <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">
+                  衰老指数表示：<span class="font-bold" style="color: var(--text-primary);">年龄每增长1岁，身体年龄实际增加的岁数</span>
+                </p>
+              </div>
+
+              <!-- 举例说明 -->
+              <div class="p-3 rounded-lg" style="background-color: var(--fill-light);">
+                <p class="text-sm font-medium mb-2" style="color: var(--text-primary);">
+                  💡 举例说明
+                </p>
+                <ul class="text-xs space-y-2" style="color: var(--text-secondary);">
+                  <li class="flex items-start gap-2">
+                    <span class="font-bold" style="color: '#16a34a';">0.2 岁/年</span>
+                    <span>：实际年龄长1岁，身体只长0.2岁（非常健康）</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="font-bold" style="color: '#3b82f6';">1.0 岁/年</span>
+                    <span>：实际年龄长1岁，身体也长1岁（正常衰老）</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="font-bold" style="color: '#ef4444';">3.0 岁/年</span>
+                    <span>：实际年龄长1岁，身体长3岁（快速衰老）</span>
+                  </li>
+                </ul>
+              </div>
+
+              <!-- 计算方式 -->
+              <div class="p-3 rounded-lg" style="background-color: var(--fill-light);">
+                <p class="text-sm font-medium mb-2" style="color: var(--text-primary);">
+                  📊 计算方式
+                </p>
+                <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">
+                  衰老指数与<span class="font-medium" style="color: var(--text-primary);">每日任务完成率</span>相关：
+                </p>
+                <ul class="text-xs mt-2 space-y-1" style="color: var(--text-secondary);">
+                  <li>✅ 完成率越高，衰老指数越低（身体越年轻）</li>
+                  <li>❌ 完成率越低，衰老指数越高（身体衰老越快）</li>
+                  <li>🎯 即使超额完成任务，衰老指数也不会低于0.2</li>
+                </ul>
+              </div>
+
+              <!-- 评级标准 -->
+              <div class="p-3 rounded-lg" style="background-color: var(--fill-light);">
+                <p class="text-sm font-medium mb-2" style="color: var(--text-primary);">
+                  🏆 评级标准
+                </p>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                  <div class="flex items-center gap-2 p-2 rounded" style="background-color: 'rgba(22, 163, 74, 0.1)';">
+                    <span class="w-2 h-2 rounded-full" style="background-color: '#16a34a';"></span>
+                    <span style="color: '#16a34a';">优秀</span>
+                    <span style="color: var(--text-secondary);">≤0.5</span>
+                  </div>
+                  <div class="flex items-center gap-2 p-2 rounded" style="background-color: 'rgba(59, 130, 246, 0.1)';">
+                    <span class="w-2 h-2 rounded-full" style="background-color: '#3b82f6';"></span>
+                    <span style="color: '#3b82f6';">良好</span>
+                    <span style="color: var(--text-secondary);">0.5-1.2</span>
+                  </div>
+                  <div class="flex items-center gap-2 p-2 rounded" style="background-color: 'rgba(245, 158, 11, 0.1)';">
+                    <span class="w-2 h-2 rounded-full" style="background-color: '#f59e0b';"></span>
+                    <span style="color: '#f59e0b';">需关注</span>
+                    <span style="color: var(--text-secondary);">1.2-2.0</span>
+                  </div>
+                  <div class="flex items-center gap-2 p-2 rounded" style="background-color: 'rgba(239, 68, 68, 0.1)';">
+                    <span class="w-2 h-2 rounded-full" style="background-color: '#ef4444';"></span>
+                    <span style="color: '#ef4444';">危险</span>
+                    <span style="color: var(--text-secondary);">>2.0</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-3 flex justify-end" style="border-top: 1px solid var(--border);">
+              <button
+                @click="showAgingIndexInfo = false"
+                class="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+                style="color: white; background-color: #3b82f6;"
+                @mouseenter="$event.currentTarget.style.backgroundColor = '#2563eb'"
+                @mouseleave="$event.currentTarget.style.backgroundColor = '#3b82f6'"
+              >
+                我知道了
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
     <!-- Toast -->
     <Toast ref="toastRef" />
   </div>
@@ -735,10 +940,13 @@ import {
   FileText,
   BrainCircuit,
   AlertTriangle,
-  Bot
+  Bot,
+  HelpCircle,
+  Info
 } from 'lucide-vue-next'
 import DatePickerButton from '../components/shared/DatePickerButton.vue'
 import Toast from '../components/shared/Toast.vue'
+import HealthDataPreview from '../components/HealthDataPreview.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -795,6 +1003,7 @@ interface UserData {
   lastGlucose: number
   lastWeight: number
   lastBP: string
+  lastDeviceSync: Date
 }
 
 interface Blocker {
@@ -845,8 +1054,11 @@ interface InterventionStage {
 const selectedUser = ref<string | null>(null)
 const searchQuery = ref('')
 const activeFilter = ref<'all' | 'pending' | 'in-progress' | 'completed'>('all')
+const sortBy = ref<'完成率' | '衰老指数' | '任务数' | null>(null)
+const sortOrder = ref<'asc' | 'desc'>('desc')
 const showAddTaskModal = ref(false)
 const newTask = ref({ title: '', description: '', priority: 'medium' as const, deadline: '09:00' })
+const showAgingIndexInfo = ref(false)
 
 // Calendar state
 const selectedCalendarDate = ref(new Date())
@@ -881,14 +1093,14 @@ const filterTabs = computed(() => [
 
 // Mock User Data Map
 const userDataMap = ref<{ [key: string]: UserData }>({
-  '1': { todayTasks: 8, todayCompleted: 5, pendingTasks: 3, compliance: 85, metabolicRisk: 75, weeklyRate: 82, streak: 12, lastGlucose: 7.2, lastWeight: 84.5, lastBP: '125/82' },
-  '2': { todayTasks: 6, todayCompleted: 7, pendingTasks: 0, compliance: 92, metabolicRisk: 45, weeklyRate: 90, streak: 18, lastGlucose: 6.8, lastWeight: 68.2, lastBP: '118/75' },
-  '3': { todayTasks: 10, todayCompleted: 2, pendingTasks: 8, compliance: 65, metabolicRisk: 85, weeklyRate: 55, streak: 3, lastGlucose: 9.5, lastWeight: 92.1, lastBP: '145/92' },
-  '4': { todayTasks: 7, todayCompleted: 4, pendingTasks: 3, compliance: 88, metabolicRisk: 55, weeklyRate: 85, streak: 15, lastGlucose: 6.5, lastWeight: 58.3, lastBP: '112/70' },
-  '5': { todayTasks: 5, todayCompleted: 0, pendingTasks: 5, compliance: 45, metabolicRisk: 60, weeklyRate: 40, streak: 0, lastGlucose: 0, lastWeight: 0, lastBP: '' },
-  '6': { todayTasks: 8, todayCompleted: 6, pendingTasks: 2, compliance: 95, metabolicRisk: 35, weeklyRate: 92, streak: 22, lastGlucose: 5.8, lastWeight: 62.5, lastBP: '108/68' },
-  '7': { todayTasks: 9, todayCompleted: 1, pendingTasks: 8, compliance: 58, metabolicRisk: 70, weeklyRate: 50, streak: 5, lastGlucose: 8.1, lastWeight: 88.7, lastBP: '135/88' },
-  '8': { todayTasks: 6, todayCompleted: 8, pendingTasks: 0, compliance: 90, metabolicRisk: 40, weeklyRate: 88, streak: 20, lastGlucose: 6.2, lastWeight: 55.8, lastBP: '115/72' }
+  '1': { todayTasks: 8, todayCompleted: 5, pendingTasks: 3, compliance: 85, metabolicRisk: 75, weeklyRate: 82, streak: 12, lastGlucose: 7.2, lastWeight: 84.5, lastBP: '125/82', lastDeviceSync: new Date() },
+  '2': { todayTasks: 6, todayCompleted: 7, pendingTasks: 0, compliance: 92, metabolicRisk: 45, weeklyRate: 90, streak: 18, lastGlucose: 6.8, lastWeight: 68.2, lastBP: '118/75', lastDeviceSync: new Date(Date.now() - 86400000) },
+  '3': { todayTasks: 10, todayCompleted: 2, pendingTasks: 8, compliance: 65, metabolicRisk: 85, weeklyRate: 55, streak: 3, lastGlucose: 9.5, lastWeight: 92.1, lastBP: '145/92', lastDeviceSync: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000) },
+  '4': { todayTasks: 7, todayCompleted: 4, pendingTasks: 3, compliance: 88, metabolicRisk: 55, weeklyRate: 85, streak: 15, lastGlucose: 6.5, lastWeight: 58.3, lastBP: '112/70', lastDeviceSync: new Date() },
+  '5': { todayTasks: 5, todayCompleted: 0, pendingTasks: 5, compliance: 45, metabolicRisk: 60, weeklyRate: 40, streak: 0, lastGlucose: 0, lastWeight: 0, lastBP: '', lastDeviceSync: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000) },
+  '6': { todayTasks: 8, todayCompleted: 6, pendingTasks: 2, compliance: 95, metabolicRisk: 35, weeklyRate: 92, streak: 22, lastGlucose: 5.8, lastWeight: 62.5, lastBP: '108/68', lastDeviceSync: new Date() },
+  '7': { todayTasks: 9, todayCompleted: 1, pendingTasks: 8, compliance: 58, metabolicRisk: 70, weeklyRate: 50, streak: 5, lastGlucose: 8.1, lastWeight: 88.7, lastBP: '135/88', lastDeviceSync: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000) },
+  '8': { todayTasks: 6, todayCompleted: 8, pendingTasks: 0, compliance: 90, metabolicRisk: 40, weeklyRate: 88, streak: 20, lastGlucose: 6.2, lastWeight: 55.8, lastBP: '115/72', lastDeviceSync: new Date() }
 })
 
 // Blockers Data
@@ -971,6 +1183,26 @@ const filteredUsers = computed(() => {
     )
   }
 
+  // 排序
+  if (sortBy.value) {
+    filtered = filtered.slice().sort((a, b) => {
+      let comparison = 0
+
+      if (sortBy.value === '完成率') {
+        const rateA = a.todayTasks > 0 ? a.todayCompleted / a.todayTasks : 0
+        const rateB = b.todayTasks > 0 ? b.todayCompleted / b.todayTasks : 0
+        comparison = rateA - rateB
+      } else if (sortBy.value === '衰老指数') {
+        comparison = calculateAgingIndex(a) - calculateAgingIndex(b)
+      } else if (sortBy.value === '任务数') {
+        comparison = a.todayTasks - b.todayTasks
+      }
+
+      // 根据排序方向返回结果
+      return sortOrder.value === 'asc' ? comparison : -comparison
+    })
+  }
+
   return filtered
 })
 
@@ -1035,6 +1267,36 @@ const selectUser = (userId: string) => {
   selectedUser.value = userId
 }
 
+// 切换排序
+const toggleSort = (field: '完成率' | '衰老指数' | '任务数') => {
+  if (sortBy.value === field) {
+    // 如果点击的是当前排序字段，切换排序方向
+    if (sortOrder.value === 'desc') {
+      sortOrder.value = 'asc'
+    } else {
+      // 如果是升序，取消排序
+      sortBy.value = null
+      sortOrder.value = 'desc'
+    }
+  } else {
+    // 如果点击的是新字段，设置为倒序
+    sortBy.value = field
+    sortOrder.value = 'desc'
+  }
+}
+
+// 取消排序
+const clearSort = () => {
+  sortBy.value = null
+  sortOrder.value = 'desc'
+}
+
+// 获取排序图标
+const getSortIcon = (field: '完成率' | '衰老指数' | '任务数') => {
+  if (sortBy.value !== field) return ''
+  return sortOrder.value === 'desc' ? '↓' : '↑'
+}
+
 // 计算衰老指数
 // 衰老指数含义：年龄每增大一岁，身体年龄增加的数量
 // 算法：与任务完成率成反比，完成率越高，衰老指数越低
@@ -1079,6 +1341,12 @@ const getAgingIndexLabel = (agingIndex: number): string => {
   return '危险'
 }
 
+// 获取当前用户的衰老指数
+const getUserAgingIndex = (): number => {
+  const user = users.value.find(u => u.id === selectedUser.value)
+  return user ? calculateAgingIndex(user) : 0
+}
+
 const goToProfile = () => {
   if (selectedUser.value) {
     // 传递当前路径作为返回参数
@@ -1089,8 +1357,50 @@ const goToProfile = () => {
   }
 }
 
-const openAIModal = () => {
-  toastRef.value?.show('AI处方生成功能开发中', 'info')
+// 快速完成所有待完成任务
+const quickMarkAllComplete = () => {
+  if (!selectedUser.value) return
+
+  const userTasks = userTasksMap.value[selectedUser.value]
+  if (userTasks) {
+    // 标记所有未完成的任务为已完成
+    userTasks.forEach(task => {
+      if (!task.completed) {
+        task.completed = true
+        task.completedAt = new Date().toISOString()
+      }
+    })
+
+    // 更新用户状态
+    const user = users.value.find(u => u.id === selectedUser.value)
+    if (user) {
+      user.todayCompleted = user.todayTasks
+      user.taskStatus = 'completed'
+    }
+
+    // 更新用户数据
+    const userData = userDataMap.value[selectedUser.value]
+    if (userData) {
+      userData.todayCompleted = userData.todayTasks
+      userData.pendingTasks = 0
+    }
+
+    toastRef.value?.show(`已将${currentUser.value?.name}的所有任务标记为完成`, 'success')
+  }
+}
+
+// 发送打卡提醒
+const sendReminder = () => {
+  if (!selectedUser.value) return
+
+  const user = users.value.find(u => u.id === selectedUser.value)
+  if (user) {
+    // 模拟发送提醒
+    toastRef.value?.show(`已向${user.name}发送打卡提醒`, 'success')
+
+    // 可以在这里添加实际的提醒发送逻辑
+    // 例如调用API发送短信、推送通知等
+  }
 }
 
 const handleAlert = () => {
