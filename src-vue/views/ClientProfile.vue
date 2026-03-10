@@ -163,18 +163,34 @@
                 </div>
               </div>
               <div class="flex items-center gap-3">
-                <button
-                  @click="openEditModal"
-                  class="flex items-center gap-1.5 text-sm text-indigo-600 font-medium hover:bg-indigo-50 px-4 py-2 rounded-lg transition-all border border-transparent hover:border-indigo-200 shadow-sm hover:shadow"
-                >
-                  <Edit3 :size="16" /> 编辑档案
-                </button>
-                <button
-                  @click="handleExportData"
-                  class="flex items-center gap-1.5 text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-700 px-4 py-2 rounded-lg transition-all border border-slate-200"
-                >
-                  <Download :size="16" /> 导出数据
-                </button>
+                <template v-if="!isEditMode">
+                  <button
+                    @click="startEditMode"
+                    class="flex items-center gap-1.5 text-sm text-indigo-600 font-medium hover:bg-indigo-50 px-4 py-2 rounded-lg transition-all border border-transparent hover:border-indigo-200 shadow-sm hover:shadow"
+                  >
+                    <Edit3 :size="16" /> 编辑档案
+                  </button>
+                  <button
+                    @click="handleExportData"
+                    class="flex items-center gap-1.5 text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-700 px-4 py-2 rounded-lg transition-all border border-slate-200"
+                  >
+                    <Download :size="16" /> 导出数据
+                  </button>
+                </template>
+                <template v-else>
+                  <button
+                    @click="saveInlineEdit"
+                    class="flex items-center gap-1.5 text-sm text-white font-medium bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg transition-all border border-transparent shadow-sm hover:shadow"
+                  >
+                    <CheckCircle2 :size="16" /> 保存
+                  </button>
+                  <button
+                    @click="cancelEditMode"
+                    class="flex items-center gap-1.5 text-sm text-slate-600 font-medium hover:bg-slate-100 px-4 py-2 rounded-lg transition-all border border-slate-200"
+                  >
+                    <X :size="16" /> 取消
+                  </button>
+                </template>
               </div>
             </div>
 
@@ -194,21 +210,51 @@
                   <span class="text-xs uppercase tracking-wide">姓名</span>
                 </div>
                 <div class="flex-1 p-4 border-r border-slate-100 flex items-center gap-2 break-words transition-all bg-indigo-50/50 text-indigo-900 hover:bg-slate-50">
-                  <span class="leading-relaxed">{{ staticInfo.name }}</span>
+                  <template v-if="isEditMode">
+                    <input
+                      v-model="editData.name"
+                      type="text"
+                      class="w-full px-3 py-2 border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                      placeholder="请输入姓名"
+                    />
+                  </template>
+                  <template v-else>
+                    <span class="leading-relaxed">{{ staticInfo.name }}</span>
+                  </template>
                 </div>
                 <div class="w-48 bg-gradient-to-r from-slate-50 to-white p-4 font-bold text-slate-700 border-r border-slate-200 flex-shrink-0 flex items-center gap-2.5 hover:from-slate-100 hover:to-slate-50 transition-all">
                   <span class="text-base flex-shrink-0">⚧</span>
                   <span class="text-xs uppercase tracking-wide">性别</span>
                 </div>
                 <div class="flex-1 p-4 border-r border-slate-100 flex items-center gap-2 break-words transition-all text-slate-700 hover:bg-slate-50">
-                  <span class="leading-relaxed">{{ staticInfo.gender }}</span>
+                  <template v-if="isEditMode">
+                    <select
+                      v-model="editData.gender"
+                      class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                    >
+                      <option value="男">男</option>
+                      <option value="女">女</option>
+                    </select>
+                  </template>
+                  <template v-else>
+                    <span class="leading-relaxed">{{ staticInfo.gender }}</span>
+                  </template>
                 </div>
                 <div class="w-48 bg-gradient-to-r from-slate-50 to-white p-4 font-bold text-slate-700 border-r border-slate-200 flex-shrink-0 flex items-center gap-2.5 hover:from-slate-100 hover:to-slate-50 transition-all">
                   <span class="text-base flex-shrink-0">🎂</span>
                   <span class="text-xs uppercase tracking-wide">出生日期</span>
                 </div>
                 <div class="flex-1 p-4 border-r border-slate-100 flex items-center gap-2 break-words transition-all text-slate-700 hover:bg-slate-50">
-                  <span class="leading-relaxed">{{ staticInfo.dob }}</span>
+                  <template v-if="isEditMode">
+                    <input
+                      v-model="editData.dob"
+                      type="date"
+                      class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                    />
+                  </template>
+                  <template v-else>
+                    <span class="leading-relaxed">{{ staticInfo.dob }}</span>
+                  </template>
                 </div>
               </div>
 
@@ -218,25 +264,57 @@
                   <span class="text-xs uppercase tracking-wide">年龄</span>
                 </div>
                 <div class="flex-1 p-4 border-r border-slate-100 flex items-center gap-2 break-words transition-all text-slate-700 hover:bg-slate-50">
-                  <span class="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">{{ staticInfo.age }}岁</span>
+                  <template v-if="isEditMode">
+                    <input
+                      v-model.number="editData.age"
+                      type="number"
+                      class="w-24 px-3 py-1 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                      placeholder="年龄"
+                    />
+                    <span class="text-xs text-slate-500">岁</span>
+                  </template>
+                  <template v-else>
+                    <span class="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">{{ staticInfo.age }}岁</span>
+                  </template>
                 </div>
                 <div class="w-48 bg-gradient-to-r from-slate-50 to-white p-4 font-bold text-slate-700 border-r border-slate-200 flex-shrink-0 flex items-center gap-2.5">
                   <span class="text-base flex-shrink-0">📞</span>
                   <span class="text-xs uppercase tracking-wide">联系电话</span>
                 </div>
                 <div class="flex-1 p-4 border-r border-slate-100 flex items-center gap-2 break-words transition-all text-slate-700 hover:bg-slate-50">
-                  <button @click="copyToClipboard(staticInfo.phone)" class="flex-shrink-0 p-1 text-slate-400 hover:text-indigo-600 transition-colors" :title="copied ? '已复制!' : '点击复制'">
-                    <CheckCircle2 v-if="copied" :size="14" class="text-green-500" />
-                    <FileText v-else :size="14" />
-                  </button>
-                  <span class="leading-relaxed">{{ staticInfo.phone }}</span>
+                  <template v-if="isEditMode">
+                    <input
+                      v-model="editData.phone"
+                      type="tel"
+                      class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                      placeholder="请输入联系电话"
+                    />
+                  </template>
+                  <template v-else>
+                    <button @click="copyToClipboard(staticInfo.phone)" class="flex-shrink-0 p-1 text-slate-400 hover:text-indigo-600 transition-colors" :title="copied ? '已复制!' : '点击复制'">
+                      <CheckCircle2 v-if="copied" :size="14" class="text-green-500" />
+                      <FileText v-else :size="14" />
+                    </button>
+                    <span class="leading-relaxed">{{ staticInfo.phone }}</span>
+                  </template>
                 </div>
                 <div class="w-48 bg-gradient-to-r from-slate-50 to-white p-4 font-bold text-slate-700 border-r border-slate-200 flex-shrink-0 flex items-center gap-2.5">
                   <span class="text-base flex-shrink-0">📏</span>
                   <span class="text-xs uppercase tracking-wide">身高(cm)</span>
                 </div>
                 <div class="flex-1 p-4 border-r border-slate-100 flex items-center gap-2 break-words transition-all text-slate-700 hover:bg-slate-50">
-                  <span class="leading-relaxed">{{ staticInfo.height }}</span>
+                  <template v-if="isEditMode">
+                    <input
+                      v-model="editData.height"
+                      type="text"
+                      class="w-24 px-3 py-1 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                      placeholder="身高"
+                    />
+                    <span class="text-xs text-slate-500">cm</span>
+                  </template>
+                  <template v-else>
+                    <span class="leading-relaxed">{{ staticInfo.height }}</span>
+                  </template>
                 </div>
               </div>
 
@@ -246,14 +324,35 @@
                   <span class="text-xs uppercase tracking-wide">体重(kg)</span>
                 </div>
                 <div class="flex-1 p-4 border-r border-slate-100 flex items-center gap-2 break-words transition-all text-slate-700 hover:bg-slate-50">
-                  <span class="leading-relaxed">{{ staticInfo.weight }}</span>
+                  <template v-if="isEditMode">
+                    <input
+                      v-model="editData.weight"
+                      type="text"
+                      class="w-24 px-3 py-1 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                      placeholder="体重"
+                    />
+                    <span class="text-xs text-slate-500">kg</span>
+                  </template>
+                  <template v-else>
+                    <span class="leading-relaxed">{{ staticInfo.weight }}</span>
+                  </template>
                 </div>
                 <div class="w-48 bg-gradient-to-r from-slate-50 to-white p-4 font-bold text-slate-700 border-r border-slate-200 flex-shrink-0 flex items-center gap-2.5">
                   <span class="text-base flex-shrink-0">📊</span>
                   <span class="text-xs uppercase tracking-wide">渠道来源</span>
                 </div>
                 <div class="flex-1 p-4 border-r border-slate-100 flex items-center gap-2 break-words transition-all text-slate-700 hover:bg-slate-50">
-                  <span class="px-2.5 py-1 bg-slate-100 text-slate-600 text-xs rounded-full border border-slate-200">{{ staticInfo.channel }}</span>
+                  <template v-if="isEditMode">
+                    <input
+                      v-model="editData.channel"
+                      type="text"
+                      class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                      placeholder="请输入渠道来源"
+                    />
+                  </template>
+                  <template v-else>
+                    <span class="px-2.5 py-1 bg-slate-100 text-slate-600 text-xs rounded-full border border-slate-200">{{ staticInfo.channel }}</span>
+                  </template>
                 </div>
                 <div class="w-48 bg-gradient-to-r from-slate-50 to-white p-4 font-bold text-slate-700 border-r border-slate-200 flex-shrink-0 flex items-center gap-2.5">
                   <span class="text-base flex-shrink-0">🕐</span>
@@ -285,7 +384,17 @@
                   <span class="text-xs uppercase tracking-wide">身体指标及疾病情况</span>
                 </div>
                 <div :class="`flex-1 p-4 border-r border-slate-100 flex items-center gap-2 break-words transition-all hover:bg-slate-50 ${staticInfo.bodyMetrics !== '无数据' ? 'bg-orange-50/50 text-orange-900' : 'text-slate-700'}`">
-                  <span class="leading-relaxed">{{ staticInfo.bodyMetrics }}</span>
+                  <template v-if="isEditMode">
+                    <input
+                      v-model="editData.bodyMetrics"
+                      type="text"
+                      class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                      placeholder="请输入身体指标"
+                    />
+                  </template>
+                  <template v-else>
+                    <span class="leading-relaxed">{{ staticInfo.bodyMetrics }}</span>
+                  </template>
                 </div>
               </div>
 
@@ -295,21 +404,51 @@
                   <span class="text-xs uppercase tracking-wide">遗传病史</span>
                 </div>
                 <div class="flex-1 p-4 border-r border-slate-100 flex items-center gap-2 break-words transition-all text-slate-700 hover:bg-slate-50">
-                  <span class="leading-relaxed">{{ staticInfo.hereditary }}</span>
+                  <template v-if="isEditMode">
+                    <input
+                      v-model="editData.hereditary"
+                      type="text"
+                      class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                      placeholder="请输入遗传病史"
+                    />
+                  </template>
+                  <template v-else>
+                    <span class="leading-relaxed">{{ staticInfo.hereditary }}</span>
+                  </template>
                 </div>
                 <div class="w-[200px] bg-gradient-to-r from-slate-50 to-white p-4 font-bold text-slate-700 border-r border-slate-200 flex-shrink-0 flex items-center gap-2.5">
                   <span class="text-base flex-shrink-0">⚠</span>
                   <span class="text-xs uppercase tracking-wide">过敏源</span>
                 </div>
                 <div class="flex-1 p-4 border-r border-slate-100 flex items-center gap-2 break-words transition-all text-slate-700 hover:bg-slate-50">
-                  <span class="leading-relaxed">{{ staticInfo.allergies }}</span>
+                  <template v-if="isEditMode">
+                    <input
+                      v-model="editData.allergies"
+                      type="text"
+                      class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                      placeholder="请输入过敏源"
+                    />
+                  </template>
+                  <template v-else>
+                    <span class="leading-relaxed">{{ staticInfo.allergies }}</span>
+                  </template>
                 </div>
                 <div class="w-48 bg-gradient-to-r from-slate-50 to-white p-4 font-bold text-slate-700 border-r border-slate-200 flex-shrink-0 flex items-center gap-2.5">
                   <span class="text-base flex-shrink-0">🎯</span>
                   <span class="text-xs uppercase tracking-wide">健康目标</span>
                 </div>
                 <div class="flex-1 p-4 border-r border-slate-100 flex items-center gap-2 break-words transition-all bg-indigo-50/50 text-indigo-900 hover:bg-slate-50">
-                  <span class="leading-relaxed">{{ staticInfo.goal }}</span>
+                  <template v-if="isEditMode">
+                    <textarea
+                      v-model="editData.goal"
+                      rows="2"
+                      class="w-full px-3 py-2 border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white resize-none"
+                      placeholder="请输入健康目标"
+                    ></textarea>
+                  </template>
+                  <template v-else>
+                    <span class="leading-relaxed">{{ staticInfo.goal }}</span>
+                  </template>
                 </div>
               </div>
 
@@ -327,21 +466,51 @@
                   <span class="text-xs uppercase tracking-wide">口味偏好及用餐方式</span>
                 </div>
                 <div class="flex-1 p-4 border-r border-slate-100 flex items-center gap-2 break-words transition-all text-slate-700 hover:bg-slate-50">
-                  <span class="leading-relaxed">{{ staticInfo.taste }}</span>
+                  <template v-if="isEditMode">
+                    <input
+                      v-model="editData.taste"
+                      type="text"
+                      class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                      placeholder="请输入口味偏好"
+                    />
+                  </template>
+                  <template v-else>
+                    <span class="leading-relaxed">{{ staticInfo.taste }}</span>
+                  </template>
                 </div>
                 <div class="w-[200px] bg-gradient-to-r from-slate-50 to-white p-4 font-bold text-slate-700 border-r border-slate-200 flex-shrink-0 flex items-center gap-2.5">
                   <span class="text-base flex-shrink-0">🩹</span>
                   <span class="text-xs uppercase tracking-wide">运动损伤史</span>
                 </div>
                 <div class="flex-1 p-4 border-r border-slate-100 flex items-center gap-2 break-words transition-all text-slate-700 hover:bg-slate-50">
-                  <span class="leading-relaxed">{{ staticInfo.injury }}</span>
+                  <template v-if="isEditMode">
+                    <input
+                      v-model="editData.injury"
+                      type="text"
+                      class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                      placeholder="请输入运动损伤史"
+                    />
+                  </template>
+                  <template v-else>
+                    <span class="leading-relaxed">{{ staticInfo.injury }}</span>
+                  </template>
                 </div>
                 <div class="w-48 bg-gradient-to-r from-slate-50 to-white p-4 font-bold text-slate-700 border-r border-slate-200 flex-shrink-0 flex items-center gap-2.5">
                   <span class="text-base flex-shrink-0">🏃</span>
                   <span class="text-xs uppercase tracking-wide">运动偏好</span>
                 </div>
                 <div class="flex-1 p-4 border-r border-slate-100 flex items-center gap-2 break-words transition-all text-slate-700 hover:bg-slate-50">
-                  <span class="leading-relaxed">{{ staticInfo.sportsPref }}</span>
+                  <template v-if="isEditMode">
+                    <input
+                      v-model="editData.sportsPref"
+                      type="text"
+                      class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                      placeholder="请输入运动偏好"
+                    />
+                  </template>
+                  <template v-else>
+                    <span class="leading-relaxed">{{ staticInfo.sportsPref }}</span>
+                  </template>
                 </div>
               </div>
 
@@ -351,21 +520,51 @@
                   <span class="text-xs uppercase tracking-wide">运动爱好</span>
                 </div>
                 <div class="flex-1 p-4 border-r border-slate-100 flex items-center gap-2 break-words transition-all bg-indigo-50/50 text-indigo-900 hover:bg-slate-50">
-                  <span class="leading-relaxed">{{ staticInfo.hobbies }}</span>
+                  <template v-if="isEditMode">
+                    <input
+                      v-model="editData.hobbies"
+                      type="text"
+                      class="w-full px-3 py-2 border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                      placeholder="请输入运动爱好"
+                    />
+                  </template>
+                  <template v-else>
+                    <span class="leading-relaxed">{{ staticInfo.hobbies }}</span>
+                  </template>
                 </div>
                 <div class="w-[200px] bg-gradient-to-r from-slate-50 to-white p-4 font-bold text-slate-700 border-r border-slate-200 flex-shrink-0 flex items-center gap-2.5">
                   <span class="text-base flex-shrink-0">😴</span>
                   <span class="text-xs uppercase tracking-wide">睡眠情况</span>
                 </div>
                 <div class="flex-1 p-4 border-r border-slate-100 flex items-center gap-2 break-words transition-all text-slate-700 hover:bg-slate-50">
-                  <span class="leading-relaxed">{{ staticInfo.sleep }}</span>
+                  <template v-if="isEditMode">
+                    <input
+                      v-model="editData.sleep"
+                      type="text"
+                      class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                      placeholder="请输入睡眠情况"
+                    />
+                  </template>
+                  <template v-else>
+                    <span class="leading-relaxed">{{ staticInfo.sleep }}</span>
+                  </template>
                 </div>
                 <div class="w-48 bg-gradient-to-r from-slate-50 to-white p-4 font-bold text-slate-700 border-r border-slate-200 flex-shrink-0 flex items-center gap-2.5">
                   <span class="text-base flex-shrink-0">💊</span>
                   <span class="text-xs uppercase tracking-wide">用药情况及手术史</span>
                 </div>
                 <div class="flex-1 p-4 flex items-center gap-2 break-words transition-all text-slate-700 hover:bg-slate-50">
-                  <span class="leading-relaxed">{{ staticInfo.medication }}</span>
+                  <template v-if="isEditMode">
+                    <input
+                      v-model="editData.medication"
+                      type="text"
+                      class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                      placeholder="请输入用药情况"
+                    />
+                  </template>
+                  <template v-else>
+                    <span class="leading-relaxed">{{ staticInfo.medication }}</span>
+                  </template>
                 </div>
               </div>
             </div>
@@ -691,6 +890,7 @@ const editingTagIndex = ref<number | null>(null)
 const editingTagValue = ref('')
 const copied = ref(false)
 const showEditModal = ref(false)
+const isEditMode = ref(false)
 
 // Mock client data
 const client = ref({
@@ -724,6 +924,8 @@ const staticInfo = ref({
   sleep: '无',
   medication: '无'
 })
+
+const editData = ref({ ...staticInfo.value })
 
 const editForm = ref({
   name: '王磊',
@@ -763,13 +965,13 @@ const handleAddTag = () => {
     tags.value.push(newTag.value.trim())
     newTag.value = ''
     showAddTag.value = false
-    toastRef.value?.show('标签添加成功', 'success')
+    toastRef.value?.success('标签添加成功')
   }
 }
 
 const deleteTag = (index: number) => {
   tags.value.splice(index, 1)
-  toastRef.value?.show('标签已删除', 'info')
+  toastRef.value?.info('标签已删除')
 }
 
 const startEditingTag = (index: number, value: string) => {
@@ -784,7 +986,7 @@ const saveEditingTag = () => {
   if (editingTagIndex.value !== null && editingTagValue.value.trim()) {
     tags.value[editingTagIndex.value] = editingTagValue.value.trim()
     editingTagIndex.value = null
-    toastRef.value?.show('标签已更新', 'success')
+    toastRef.value?.success('标签已更新')
   }
 }
 
@@ -796,7 +998,7 @@ const cancelEditingTag = () => {
 const copyToClipboard = (text: string) => {
   navigator.clipboard.writeText(text)
   copied.value = true
-  toastRef.value?.show('已复制到剪贴板', 'success')
+  toastRef.value?.success('已复制到剪贴板')
   setTimeout(() => {
     copied.value = false
   }, 2000)
@@ -806,7 +1008,7 @@ const handleShare = () => {
   // 模拟分享功能
   const url = window.location.href
   navigator.clipboard.writeText(url)
-  toastRef.value?.show('分享链接已复制到剪贴板', 'success')
+  toastRef.value?.success('分享链接已复制到剪贴板')
 }
 
 const openEditModal = () => {
@@ -830,7 +1032,33 @@ const saveEdit = () => {
   staticInfo.value.phone = editForm.value.phone
   client.value.name = editForm.value.name
   showEditModal.value = false
-  toastRef.value?.show('档案信息已保存', 'success')
+  toastRef.value?.success('档案信息已保存')
+}
+
+// 内联编辑模式函数
+const startEditMode = () => {
+  editData.value = { ...staticInfo.value }
+  isEditMode.value = true
+  toastRef.value?.info('进入编辑模式，可直接修改表格内容')
+}
+
+const cancelEditMode = () => {
+  isEditMode.value = false
+  editData.value = { ...staticInfo.value }
+}
+
+const saveInlineEdit = () => {
+  // 验证必填字段
+  if (!editData.value.name || !editData.value.phone) {
+    toastRef.value?.error('姓名和电话为必填项')
+    return
+  }
+
+  // 保存数据
+  staticInfo.value = { ...editData.value }
+  client.value.name = editData.value.name
+  isEditMode.value = false
+  toastRef.value?.success('档案信息已保存')
 }
 
 const handleExportData = () => {
@@ -845,7 +1073,7 @@ const handleExportData = () => {
   a.click()
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
-  toastRef.value?.show('档案数据已导出', 'success')
+  toastRef.value?.success('档案数据已导出')
 }
 
 const openAIModal = () => {
@@ -864,12 +1092,12 @@ const regenerateAIReport = () => {
   aiStep.value = 'loading'
   setTimeout(() => {
     aiStep.value = 'result'
-    toastRef.value?.show('AI 报告已重新生成', 'success')
+    toastRef.value?.success('AI 报告已重新生成')
   }, 2000)
 }
 
 const applyAIReport = () => {
   showAIModal.value = false
-  toastRef.value?.show('AI 处方已应用到干预计划', 'success')
+  toastRef.value?.success('AI 处方已应用到干预计划')
 }
 </script>

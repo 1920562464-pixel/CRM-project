@@ -133,23 +133,104 @@
 
       <!-- 成本趋势 -->
       <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-        <h3 class="text-lg font-bold text-slate-900 mb-4">人力成本趋势（近6个月）</h3>
-        <div class="grid grid-cols-6 gap-4">
-          <div
-            v-for="(month, index) in costTrend"
-            :key="index"
-            class="text-center"
-          >
-            <div class="text-xs text-slate-500 mb-2">{{ month.month }}</div>
-            <div
-              class="h-32 bg-gradient-to-t from-amber-500 to-amber-300 rounded-t-lg relative"
-              :style="{ height: (month.amount / 35000 * 100) + '%' }"
-            >
-              <div class="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-semibold text-slate-700">
-                ¥{{ (month.amount / 1000).toFixed(1) }}k
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-lg font-bold text-slate-900">人力成本趋势（近6个月）</h3>
+          <div class="flex items-center gap-4 text-sm">
+            <div class="flex items-center gap-2 px-3 py-1.5 bg-amber-50 rounded-lg">
+              <div class="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500"></div>
+              <span class="text-slate-700 font-medium">人力成本</span>
+            </div>
+            <div class="flex items-center gap-2 text-slate-500">
+              <TrendingUp :size="16" />
+              <span>平均: ¥{{ (costTrend.reduce((sum, m) => sum + m.amount, 0) / costTrend.length / 1000).toFixed(1) }}k</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 折线图容器 -->
+        <div class="relative">
+          <!-- Y轴和网格线区域 -->
+          <div class="absolute left-14 right-4 top-0 bottom-10 pointer-events-none">
+            <!-- 网格线 -->
+            <div class="h-full flex flex-col justify-between">
+              <div v-for="i in 5" :key="i" class="relative border-t border-slate-100">
+                <span class="absolute -left-14 -top-2.5 text-xs text-slate-400 w-10 text-right pr-2">
+                  ¥{{ ((maxCostTrend / 4) * (5 - i) / 1000).toFixed(0) }}k
+                </span>
               </div>
             </div>
           </div>
+
+          <!-- SVG 折线图 -->
+          <svg class="w-full h-52 pl-14 pr-4" viewBox="0 0 800 200" preserveAspectRatio="none">
+            <defs>
+              <!-- 渐变填充 -->
+              <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:rgb(251, 191, 36);stop-opacity:0.3" />
+                <stop offset="100%" style="stop-color:rgb(251, 191, 36);stop-opacity:0" />
+              </linearGradient>
+              <!-- 阴影滤镜 -->
+              <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="rgb(251, 191, 36)" flood-opacity="0.3"/>
+              </filter>
+            </defs>
+
+            <!-- 区域填充 -->
+            <path
+              :d="getAreaPath()"
+              fill="url(#areaGradient)"
+              class="transition-all duration-500"
+            />
+
+            <!-- 折线 -->
+            <path
+              :d="getLinePath()"
+              fill="none"
+              stroke="rgb(251, 146, 60)"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              filter="url(#shadow)"
+              class="transition-all duration-500"
+            />
+
+            <!-- 数据点和交互区域 -->
+            <g v-for="(month, index) in costTrend" :key="index">
+              <!-- 数据点圆圈 -->
+              <circle
+                :cx="getPointX(index)"
+                :cy="getPointY(month.amount)"
+                :r="hoveredMonthIndex === index ? 8 : 5"
+                :fill="hoveredMonthIndex === index ? 'rgb(251, 146, 60)' : 'white'"
+                :stroke="hoveredMonthIndex === index ? 'rgb(251, 146, 60)' : 'rgb(251, 146, 60)'"
+                :stroke-width="hoveredMonthIndex === index ? 3 : 2"
+                class="transition-all duration-200 cursor-pointer"
+                @mouseenter="handlePointMouseEnter($event, index)"
+                @mouseleave="handleMonthMouseLeave"
+              />
+
+              <!-- 数值标签 -->
+              <text
+                :x="getPointX(index)"
+                :y="getPointY(month.amount) - 15"
+                text-anchor="middle"
+                class="text-xs font-bold fill-slate-700 transition-all duration-200"
+                :class="{ 'fill-amber-600': hoveredMonthIndex === index }"
+              >
+                ¥{{ (month.amount / 1000).toFixed(1) }}k
+              </text>
+
+              <!-- 月份标签 -->
+              <text
+                :x="getPointX(index)"
+                y="195"
+                text-anchor="middle"
+                class="text-xs font-semibold fill-slate-600"
+              >
+                {{ month.month }}
+              </text>
+            </g>
+          </svg>
         </div>
       </div>
     </div>
@@ -396,7 +477,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import {
   Calculator,
   Users,
@@ -406,12 +487,14 @@ import {
   Package,
   ShoppingCart,
   TrendingDown,
+  TrendingUp,
   Clock,
   Target,
   User,
   MessageSquare,
   BarChart3,
-  RefreshCw
+  RefreshCw,
+  Calendar
 } from 'lucide-vue-next'
 import { useSalary } from '../composables/useSalary'
 import { useToast } from '../composables/useToast'
@@ -453,6 +536,73 @@ const tabs: CostTab[] = [
 ]
 
 const activeTab = ref('labor')
+
+// Tooltip state
+const hoveredMonthIndex = ref(-1)
+const tooltipPosition = ref({ x: 0, y: 0 })
+
+// SVG图表配置
+const svgWidth = 800
+const svgHeight = 200
+const chartPadding = { top: 20, right: 20, bottom: 30, left: 0 }
+const chartWidth = svgWidth - chartPadding.left - chartPadding.right
+const chartHeight = svgHeight - chartPadding.top - chartPadding.bottom
+
+// 计算点的X坐标
+const getPointX = (index: number) => {
+  return chartPadding.left + (chartWidth / (costTrend.value.length - 1)) * index
+}
+
+// 计算点的Y坐标
+const getPointY = (amount: number) => {
+  const ratio = amount / maxCostTrend.value
+  return chartPadding.top + chartHeight * (1 - ratio)
+}
+
+// 生成折线路径
+const getLinePath = () => {
+  const points = costTrend.value.map((month, index) => {
+    const x = getPointX(index)
+    const y = getPointY(month.amount)
+    return `${index === 0 ? 'M' : 'L'} ${x} ${y}`
+  })
+  return points.join(' ')
+}
+
+// 生成区域填充路径
+const getAreaPath = () => {
+  const linePoints = costTrend.value.map((month, index) => {
+    const x = getPointX(index)
+    const y = getPointY(month.amount)
+    return `${x} ${y}`
+  })
+
+  return [
+    `M ${linePoints[0]}`,
+    ...linePoints.slice(1).map(p => `L ${p}`),
+    `L ${getPointX(costTrend.value.length - 1)} ${chartPadding.top + chartHeight}`,
+    `L ${getPointX(0)} ${chartPadding.top + chartHeight}`,
+    'Z'
+  ].join(' ')
+}
+
+const handlePointMouseEnter = (event: MouseEvent, index: number) => {
+  hoveredMonthIndex.value = index
+  const svg = (event.target as SVGElement).closest('svg')
+  if (svg) {
+    const rect = svg.getBoundingClientRect()
+    const x = rect.left + getPointX(index)
+    const y = rect.top + getPointY(costTrend.value[index].amount)
+    tooltipPosition.value = {
+      x: x,
+      y: y - 10
+    }
+  }
+}
+
+const handleMonthMouseLeave = () => {
+  hoveredMonthIndex.value = -1
+}
 
 const laborCost = ref({
   totalCost: 28500,
@@ -688,5 +838,20 @@ const getCategoryBadgeClass = (category: string) => {
     '运动器材': 'bg-green-100 text-green-800'
   }
   return classes[category] || 'bg-slate-100 text-slate-800'
+}
+
+// 计算最大成本趋势值（用于图表缩放）
+const maxCostTrend = computed(() => {
+  const max = Math.max(...costTrend.value.map(m => m.amount))
+  // 向上取整到最近的5000
+  return Math.ceil(max / 5000) * 5000
+})
+
+// 获取趋势标签颜色（保留给其他地方使用）
+const getTrendLabelClass = (amount: number, max: number) => {
+  const ratio = amount / max
+  if (ratio >= 0.8) return 'text-amber-600'
+  if (ratio >= 0.6) return 'text-amber-500'
+  return 'text-slate-600'
 }
 </script>

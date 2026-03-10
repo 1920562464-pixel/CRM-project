@@ -11,7 +11,17 @@
           工资条计算公式
         </h3>
         <div class="text-sm text-indigo-700 bg-white/50 px-3 py-1 rounded-full">
-          实发 = 底薪 + 管理费 + 佣金 + 富贵饼 + 上线服务 - 五险一金
+          实发 = 底薪 + 管理费 + 佣金 + 富贵饼 + 上线服务 + 津贴补贴 - 五险一金
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+        <div class="flex items-center gap-2 text-slate-700">
+          <div class="w-2 h-2 rounded-full bg-green-500"></div>
+          <span><strong>收入项：</strong>底薪 + 管理费 + 佣金 + 富贵饼 + 上线服务 + <span class="text-amber-600 font-medium">津贴补贴(交通/通讯/餐补/房补)</span></span>
+        </div>
+        <div class="flex items-center gap-2 text-slate-700">
+          <div class="w-2 h-2 rounded-full bg-red-500"></div>
+          <span><strong>扣款项：</strong>五险一金(养老8% + 医疗2% + 失业0.5% + 公积金12%)</span>
         </div>
       </div>
     </div>
@@ -22,11 +32,11 @@
         <h3 class="text-base font-semibold text-slate-900">📊 模块确认状态</h3>
         <div class="flex items-center gap-2 text-sm">
           <span :class="allConfirmed ? 'text-green-600' : 'text-slate-500'">
-            {{ confirmedCount }} / 6 已确认
+            {{ confirmedCount }} / 7 已确认
           </span>
         </div>
       </div>
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
         <!-- 底薪 -->
         <div
           class="p-3 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md"
@@ -137,6 +147,28 @@
           </div>
         </div>
 
+        <!-- 津贴补贴 -->
+        <div
+          class="p-3 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md"
+          :class="moduleStatus.allowance.confirmed ? 'border-green-500 bg-green-50' : 'border-slate-200 bg-slate-50'"
+          @click="goToModule('allowance')"
+        >
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-1.5">
+              <Coffee :size="16" :class="moduleStatus.allowance.confirmed ? 'text-green-600' : 'text-slate-400'" />
+              <span class="text-sm font-medium" :class="moduleStatus.allowance.confirmed ? 'text-green-900' : 'text-slate-700'">津贴补贴</span>
+            </div>
+            <CheckCircle v-if="moduleStatus.allowance.confirmed" :size="16" class="text-green-600" />
+            <Clock v-else :size="16" class="text-slate-400" />
+          </div>
+          <div class="text-xs" :class="moduleStatus.allowance.confirmed ? 'text-green-700' : 'text-slate-600'">
+            {{ moduleStatus.allowance.confirmed ? '已确认' : '待确认' }}
+          </div>
+          <div class="text-xs mt-1 text-slate-500">
+            ¥{{ moduleStatus.allowance.amount.toLocaleString() }}
+          </div>
+        </div>
+
         <!-- 五险一金 -->
         <div
           class="p-3 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md"
@@ -193,7 +225,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import {
-  BarChart3, Calculator, Briefcase, DollarSign, Award, Clock, Shield,
+  BarChart3, Calculator, Briefcase, DollarSign, Award, Clock, Shield, Coffee,
   CheckCircle, FileText, AlertCircle
 } from 'lucide-vue-next'
 import Toast from './shared/Toast.vue'
@@ -237,6 +269,11 @@ const moduleStatus = ref({
     count: 25,
     amount: 5800
   },
+  allowance: {
+    confirmed: false,
+    count: 4,
+    amount: 1620
+  },
   socialInsurance: {
     confirmed: false,
     count: 5,
@@ -262,6 +299,7 @@ const getModuleName = (key: string): string => {
     commission: '佣金',
     richBiscuit: '富贵饼',
     onlineService: '上线服务',
+    allowance: '津贴补贴',
     socialInsurance: '五险一金'
   }
   return names[key] || key

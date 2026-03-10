@@ -53,38 +53,38 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <div class="bg-blue-500 text-white rounded-xl p-4 shadow-lg">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-medium">本月收入</span>
+            <span class="text-xs font-medium">本月订单数</span>
             <TrendingUp :size="18" />
           </div>
-          <div class="text-2xl font-bold">¥128,500</div>
+          <div class="text-2xl font-bold">128</div>
           <div class="text-xs opacity-75">较上月 +12.5%</div>
         </div>
 
-        <div class="bg-red-500 text-white rounded-xl p-4 shadow-lg">
+        <div class="bg-green-500 text-white rounded-xl p-4 shadow-lg">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-medium">本月支出</span>
-            <Wallet :size="18" />
+            <span class="text-xs font-medium">待结算教练</span>
+            <Users :size="18" />
           </div>
-          <div class="text-2xl font-bold">¥86,200</div>
-          <div class="text-xs opacity-75">较上月 +8.3%</div>
+          <div class="text-2xl font-bold">5人</div>
+          <div class="text-xs opacity-75">本月待处理</div>
         </div>
 
         <div class="bg-purple-500 text-white rounded-xl p-4 shadow-lg">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-medium">应收账款</span>
+            <span class="text-xs font-medium">待催收</span>
             <DollarSign :size="18" />
           </div>
-          <div class="text-2xl font-bold">¥45,600</div>
-          <div class="text-xs opacity-75">32笔待收款</div>
+          <div class="text-2xl font-bold">12笔</div>
+          <div class="text-xs opacity-75">需跟进</div>
         </div>
 
         <div class="bg-amber-500 text-white rounded-xl p-4 shadow-lg">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-medium">账户余额</span>
-            <Building :size="18" />
+            <span class="text-xs font-medium">特殊项目</span>
+            <FileText :size="18" />
           </div>
-          <div class="text-2xl font-bold">¥523,800</div>
-          <div class="text-xs opacity-75">3个银行账户</div>
+          <div class="text-2xl font-bold">8笔</div>
+          <div class="text-xs opacity-75">本月记录</div>
         </div>
       </div>
 
@@ -93,7 +93,7 @@
         <div class="bg-white rounded-xl border border-orange-300 p-4">
           <h3 class="font-bold text-orange-900 mb-3 flex items-center gap-2">
             <AlertCircle :size="16" />
-            待支付提醒
+            待处理提醒
           </h3>
           <div class="space-y-2">
             <div class="flex items-center justify-between p-2 bg-orange-50 rounded-lg">
@@ -101,25 +101,25 @@
                 <Users :size="14" class="text-orange-600" />
                 <span class="text-sm font-medium text-orange-900">教练结算</span>
               </div>
-              <span class="text-sm font-bold text-orange-700">¥13,700</span>
-            </div>
-            <div class="flex items-center justify-between p-2 bg-orange-50 rounded-lg">
-              <div class="flex items-center gap-2">
-                <Package :size="14" class="text-orange-600" />
-                <span class="text-sm font-medium text-orange-900">库存采购</span>
-              </div>
-              <span class="text-sm font-bold text-orange-700">¥18,500</span>
+              <span class="text-xs text-orange-700">待审核</span>
             </div>
             <div class="flex items-center justify-between p-2 bg-orange-50 rounded-lg">
               <div class="flex items-center gap-2">
                 <DollarSign :size="14" class="text-orange-600" />
-                <span class="text-sm font-medium text-orange-900">顾问佣金</span>
+                <span class="text-sm font-medium text-orange-900">应收催收</span>
               </div>
-              <span class="text-sm font-bold text-orange-700">¥3,600</span>
+              <span class="text-xs text-orange-700">5笔逾期</span>
+            </div>
+            <div class="flex items-center justify-between p-2 bg-orange-50 rounded-lg">
+              <div class="flex items-center gap-2">
+                <Package :size="14" class="text-orange-600" />
+                <span class="text-sm font-medium text-orange-900">特殊项目</span>
+              </div>
+              <span class="text-xs text-orange-700">3笔待确认</span>
             </div>
           </div>
           <button
-            @click="setCurrentView({ id: 'payable', name: '', description: '', color: '' })"
+            @click="setCurrentView({ id: 'settlement', name: '', description: '', color: '' })"
             class="mt-2 w-full py-1.5 text-xs font-medium text-orange-700 border border-orange-300 rounded-lg hover:bg-orange-50 transition-colors"
           >
             查看详情 →
@@ -129,36 +129,35 @@
         <div class="bg-white rounded-xl border border-slate-200 p-4">
           <h3 class="font-bold text-slate-900 mb-3 flex items-center gap-2">
             <FileText :size="16" />
-            待审批报销
+            特殊项目记录
           </h3>
           <div class="space-y-2">
             <div class="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
               <div class="flex-1">
-                <div class="text-sm font-medium text-slate-900">王采购</div>
-                <div class="text-xs text-slate-500">库存采购 - 乳清蛋白粉</div>
+                <div class="text-sm font-medium text-slate-900">收入 - 特殊折扣</div>
+                <div class="text-xs text-slate-500">王磊 - 年度套餐优惠</div>
               </div>
-              <span class="text-sm font-bold text-slate-700">¥6,400</span>
+              <span class="text-xs text-slate-500">今日</span>
             </div>
             <div class="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
               <div class="flex-1">
-                <div class="text-sm font-medium text-slate-900">李运营</div>
-                <div class="text-xs text-slate-500">运营支出 - 线下活动物料</div>
+                <div class="text-sm font-medium text-slate-900">应付 - 额外奖金</div>
+                <div class="text-xs text-slate-500">教练张三 - 销售激励</div>
               </div>
-              <span class="text-sm font-bold text-slate-700">¥1,200</span>
+              <span class="text-xs text-slate-500">昨日</span>
             </div>
             <div class="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
               <div class="flex-1">
-                <div class="text-sm font-medium text-slate-900">李行政</div>
-                <div class="text-xs text-slate-500">办公用品采购</div>
+                <div class="text-sm font-medium text-slate-900">成本 - 设备采购</div>
+                <div class="text-xs text-slate-500">新增健身器材</div>
               </div>
-              <span class="text-sm font-bold text-slate-700">¥320</span>
+              <span class="text-xs text-slate-500">3天前</span>
             </div>
           </div>
           <button
-            @click="setCurrentView({ id: 'reimbursement', name: '', description: '', color: '' })"
             class="mt-2 w-full py-1.5 text-xs font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
           >
-            查看详情 →
+            查看全部 →
           </button>
         </div>
       </div>
@@ -167,36 +166,36 @@
       <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-200 mb-6">
         <h3 class="font-bold text-indigo-900 mb-3 flex items-center gap-2">
           <ArrowUpDown :size="18" class="text-indigo-600" />
-          业务流程与数据勾稽
+          业务流程与数据关联
         </h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
           <div class="flex items-start gap-2.5 p-2.5 bg-white rounded-lg border border-indigo-100">
             <div class="p-1.5 bg-green-100 rounded-lg">
-              <Users :size="18" class="text-green-600" />
+              <TrendingUp :size="18" class="text-green-600" />
             </div>
             <div>
-              <div class="font-bold text-slate-900">人力结算</div>
-              <div class="text-xs text-slate-600 mt-0.5">教练/医生/顾问结算 → 自动生成应付账款</div>
+              <div class="font-bold text-slate-900">收入 → 应收</div>
+              <div class="text-xs text-slate-600 mt-0.5">订单录入 → 自动生成应收记录</div>
             </div>
           </div>
 
           <div class="flex items-start gap-2.5 p-2.5 bg-white rounded-lg border border-indigo-100">
             <div class="p-1.5 bg-blue-100 rounded-lg">
-              <Package :size="18" class="text-blue-600" />
+              <Users :size="18" class="text-blue-600" />
             </div>
             <div>
-              <div class="font-bold text-slate-900">商品与库存</div>
-              <div class="text-xs text-slate-600 mt-0.5">采购入库 → 自动生成应付账款</div>
+              <div class="font-bold text-slate-900">人力结算 → 应付</div>
+              <div class="text-xs text-slate-600 mt-0.5">教练/医生/顾问结算 → 关联应付账款</div>
             </div>
           </div>
 
           <div class="flex items-start gap-2.5 p-2.5 bg-white rounded-lg border border-indigo-100">
             <div class="p-1.5 bg-purple-100 rounded-lg">
-              <CreditCard :size="18" class="text-purple-600" />
+              <FileText :size="18" class="text-purple-600" />
             </div>
             <div>
-              <div class="font-bold text-slate-900">费用报销</div>
-              <div class="text-xs text-slate-600 mt-0.5">报销审批 → 关联支出与资金流水</div>
+              <div class="font-bold text-slate-900">特殊项目记录</div>
+              <div class="text-xs text-slate-600 mt-0.5">所有模块支持个性化留痕</div>
             </div>
           </div>
         </div>
@@ -219,11 +218,9 @@
       <IncomeManagement v-if="currentView === 'income'" />
       <AccountReceivable v-else-if="currentView === 'receivable'" />
       <AccountPayable v-else-if="currentView === 'payable'" />
-      <FundsManagement v-else-if="currentView === 'funds'" />
-      <Reimbursement v-else-if="currentView === 'reimbursement'" />
-      <FinancialReports v-else-if="currentView === 'reports'" />
+      <SettlementManagement v-else-if="currentView === 'settlement'" />
       <CostAccounting v-else-if="currentView === 'cost'" />
-      <BudgetManagement v-else-if="currentView === 'budget'" />
+      <FinancialReports v-else-if="currentView === 'reports'" />
       <div v-else class="bg-white rounded-xl border border-slate-200 p-12 text-center">
         <div class="inline-flex items-center justify-center w-16 h-16 bg-slate-100 rounded-full mb-4">
           <FileText :size="32" class="text-slate-400" />
@@ -260,23 +257,19 @@ import {
 import IncomeManagement from './IncomeManagement.vue'
 import AccountReceivable from './AccountReceivable.vue'
 import AccountPayable from './AccountPayable.vue'
-import FundsManagement from './FundsManagement.vue'
-import Reimbursement from './Reimbursement.vue'
 import FinanceOverview from './FinanceOverview.vue'
 import FinancialReports from './FinancialReports.vue'
 import CostAccounting from './CostAccounting.vue'
-import BudgetManagement from './BudgetManagement.vue'
+import SettlementManagement from './SettlementManagement.vue'
 
 type FinanceView =
   | 'dashboard'
   | 'income'
   | 'receivable'
   | 'payable'
-  | 'funds'
-  | 'reimbursement'
-  | 'reports'
+  | 'settlement'
   | 'cost'
-  | 'budget'
+  | 'reports'
 
 interface FinanceModule {
   id: FinanceView
@@ -295,58 +288,37 @@ const modules: FinanceModule[] = [
     id: 'income',
     name: '收入管理',
     icon: TrendingUp,
-    description: '会员充值、课程收入等',
+    description: '业务线、会员、订单关联',
     color: 'from-green-500 to-green-600'
   },
   {
     id: 'receivable',
     name: '应收账款',
     icon: DollarSign,
-    description: '会员欠款、待收费用',
+    description: '会员欠款、催收标记',
     color: 'from-purple-500 to-purple-600'
   },
   {
     id: 'payable',
     name: '应付账款',
     icon: AlertCircle,
-    description: '教练结算、供应商货款',
+    description: '教练、医生、合作方结算',
     color: 'from-orange-500 to-orange-600',
-    related: ['人力结算', '库存采购']
-  },
-  {
-    id: 'funds',
-    name: '资金管理',
-    icon: Building,
-    description: '银行账户、资金流水',
-    color: 'from-indigo-500 to-indigo-600'
-  },
-  {
-    id: 'reimbursement',
-    name: '报销管理',
-    icon: FileText,
-    description: '费用报销审批',
-    color: 'from-cyan-500 to-cyan-600'
-  },
-  {
-    id: 'reports',
-    name: '财务报表',
-    icon: PieChart,
-    description: '资产负债、损益表等',
-    color: 'from-pink-500 to-pink-600'
+    related: ['人力结算', '外部合作']
   },
   {
     id: 'cost',
     name: '成本核算',
     icon: Calculator,
-    description: '人力、库存成本分析',
+    description: '人力成本、特殊项目',
     color: 'from-amber-500 to-amber-600'
   },
   {
-    id: 'budget',
-    name: '预算管理',
-    icon: FileSpreadsheet,
-    description: '预算编制与控制',
-    color: 'from-teal-500 to-teal-600'
+    id: 'reports',
+    name: '业务线分析',
+    icon: PieChart,
+    description: '收入、订单、毛利率分析',
+    color: 'from-pink-500 to-pink-600'
   }
 ]
 

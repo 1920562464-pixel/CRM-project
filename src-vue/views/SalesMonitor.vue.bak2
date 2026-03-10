@@ -27,8 +27,8 @@
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="搜索姓名/ID/地区/偏好..."
-            class="pl-9 pr-10 py-2.5 rounded-lg text-sm focus:outline-none w-64 transition-all focus:ring-2 focus:ring-opacity-50"
+            placeholder="搜索姓名/ID..."
+            class="pl-9 pr-4 py-2.5 rounded-lg text-sm focus:outline-none w-64 transition-all focus:ring-2 focus:ring-opacity-50"
             :style="{
               background: 'var(--fill-light)',
               border: '1px solid var(--border)',
@@ -36,14 +36,6 @@
             }"
             :class="{ 'ring-2': isBlackGold ? 'ring-[#D4A84A]' : 'ring-[#facc15]' }"
           />
-          <button
-            v-if="searchQuery"
-            @click="searchQuery = ''"
-            class="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-slate-200 transition-colors"
-            :style="{ color: 'var(--text-secondary)' }"
-          >
-            <X :size="14" />
-          </button>
         </div>
       </div>
     </div>
@@ -460,7 +452,7 @@
                         <div class="w-2 h-2 rounded-full bg-indigo-500"></div>
                         <span class="text-sm" :style="{ color: 'var(--text-primary)' }">待通话</span>
                       </div>
-                      <span class="text-sm font-medium text-indigo-600">{{ reservationStats.scheduled }}人</span>
+                      <span class="text-sm font-medium" :style="{ color: 'var(--text-primary)' }">{{ reservationStats.scheduled }}人</span>
                     </div>
                     <div class="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 transition-colors">
                       <div class="flex items-center gap-2">
@@ -515,132 +507,6 @@
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
-
-              <!-- 预约用户列表表格 -->
-              <div class="mt-6 border rounded-xl overflow-hidden" :style="{ borderColor: 'var(--border)', background: 'var(--card)' }">
-                <div class="p-4 border-b" :style="{ borderColor: 'var(--border-light)' }">
-                  <div class="flex items-center justify-between">
-                    <h4 class="font-semibold flex items-center gap-2" :style="{ color: 'var(--text-primary)' }">
-                      <PhoneCall :size="18" :style="{ color: isBlackGold ? '#D4A84A' : '#4f46e5' }" />
-                      预约用户列表
-                    </h4>
-                    <div class="flex items-center gap-3">
-                      <div class="flex items-center gap-2 text-xs">
-                        <span :style="{ color: 'var(--text-secondary)' }">共</span>
-                        <span class="font-bold text-indigo-600">{{ reservationList.length }}</span>
-                        <span :style="{ color: 'var(--text-secondary)' }">位预约用户</span>
-                        <span v-if="activeTab !== '全部'" class="text-slate-400">
-                          ，筛选结果 <span class="font-medium">{{ filteredReservationList.length }}</span> 位
-                        </span>
-                      </div>
-                      <div class="flex items-center gap-2">
-                        <span class="px-2 py-1 bg-indigo-100 text-indigo-600 rounded text-xs">
-                          待处理 {{ reservationList.filter(r => r.status === 'scheduled').length }}
-                        </span>
-                        <span class="px-2 py-1 bg-green-100 text-green-600 rounded text-xs">
-                          已完成 {{ reservationList.filter(r => r.status === 'completed').length }}
-                        </span>
-                        <span class="px-2 py-1 bg-red-100 text-red-600 rounded text-xs">
-                          未接听 {{ reservationList.filter(r => r.status === 'missed').length }}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="overflow-x-auto">
-                  <table class="w-full text-left text-sm">
-                    <thead class="font-medium" :style="{
-                      background: 'var(--fill-light)',
-                      color: 'var(--text-secondary)'
-                    }">
-                      <tr>
-                        <th class="px-6 py-3 w-72">用户资料</th>
-                        <th class="px-6 py-3 w-24">预约时间</th>
-                        <th class="px-6 py-3 w-28">跟进教练</th>
-                        <th class="px-6 py-3 w-24">状态</th>
-                        <th class="px-6 py-3 w-48">标签</th>
-                        <th class="px-6 py-3 w-32">地区</th>
-                        <th class="px-6 py-3 text-right">操作</th>
-                      </tr>
-                    </thead>
-                    <tbody class="divide-y" :style="{ borderColor: 'var(--border-light)' }">
-                      <tr
-                        v-for="reservation in filteredReservationList"
-                        :key="reservation.id"
-                        class="hover:bg-slate-50 transition-colors"
-                      >
-                        <td class="px-6 py-4">
-                          <div class="flex items-center gap-3">
-                            <img :src="reservation.avatar" class="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
-                            <div class="min-w-0 flex-1">
-                              <div class="font-semibold text-slate-800 truncate">{{ reservation.name }}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td class="px-6 py-4">
-                          <div class="font-medium" :style="{ color: 'var(--text-primary)' }">{{ reservation.time }}</div>
-                        </td>
-                        <td class="px-6 py-4">
-                          <div class="flex items-center gap-2">
-                            <div :class="`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${reservation.coachAvatar}`">
-                              {{ reservation.coach.charAt(0) }}
-                            </div>
-                            <span class="text-slate-600 truncate">{{ reservation.coach }}</span>
-                          </div>
-                        </td>
-                        <td class="px-6 py-4">
-                          <span
-                            class="px-2 py-1 text-xs font-medium rounded"
-                            :class="getStatusBadgeClass(reservation.status)"
-                          >
-                            {{ reservation.statusText }}
-                          </span>
-                        </td>
-                        <td class="px-6 py-4">
-                          <div class="flex gap-1 flex-wrap">
-                            <span
-                              v-for="(tag, index) in reservation.tags"
-                              :key="index"
-                              class="px-2 py-0.5 text-[10px] font-medium rounded whitespace-nowrap"
-                              :class="tag === 'VIP' ? 'bg-purple-100 text-purple-700' : 'bg-blue-50 text-blue-600'"
-                            >
-                              {{ tag }}
-                            </span>
-                          </div>
-                        </td>
-                        <td class="px-6 py-4">
-                          <span class="text-sm text-slate-600">{{ reservation.location }}</span>
-                        </td>
-                        <td class="px-6 py-4 text-right">
-                          <div class="flex items-center justify-end gap-1">
-                            <button
-                              class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                              title="拨打电话"
-                            >
-                              <Phone :size="16" />
-                            </button>
-                            <button
-                              class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                              title="查看详情"
-                            >
-                              <ChevronRight :size="16" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-
-                      <!-- 空状态 -->
-                      <tr v-if="filteredReservationList.length === 0">
-                        <td colspan="7" class="px-6 py-12 text-center text-slate-400">
-                          <PhoneCall :size="48" class="mx-auto mb-4 opacity-50" />
-                          <p class="font-medium">暂无预约数据</p>
-                          <p class="text-sm mt-1">{{ activeTab === '全部' ? '当前没有任何预约记录' : `当前没有${activeTab}的预约` }}</p>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
                 </div>
               </div>
             </div>
@@ -930,30 +796,7 @@
 
           <!-- 其他视图的表格内容 -->
           <div v-else class="p-4">
-            <!-- 统计信息栏 -->
-            <div v-if="activeView === 'allocation'" class="mb-4 flex items-center justify-between">
-              <div class="flex items-center gap-2 text-sm">
-                <span class="font-medium" :style="{ color: 'var(--text-primary)' }">
-                  共 <span class="text-orange-500 font-bold">{{ allocationList.length }}</span> 位等待分配用户
-                </span>
-                <span v-if="searchQuery" class="text-slate-400">
-                  ，筛选结果 <span class="font-medium">{{ filteredAllocationList.length }}</span> 位
-                </span>
-              </div>
-              <div class="flex items-center gap-2 text-xs">
-                <span class="px-2 py-1 bg-red-100 text-red-600 rounded">
-                  {{ allocationList.filter(u => u.isOverdue).length }} 超时
-                </span>
-                <span class="px-2 py-1 bg-blue-100 text-blue-600 rounded">
-                  {{ allocationList.filter(u => u.tags.includes('vip')).length }} VIP
-                </span>
-                <span class="px-2 py-1 bg-green-100 text-green-600 rounded">
-                  {{ allocationList.filter(u => u.tags.includes('老客户推荐')).length }} 转介绍
-                </span>
-              </div>
-            </div>
-
-            <table class="w-full text-left text-sm table-fixed">
+            <table class="w-full text-left text-sm">
             <thead class="font-medium sticky top-0 z-10" :style="{
               background: 'var(--fill-light)',
               color: 'var(--text-secondary)'
@@ -961,30 +804,29 @@
               <tr>
                 <!-- Coach Table Header -->
                 <template v-if="activeView === 'coaches'">
-                  <th class="px-6 py-3 w-64">教练姓名</th>
-                  <th class="px-6 py-3 w-36">专业类型</th>
-                  <th class="px-6 py-3 w-32">管理用户</th>
-                  <th class="px-6 py-3 w-32">待出报告</th>
-                  <th class="px-6 py-3 w-48">负载状态</th>
+                  <th class="px-6 py-3">教练姓名</th>
+                  <th class="px-6 py-3">专业类型</th>
+                  <th class="px-6 py-3">管理用户</th>
+                  <th class="px-6 py-3">待出报告</th>
+                  <th class="px-6 py-3">负载状态</th>
                 </template>
 
                 <!-- User Tables Header -->
                 <template v-else>
-                  <th v-if="activeView === 'allocation'" class="px-4 py-3 w-14 text-center">
+                  <th v-if="activeView === 'allocation'" class="px-6 py-3 w-12">
                     <input
                       type="checkbox"
-                      :checked="isAllFilteredSelected"
-                      :indeterminate="isSomeFilteredSelected && !isAllFilteredSelected"
+                      v-model="selectAllUsers"
                       @change="toggleSelectAll"
                       class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                     />
                   </th>
-                  <th class="px-6 py-3 w-64">用户资料</th>
-                  <th v-if="activeView === 'reservation'" class="px-6 py-3 w-40">预约时间</th>
-                  <th v-if="activeView === 'reservation'" class="px-6 py-3 w-32">跟进教练</th>
-                  <th v-if="activeView === 'allocation'" class="px-6 py-3 w-28">等待时长</th>
-                  <th v-if="activeView === 'allocation'" class="px-6 py-3 w-36">来源/偏好</th>
-                  <th class="px-6 py-3 w-32 text-right">
+                  <th class="px-6 py-3">用户资料</th>
+                  <th v-if="activeView === 'reservation'" class="px-6 py-3">预约时间</th>
+                  <th v-if="activeView === 'reservation'" class="px-6 py-3">跟进教练</th>
+                  <th v-if="activeView === 'allocation'" class="px-6 py-3">等待时长</th>
+                  <th v-if="activeView === 'allocation'" class="px-6 py-3">来源/偏好</th>
+                  <th class="px-6 py-3 text-right">
                     <div v-if="activeView === 'allocation' && selectedUsersForBatch.length > 0" class="flex items-center justify-end gap-2">
                       <span class="text-xs text-slate-500">已选 {{ selectedUsersForBatch.length }} 人</span>
                       <button
@@ -1005,11 +847,11 @@
                 <tr v-for="coach in coachList" :key="coach.id" class="hover:bg-slate-50 group">
                   <td class="px-6 py-4">
                     <div class="flex items-center gap-3">
-                      <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-50 flex items-center justify-center font-bold text-indigo-700 shadow-sm border border-indigo-100 flex-shrink-0">
+                      <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-50 flex items-center justify-center font-bold text-indigo-700 shadow-sm border border-indigo-100">
                         {{ coach.name.charAt(0) }}
                       </div>
-                      <div class="min-w-0 flex-1">
-                        <div class="font-bold text-slate-800 truncate">{{ coach.name }}</div>
+                      <div>
+                        <div class="font-bold text-slate-800">{{ coach.name }}</div>
                         <div class="text-xs text-slate-400">
                           在线 ·
                           <span :class="coach.load/coach.maxLoad > 0.8 ? 'text-red-500 font-medium' : 'text-emerald-500 font-medium'">
@@ -1020,18 +862,18 @@
                     </div>
                   </td>
                   <td class="px-6 py-4">
-                    <span class="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded border border-slate-200 whitespace-nowrap">
+                    <span class="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded border border-slate-200">
                       {{ coach.type }}
                     </span>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
+                  <td class="px-6 py-4">
                     <div class="flex items-center gap-2">
                       <Users :size="14" class="text-slate-400" />
                       <span class="font-bold text-slate-700">{{ coach.activeUsers }}</span>
                       <span class="text-xs text-slate-400">人</span>
                     </div>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
+                  <td class="px-6 py-4">
                     <div class="flex items-center gap-2">
                       <span :class="`font-bold ${coach.reportUsers > 3 ? 'text-orange-600' : 'text-slate-600'}`">
                         {{ coach.reportUsers }}
@@ -1041,7 +883,7 @@
                   </td>
                   <td class="px-6 py-4">
                     <div class="flex items-center gap-3">
-                      <div class="flex-1 min-w-0">
+                      <div class="flex-1 max-w-[120px]">
                         <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                           <div
                             :class="`h-full rounded-full transition-all ${coach.load/coach.maxLoad > 0.8 ? 'bg-red-500' : 'bg-emerald-500'}`"
@@ -1049,7 +891,7 @@
                           ></div>
                         </div>
                       </div>
-                      <span :class="`text-xs font-bold whitespace-nowrap ${coach.load/coach.maxLoad > 0.8 ? 'text-red-600' : 'text-slate-600'}`">
+                      <span :class="`text-xs font-bold ${coach.load/coach.maxLoad > 0.8 ? 'text-red-600' : 'text-slate-600'}`">
                         {{ coach.load }}/{{ coach.maxLoad }}
                       </span>
                     </div>
@@ -1062,28 +904,28 @@
                 <tr v-for="item in reservationList" :key="item.id" class="hover:bg-slate-50 group">
                   <td class="px-6 py-4">
                     <div class="flex items-center gap-3">
-                      <img :src="item.avatar" class="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
-                      <div class="min-w-0 flex-1">
-                        <div class="font-bold text-slate-800 truncate">{{ item.name }}</div>
-                        <div class="text-xs text-slate-400 truncate">{{ item.location }}</div>
+                      <img :src="item.avatar" class="w-10 h-10 rounded-full object-cover" alt="" />
+                      <div>
+                        <div class="font-bold text-slate-800">{{ item.name }}</div>
+                        <div class="text-xs text-slate-400">{{ item.location }}</div>
                       </div>
                     </div>
                   </td>
                   <td class="px-6 py-4">
                     <div class="flex flex-col">
-                      <span class="font-medium text-slate-700 whitespace-nowrap">{{ item.time }}</span>
+                      <span class="font-medium text-slate-700">{{ item.time }}</span>
                       <span :class="`text-xs ${item.status === 'scheduled' ? 'text-indigo-500' : 'text-slate-400'}`">{{ item.statusText }}</span>
                     </div>
                   </td>
                   <td class="px-6 py-4">
                     <div class="flex items-center gap-2">
-                      <div :class="`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${item.coachAvatar}`">
+                      <div :class="`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${item.coachAvatar}`">
                         {{ item.coach.charAt(0) }}
                       </div>
-                      <span class="text-slate-600 truncate">{{ item.coach }}</span>
+                      <span class="text-slate-600">{{ item.coach }}</span>
                     </div>
                   </td>
-                  <td class="px-6 py-4 text-right whitespace-nowrap">
+                  <td class="px-6 py-4 text-right">
                     <button class="text-slate-400 hover:text-indigo-600 p-2 hover:bg-indigo-50 rounded-full transition-colors">
                       <Phone :size="16" />
                     </button>
@@ -1096,25 +938,23 @@
 
               <!-- Allocation Rows -->
               <template v-else>
-                <tr v-for="item in filteredAllocationList" :key="item.id" class="hover:bg-slate-50 group">
-                  <td class="px-4 py-4 text-center">
-                    <input
-                      type="checkbox"
-                      v-model="selectedUsersForBatch"
-                      :value="item.id"
-                      class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                    />
-                  </td>
+                <tr v-for="item in allocationList" :key="item.id" class="hover:bg-slate-50 group">
                   <td class="px-6 py-4">
                     <div class="flex items-center gap-3">
-                      <img :src="item.avatar" class="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
-                      <div class="min-w-0 flex-1">
-                        <div class="font-bold text-slate-800 truncate">{{ item.name }}</div>
-                        <div class="flex gap-1 mt-1 flex-wrap">
+                      <input
+                        type="checkbox"
+                        v-model="selectedUsersForBatch"
+                        :value="item.id"
+                        class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <img :src="item.avatar" class="w-10 h-10 rounded-full object-cover" alt="" />
+                      <div>
+                        <div class="font-bold text-slate-800">{{ item.name }}</div>
+                        <div class="flex gap-1 mt-1">
                           <span
                             v-for="(t, i) in item.tags"
                             :key="i"
-                            class="text-[10px] bg-indigo-50 text-indigo-600 px-1 rounded whitespace-nowrap"
+                            class="text-[10px] bg-indigo-50 text-indigo-600 px-1 rounded"
                           >
                             {{ t }}
                           </span>
@@ -1139,15 +979,6 @@
                     </button>
                   </td>
                 </tr>
-
-                <!-- 空状态 -->
-                <tr v-if="filteredAllocationList.length === 0">
-                  <td colspan="5" class="px-6 py-12 text-center text-slate-400">
-                    <Users :size="48" class="mx-auto mb-4 opacity-50" />
-                    <p class="font-medium">暂无等待分配的用户</p>
-                    <p class="text-sm mt-1">{{ searchQuery ? '尝试其他搜索关键词' : '当前没有待分配的用户' }}</p>
-                  </td>
-                </tr>
               </template>
             </tbody>
           </table>
@@ -1156,84 +987,110 @@
       </div>
     </div>
 
-    <!-- 用户与教练分配弹窗 -->
+    <!--
     <Modal
-      v-model:show="showAssignModal"
-      :title="batchAssignMode ? '批量分配教练' : '分配教练'"
+      v-model:show="showAddReservationModal"
+      title="手动添加首通电话预约"
       size="lg"
     >
-      <div class="space-y-4">
-        <!-- 提示信息 -->
-        <div v-if="batchAssignMode" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div class="flex items-center gap-2 text-blue-800">
-            <Users :size="20" />
-            <span class="font-medium">已选择 {{ selectedUsersForBatch.length }} 位用户</span>
+      <div class="p-6">
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-2">客户姓名</label>
+            <input
+              v-model="newReservation.name"
+              type="text"
+              placeholder="请输入客户姓名"
+              class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+            />
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-2">手机号码</label>
+              <input
+                v-model="newReservation.phone"
+                type="tel"
+                placeholder="请输入手机号"
+                class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-2">所在城市</label>
+              <input
+                v-model="newReservation.location"
+                type="text"
+                placeholder="请输入城市"
+                class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-2">预约时间</label>
+            <input
+              v-model="newReservation.time"
+              type="datetime-local"
+              class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-2">分配教练</label>
+            <select
+              v-model="newReservation.coachId"
+              class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+            >
+              <option>请选择教练</option>
+              <option v-for="coach in coachList" :key="coach.id" :value="coach.id">
+                {{ coach.name }} - {{ coach.type }}
+              </option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-2">备注标签</label>
+            <div class="flex flex-wrap gap-2 mb-2">
+              <button
+                v-for="tag in ['高意向', '减重', '增肌', '康复', '产后', 'VIP']"
+                :key="tag"
+                @click="toggleTag(tag)"
+                :class="`px-3 py-1 text-xs font-medium rounded-lg border transition-colors ${
+                  newReservation.tags.includes(tag)
+                    ? 'bg-indigo-100 text-indigo-600 border-indigo-300'
+                    : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-indigo-100 hover:text-indigo-600 hover:border-indigo-300'
+                }`"
+              >
+                {{ tag }}
+              </button>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-2">备注信息</label>
+            <textarea
+              v-model="newReservation.notes"
+              placeholder="请输入备注信息（选填）"
+              rows="3"
+              class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"
+            />
           </div>
         </div>
-
-        <!-- 教练列表 -->
-        <div class="space-y-3">
-          <h4 class="text-sm font-semibold text-slate-700">选择教练</h4>
-          <div
-            v-for="coach in coachList"
-            :key="coach.id"
-            class="border rounded-lg p-4 hover:border-indigo-400 hover:bg-indigo-50/30 transition-all cursor-pointer"
-            :class="{
-              'border-red-300 bg-red-50': coach.load >= coach.maxLoad,
-              'border-slate-200': coach.load < coach.maxLoad
-            }"
-            @click="confirmAssignCoach(coach.id)"
+        <div class="flex gap-3 mt-6">
+          <button
+            @click="showAddReservationModal = false"
+            class="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg transition-colors"
           >
-            <div class="flex items-center justify-between">
-              <div class="flex-1">
-                <div class="flex items-center gap-2 mb-2">
-                  <span class="font-semibold text-slate-900">{{ coach.name }}</span>
-                  <span
-                    class="px-2 py-0.5 text-xs font-medium rounded"
-                    :class="coach.color"
-                  >
-                    {{ coach.type }}
-                  </span>
-                </div>
-                <div class="flex items-center gap-4 text-sm text-slate-600">
-                  <span>当前负载: {{ coach.load }}/{{ coach.maxLoad }}</span>
-                  <span>活跃用户: {{ coach.activeUsers }}</span>
-                  <span>汇报用户: {{ coach.reportUsers }}</span>
-                </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <!-- 负载指示器 -->
-                <div class="flex items-center gap-1">
-                  <div
-                    v-for="i in coach.maxLoad"
-                    :key="i"
-                    class="w-2 h-6 rounded-sm"
-                    :class="i <= coach.load ? 'bg-current' : 'bg-slate-200'"
-                    :style="{ color: coach.load >= coach.maxLoad ? '#ef4444' : '#6366f1' }"
-                  ></div>
-                </div>
-                <ChevronRight :size="20" class="text-slate-400" />
-              </div>
-            </div>
-            <!-- 满载提示 -->
-            <div v-if="coach.load >= coach.maxLoad" class="mt-3 text-sm text-red-600 font-medium">
-              <AlertTriangle :size="16" class="inline mr-1" />
-              教练已满载，暂时无法接收新用户
-            </div>
-          </div>
+            取消
+          </button>
+          <button
+            @click="handleAddReservation"
+            class="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-lg shadow-indigo-500/20 transition-all"
+          >
+            确认添加
+          </button>
         </div>
       </div>
-      <template #footer>
-        <button
-          @click="showAssignModal = false"
-          class="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50"
-        >
-          取消
-        </button>
-      </template>
     </Modal>
+    -->
 
-    <!-- 风险预测详情弹窗 -->
+    <!-- 风险预测详情弹窗 - 已临时禁用 -->
+    <!--
     <Modal
       v-model:show="showRiskDetailModal"
       title="风险预测详情"
@@ -1246,16 +1103,8 @@
         @schedule-check="handleScheduleCheck"
         @view-details="handleViewDetails"
       />
-      <template #footer>
-        <button
-          @click="showRiskDetailModal = false"
-          class="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50"
-        >
-          关闭
-        </button>
-      </template>
     </Modal>
-
+    -->
   </div>
 </template>
 
@@ -1268,7 +1117,6 @@ import {
   UserPlus,
   Phone,
   Search,
-  X,
   ChevronRight,
   BarChart,
   AlertTriangle,
@@ -1280,7 +1128,7 @@ import {
   Calendar,
   Clock
 } from 'lucide-vue-next'
-import Modal from '../components/shared/Modal.vue'
+import Modal from '../components/Modal.vue'
 import { useTheme } from '../composables/useTheme'
 import { useRiskPrediction } from '../composables/useRiskPrediction'
 import { onMounted } from 'vue'
@@ -1481,80 +1329,14 @@ const reservationStats = computed(() => {
     completed,
     missed,
     scheduled,
-    pending: scheduled,
-    missedCount: missed,
+    pending: scheduled + missed,
     completionRate
   }
 })
 
 // 今日预约列表
 const todayReservations = computed(() => {
-  // 显示待通话和已完成的预约，最多5个
-  return reservationList.value
-    .filter(r => r.status === 'scheduled' || r.status === 'completed')
-    .slice(0, 5)
-})
-
-// 过滤后的等待分配用户列表
-const filteredAllocationList = computed(() => {
-  let list = allocationList.value
-
-  // 根据搜索关键词过滤
-  if (searchQuery.value.trim()) {
-    const keyword = searchQuery.value.toLowerCase().trim()
-    list = list.filter(item =>
-      item.name.toLowerCase().includes(keyword) ||
-      item.id.toLowerCase().includes(keyword) ||
-      item.location.toLowerCase().includes(keyword) ||
-      item.prefer.toLowerCase().includes(keyword) ||
-      item.source.toLowerCase().includes(keyword) ||
-      item.tags.some(tag => tag.toLowerCase().includes(keyword))
-    )
-  }
-
-  return list
-})
-
-// 判断是否所有过滤后的用户都被选中
-const isAllFilteredSelected = computed(() => {
-  if (filteredAllocationList.value.length === 0) return false
-  return filteredAllocationList.value.every(item =>
-    selectedUsersForBatch.value.includes(item.id)
-  )
-})
-
-// 判断是否部分选中
-const isSomeFilteredSelected = computed(() => {
-  return filteredAllocationList.value.some(item =>
-    selectedUsersForBatch.value.includes(item.id)
-  )
-})
-
-// 根据标签页过滤预约列表
-const filteredReservationList = computed(() => {
-  let list = reservationList.value
-
-  // 根据activeTab过滤
-  if (activeTab.value === '待处理') {
-    list = list.filter(item => item.status === 'scheduled')
-  } else if (activeTab.value === '已逾期') {
-    list = list.filter(item => item.status === 'missed')
-  }
-  // '全部'显示所有
-
-  // 根据搜索关键词过滤
-  if (searchQuery.value.trim()) {
-    const keyword = searchQuery.value.toLowerCase().trim()
-    list = list.filter(item =>
-      item.name.toLowerCase().includes(keyword) ||
-      item.id.toLowerCase().includes(keyword) ||
-      item.location.toLowerCase().includes(keyword) ||
-      item.coach.toLowerCase().includes(keyword) ||
-      item.tags.some(tag => tag.toLowerCase().includes(keyword))
-    )
-  }
-
-  return list
+  return reservationList.value.slice(0, 5) // 显示前5个
 })
 
 // 周日历数据
@@ -1658,7 +1440,7 @@ const reservationList = ref([
     avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=100&h=100',
     status: 'scheduled',
     statusText: '待通话',
-    time: '14:00',
+    time: '2026-02-04 14:00',
     coach: '李教练',
     coachAvatar: 'bg-indigo-100 text-indigo-600',
     tags: ['高意向', '减重']
@@ -1670,7 +1452,7 @@ const reservationList = ref([
     avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=100&h=100',
     status: 'completed',
     statusText: '已完成',
-    time: '10:30',
+    time: '2026-02-04 10:30',
     coach: '张教练',
     coachAvatar: 'bg-emerald-100 text-emerald-600',
     tags: ['已支付']
@@ -1682,190 +1464,10 @@ const reservationList = ref([
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100&h=100',
     status: 'missed',
     statusText: '未接听',
-    time: '09:15',
+    time: '2026-02-04 09:15',
     coach: '王教练',
     coachAvatar: 'bg-emerald-100 text-emerald-600',
     tags: ['需回访']
-  },
-  {
-    id: 'r4',
-    name: '陈静 (Chen Jing)',
-    location: '深圳',
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=100&h=100',
-    status: 'scheduled',
-    statusText: '待通话',
-    time: '15:30',
-    coach: '李教练',
-    coachAvatar: 'bg-indigo-100 text-indigo-600',
-    tags: ['VIP', '产后修复']
-  },
-  {
-    id: 'r5',
-    name: '赵敏 (Zhao Min)',
-    location: '杭州',
-    avatar: 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?auto=format&fit=crop&q=80&w=100&h=100',
-    status: 'completed',
-    statusText: '已完成',
-    time: '11:00',
-    coach: '张教练',
-    coachAvatar: 'bg-emerald-100 text-emerald-600',
-    tags: ['增肌', '高意向']
-  },
-  {
-    id: 'r6',
-    name: '孙丽 (Sun Li)',
-    location: '成都',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=100&h=100',
-    status: 'missed',
-    statusText: '未接听',
-    time: '08:45',
-    coach: '王教练',
-    coachAvatar: 'bg-emerald-100 text-emerald-600',
-    tags: ['需回访', '紧急']
-  },
-  {
-    id: 'r7',
-    name: '周杰 (Zhou Jie)',
-    location: '上海',
-    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=100&h=100',
-    status: 'scheduled',
-    statusText: '待通话',
-    time: '16:00',
-    coach: '李教练',
-    coachAvatar: 'bg-indigo-100 text-indigo-600',
-    tags: ['力量训练']
-  },
-  {
-    id: 'r8',
-    name: '吴婷 (Wu Ting)',
-    location: '北京',
-    avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&q=80&w=100&h=100',
-    status: 'completed',
-    statusText: '已完成',
-    time: '13:30',
-    coach: '张教练',
-    coachAvatar: 'bg-emerald-100 text-emerald-600',
-    tags: ['瑜伽', '已支付']
-  },
-  {
-    id: 'r9',
-    name: '郑强 (Zheng Qiang)',
-    location: '广州',
-    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=100&h=100',
-    status: 'scheduled',
-    statusText: '待通话',
-    time: '17:00',
-    coach: '王教练',
-    coachAvatar: 'bg-emerald-100 text-emerald-600',
-    tags: ['VIP', '综合训练']
-  },
-  {
-    id: 'r10',
-    name: '黄娜 (Huang Na)',
-    location: '深圳',
-    avatar: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&q=80&w=100&h=100',
-    status: 'missed',
-    statusText: '未接听',
-    time: '09:00',
-    coach: '李教练',
-    coachAvatar: 'bg-indigo-100 text-indigo-600',
-    tags: ['需回访', '多次未接']
-  },
-  {
-    id: 'r11',
-    name: '林芳 (Lin Fang)',
-    location: '杭州',
-    avatar: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&q=80&w=100&h=100',
-    status: 'completed',
-    statusText: '已完成',
-    time: '10:00',
-    coach: '张教练',
-    coachAvatar: 'bg-emerald-100 text-emerald-600',
-    tags: ['普拉提', '高意向']
-  },
-  {
-    id: 'r12',
-    name: '徐强 (Xu Qiang)',
-    location: '成都',
-    avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&q=80&w=100&h=100',
-    status: 'scheduled',
-    statusText: '待通话',
-    time: '14:30',
-    coach: '王教练',
-    coachAvatar: 'bg-emerald-100 text-emerald-600',
-    tags: ['增肌训练']
-  },
-  {
-    id: 'r13',
-    name: '马丽 (Ma Li)',
-    location: '上海',
-    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=100&h=100',
-    status: 'completed',
-    statusText: '已完成',
-    time: '11:30',
-    coach: '李教练',
-    coachAvatar: 'bg-indigo-100 text-indigo-600',
-    tags: ['产后修复', '已支付']
-  },
-  {
-    id: 'r14',
-    name: '郭敏 (Guo Min)',
-    location: '北京',
-    avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&q=80&w=100&h=100',
-    status: 'missed',
-    statusText: '未接听',
-    time: '08:30',
-    coach: '张教练',
-    coachAvatar: 'bg-emerald-100 text-emerald-600',
-    tags: ['需回访', '紧急']
-  },
-  {
-    id: 'r15',
-    name: '梁芳 (Liang Fang)',
-    location: '广州',
-    avatar: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&q=80&w=100&h=100',
-    status: 'scheduled',
-    statusText: '待通话',
-    time: '15:00',
-    coach: '王教练',
-    coachAvatar: 'bg-emerald-100 text-emerald-600',
-    tags: ['VIP', '瑜伽拉伸']
-  },
-  {
-    id: 'r16',
-    name: '罗强 (Luo Qiang)',
-    location: '深圳',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=100&h=100',
-    status: 'completed',
-    statusText: '已完成',
-    time: '12:00',
-    coach: '李教练',
-    coachAvatar: 'bg-indigo-100 text-indigo-600',
-    tags: ['力量训练', '已支付']
-  },
-  {
-    id: 'r17',
-    name: '高丽 (Gao Li)',
-    location: '杭州',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=100&h=100',
-    status: 'scheduled',
-    statusText: '待通话',
-    time: '16:30',
-    coach: '张教练',
-    coachAvatar: 'bg-emerald-100 text-emerald-600',
-    tags: ['减脂塑形']
-  },
-  {
-    id: 'r18',
-    name: '谢强 (Xie Qiang)',
-    location: '成都',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=100&h=100',
-    status: 'missed',
-    statusText: '未接听',
-    time: '09:30',
-    coach: '王教练',
-    coachAvatar: 'bg-emerald-100 text-emerald-600',
-    tags: ['需回访', '多次未接']
   }
 ])
 
@@ -1902,138 +1504,6 @@ const allocationList = ref([
     source: '转介绍',
     prefer: '产后恢复',
     tags: ['老客户推荐']
-  },
-  {
-    id: 'a4',
-    name: '李娜 (Li Na)',
-    location: '北京',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=100&h=100',
-    waitTime: '28分钟',
-    isOverdue: false,
-    source: '小程序',
-    prefer: '瑜伽/塑形',
-    tags: ['新客户']
-  },
-  {
-    id: 'a5',
-    name: '王伟 (Wang Wei)',
-    location: '上海',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100&h=100',
-    waitTime: '42分钟',
-    isOverdue: true,
-    source: '线下活动',
-    prefer: '力量训练',
-    tags: ['vip', '重点客户']
-  },
-  {
-    id: 'a6',
-    name: '刘芳 (Liu Fang)',
-    location: '广州',
-    avatar: 'https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?auto=format&fit=crop&q=80&w=100&h=100',
-    waitTime: '18分钟',
-    isOverdue: false,
-    source: '转介绍',
-    prefer: '康复训练',
-    tags: ['老客户推荐']
-  },
-  {
-    id: 'a7',
-    name: '张敏 (Zhang Min)',
-    location: '深圳',
-    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=100&h=100',
-    waitTime: '8分钟',
-    isOverdue: false,
-    source: '小程序',
-    prefer: '减脂/塑形',
-    tags: []
-  },
-  {
-    id: 'a8',
-    name: '孙丽 (Sun Li)',
-    location: '杭州',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=100&h=100',
-    waitTime: '55分钟',
-    isOverdue: true,
-    source: '线上推广',
-    prefer: '瑜伽/冥想',
-    tags: ['vip']
-  },
-  {
-    id: 'a9',
-    name: '周杰 (Zhou Jie)',
-    location: '成都',
-    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=100&h=100',
-    waitTime: '3分钟',
-    isOverdue: false,
-    source: '转介绍',
-    prefer: '增肌训练',
-    tags: ['健身达人']
-  },
-  {
-    id: 'a10',
-    name: '吴婷 (Wu Ting)',
-    location: '北京',
-    avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&q=80&w=100&h=100',
-    waitTime: '22分钟',
-    isOverdue: false,
-    source: '小程序',
-    prefer: '产后修复',
-    tags: ['新客户']
-  },
-  {
-    id: 'a11',
-    name: '郑强 (Zheng Qiang)',
-    location: '上海',
-    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=100&h=100',
-    waitTime: '15分钟',
-    isOverdue: false,
-    source: '线下门店',
-    prefer: '综合训练',
-    tags: []
-  },
-  {
-    id: 'a12',
-    name: '黄敏 (Huang Min)',
-    location: '广州',
-    avatar: 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?auto=format&fit=crop&q=80&w=100&h=100',
-    waitTime: '38分钟',
-    isOverdue: true,
-    source: '线上推广',
-    prefer: '普拉提',
-    tags: ['vip', '高意向']
-  },
-  {
-    id: 'a13',
-    name: '林娜 (Lin Na)',
-    location: '深圳',
-    avatar: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&q=80&w=100&h=100',
-    waitTime: '10分钟',
-    isOverdue: false,
-    source: '转介绍',
-    prefer: '减脂/塑形',
-    tags: ['老客户推荐']
-  },
-  {
-    id: 'a14',
-    name: '徐芳 (Xu Fang)',
-    location: '杭州',
-    avatar: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&q=80&w=100&h=100',
-    waitTime: '6分钟',
-    isOverdue: false,
-    source: '小程序',
-    prefer: '瑜伽/拉伸',
-    tags: []
-  },
-  {
-    id: 'a15',
-    name: '马强 (Ma Qiang)',
-    location: '成都',
-    avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&q=80&w=100&h=100',
-    waitTime: '45分钟',
-    isOverdue: true,
-    source: '线下活动',
-    prefer: '力量训练',
-    tags: ['重点客户']
   }
 ])
 
@@ -2164,17 +1634,10 @@ const openBatchAssignModal = () => {
 
 // 全选/取消全选
 const toggleSelectAll = () => {
-  // 切换全选状态
-  if (isAllFilteredSelected.value) {
-    // 如果已经全选，则取消选择所有过滤后的用户
-    const filteredIds = filteredAllocationList.value.map(item => item.id)
-    selectedUsersForBatch.value = selectedUsersForBatch.value.filter(id => !filteredIds.includes(id))
+  if (selectAllUsers.value) {
+    selectedUsersForBatch.value = allocationList.value.map(item => item.id)
   } else {
-    // 否则选择所有过滤后的用户
-    const filteredIds = filteredAllocationList.value.map(item => item.id)
-    // 合并已选的用户ID，避免重复
-    const newSelection = [...new Set([...selectedUsersForBatch.value, ...filteredIds])]
-    selectedUsersForBatch.value = newSelection
+    selectedUsersForBatch.value = []
   }
 }
 

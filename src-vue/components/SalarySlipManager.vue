@@ -144,7 +144,7 @@
     <!-- 本月数据汇总（仅所有模块确认后显示） -->
     <div v-if="allModulesConfirmed" class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
       <h3 class="text-lg font-semibold mb-4">📊 本月薪酬数据汇总</h3>
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
         <div class="bg-blue-50 rounded-lg p-4">
           <div class="text-sm text-blue-700 mb-1">底薪</div>
           <div class="text-2xl font-bold text-blue-900">¥{{ monthlyData.baseSalary.toLocaleString() }}</div>
@@ -169,6 +169,11 @@
           <div class="text-sm text-cyan-700 mb-1">上线服务</div>
           <div class="text-2xl font-bold text-cyan-900">¥{{ monthlyData.onlineService.toLocaleString() }}</div>
           <div class="text-xs text-cyan-600">{{ monthlyData.onlineServiceCount }} 次</div>
+        </div>
+        <div class="bg-amber-50 rounded-lg p-4">
+          <div class="text-sm text-amber-700 mb-1">津贴补贴</div>
+          <div class="text-2xl font-bold text-amber-900">¥{{ monthlyData.allowance.toLocaleString() }}</div>
+          <div class="text-xs text-amber-600">{{ monthlyData.allowanceCount }} 项</div>
         </div>
         <div class="bg-red-50 rounded-lg p-4">
           <div class="text-sm text-red-700 mb-1">五险一金</div>
@@ -408,14 +413,42 @@
               </div>
             </div>
 
-            <div class="flex justify-between py-2 border-b border-slate-100">
-              <span class="text-sm text-slate-600">津贴补贴</span>
-              <span class="text-sm font-medium text-slate-900">¥{{ (
+            <div class="flex justify-between py-2 border-b border-slate-100 bg-amber-50 px-3 rounded">
+              <span class="text-sm font-medium text-amber-900">津贴补贴</span>
+              <span class="text-sm font-bold text-amber-900">¥{{ (
                 (selectedSlip.income.allowances?.traffic || 0) +
                 (selectedSlip.income.allowances?.communication || 0) +
-                (selectedSlip.income.allowances?.meal || 0) +
+                (typeof selectedSlip.income.allowances?.meal === 'object' ? selectedSlip.income.allowances.meal.amount : (selectedSlip.income.allowances?.meal || 0)) +
                 (selectedSlip.income.allowances?.housing || 0)
               ).toLocaleString() }}</span>
+            </div>
+
+            <!-- 津贴补贴明细 -->
+            <div class="bg-amber-50 rounded-lg p-3 mt-2 space-y-2">
+              <h4 class="text-xs font-semibold text-amber-800 mb-2">补贴明细</h4>
+              <div class="grid grid-cols-2 gap-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-slate-600">交通补贴</span>
+                  <span class="font-medium text-amber-900">¥{{ selectedSlip.income.allowances?.traffic?.toLocaleString() || 0 }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-slate-600">通讯补贴</span>
+                  <span class="font-medium text-amber-900">¥{{ selectedSlip.income.allowances?.communication?.toLocaleString() || 0 }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-slate-600">餐补</span>
+                  <div class="text-right">
+                    <div class="font-medium text-amber-900">¥{{ typeof selectedSlip.income.allowances?.meal === 'object' ? selectedSlip.income.allowances.meal.amount?.toLocaleString() : (selectedSlip.income.allowances?.meal || 0) }}</div>
+                    <div class="text-xs text-slate-500" v-if="typeof selectedSlip.income.allowances?.meal === 'object'">
+                      {{ selectedSlip.income.allowances.meal.workdays }}天 × ¥{{ selectedSlip.income.allowances.meal.dailyRate }}
+                    </div>
+                  </div>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-slate-600">房补</span>
+                  <span class="font-medium text-amber-900">¥{{ selectedSlip.income.allowances?.housing?.toLocaleString() || 0 }}</span>
+                </div>
+              </div>
             </div>
 
             <div class="flex justify-between py-2">
@@ -759,6 +792,7 @@ const moduleConfirmationStatus = ref({
   commission: { confirmed: false, name: '佣金' },
   richBiscuit: { confirmed: false, name: '富贵饼' },
   onlineService: { confirmed: false, name: '上线服务' },
+  allowance: { confirmed: false, name: '津贴补贴' },
   socialInsurance: { confirmed: false, name: '五险一金' }
 })
 
@@ -774,6 +808,8 @@ const monthlyData = ref({
   richBiscuitCount: 0,
   onlineService: 0,
   onlineServiceCount: 0,
+  allowance: 0,
+  allowanceCount: 0,
   socialInsurance: 0,
   socialInsuranceCount: 0
 })
@@ -838,6 +874,8 @@ const updateStats = () => {
     richBiscuitCount: 15,
     onlineService: 5800,
     onlineServiceCount: 25,
+    allowance: 1620,
+    allowanceCount: 4,
     socialInsurance: 4500,
     socialInsuranceCount: 5
   }
@@ -1083,7 +1121,7 @@ const editSalarySlip = (slip: any) => {
     commission: slip.income.commission?.totalAmount || 0,
     richBiscuit: slip.income.commission?.richBiscuits?.value || 0,
     onlineService: slip.income.commission?.onlineServices?.totalAmount || 0,
-    allowances: (slip.income.allowances?.traffic || 0) + (slip.income.allowances?.communication || 0) + (slip.income.allowances?.meal || 0) + (slip.income.allowances?.housing || 0),
+    allowances: (slip.income.allowances?.traffic || 0) + (slip.income.allowances?.communication || 0) + (typeof slip.income.allowances?.meal === 'object' ? slip.income.allowances.meal.amount : (slip.income.allowances?.meal || 0)) + (slip.income.allowances?.housing || 0),
     otherDeductions: 0,
     note: ''
   }

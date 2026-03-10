@@ -51,269 +51,25 @@
 
       <!-- 当前规则提示 -->
       <div v-if="activeTab !== 'rules'" class="bg-blue-50 border border-blue-200 rounded-xl p-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <AlertCircle :size="18" class="text-blue-600" />
-            <span class="font-semibold text-blue-900">当前结算规则：</span>
-            <span class="text-sm text-blue-800">
-              新用户 ¥{{ currentRule.newUserRate }}/人/月，老用户 ¥{{ currentRule.oldUserRate }}/人/月
-            </span>
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <AlertCircle :size="18" class="text-blue-600" />
+              <span class="font-semibold text-blue-900">当前结算规则：</span>
+            </div>
+            <button @click="activeTab = 'rules'" class="text-sm text-blue-700 hover:text-blue-900 underline">修改规则</button>
           </div>
-          <button @click="activeTab = 'rules'" class="text-sm text-blue-700 hover:text-blue-900 underline">修改规则</button>
+          <div class="text-sm text-blue-800 space-y-1 ml-7">
+            <div>• 新用户前3个月：¥{{ currentRule.newUserRate }}/人/月</div>
+            <div>• 3个月后：¥{{ currentRule.oldUserRate }}/人/月</div>
+            <div>• 中途换人：按实际服务天数核算，统一按30天折算（四舍五入保留1位小数）</div>
+            <div>• 免费赠送服务：仍需正常结算费用</div>
+            <div>• 结算周期：3个月无退费期后结算</div>
+          </div>
         </div>
       </div>
 
       <!-- Tab内容 -->
-      <!-- 用户绑定 Tab -->
-      <div v-if="activeTab === 'bindings'" class="space-y-6">
-        <!-- 操作栏 -->
-        <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-          <div class="flex items-center gap-4">
-            <div class="relative flex-1">
-              <Search :size="18" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                v-model="bindingSearchText"
-                type="text"
-                placeholder="搜索用户ID、姓名、服务人员..."
-                class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-              />
-            </div>
-            <select v-model="bindingFilterType" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
-              <option value="all">全部角色</option>
-              <option value="coach">教练</option>
-              <option value="doctor">医生</option>
-              <option value="consultant">顾问</option>
-            </select>
-            <select v-model="bindingFilterStatus" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
-              <option value="all">全部状态</option>
-              <option value="active">服务中</option>
-              <option value="paused">已暂停</option>
-              <option value="ended">已结束</option>
-            </select>
-            <button
-              v-if="bindingSearchText || bindingFilterType !== 'all' || bindingFilterStatus !== 'all'"
-              @click="clearBindingFilters"
-              class="px-3 py-2 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 flex items-center gap-1 text-sm"
-            >
-              <X :size="14" /> 清除筛选
-            </button>
-            <button
-              @click="openBindingDialog"
-              class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2 text-sm font-medium"
-            >
-              <Plus :size="16" /> 新增绑定
-            </button>
-          </div>
-        </div>
-
-        <!-- 绑定关系列表 -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <table class="w-full">
-            <thead class="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
-              <tr>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">绑定方式</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">用户ID</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">姓名</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">服务类型</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">教练</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">医生</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">顾问</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">服务周期</th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase">状态</th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase">操作</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-200">
-              <tr
-                v-for="binding in filteredBindings"
-                :key="binding.id"
-                class="hover:bg-slate-50"
-              >
-                <td class="px-4 py-3">
-                  <span
-                    :class="`px-2 py-1 rounded text-xs font-semibold flex items-center gap-1 ${
-                      binding.bindingType === 'auto'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-indigo-100 text-indigo-800'
-                    }`"
-                  >
-                    <Smartphone v-if="binding.bindingType === 'auto'" :size="12" />
-                    <UserCog v-else :size="12" />
-                    {{ binding.bindingType === 'auto' ? '小程序' : '运营分配' }}
-                  </span>
-                </td>
-                <td class="px-4 py-3 text-sm font-mono text-indigo-600">{{ binding.userId }}</td>
-                <td class="px-4 py-3 text-sm font-medium text-slate-900">{{ binding.userName }}</td>
-                <td class="px-4 py-3">
-                  <span
-                    v-if="binding.serviceType === 'deep'"
-                    class="px-2 py-1 rounded text-xs font-semibold bg-purple-100 text-purple-800"
-                  >
-                    深度干预
-                  </span>
-                  <span
-                    v-else
-                    class="px-2 py-1 rounded text-xs font-semibold bg-blue-100 text-blue-800"
-                  >
-                    基础干预
-                  </span>
-                </td>
-                <td class="px-4 py-3 text-sm text-slate-600">{{ binding.coachName || '-' }}</td>
-                <td class="px-4 py-3 text-sm text-slate-600">{{ binding.doctorName || '-' }}</td>
-                <td class="px-4 py-3 text-sm text-slate-600">{{ binding.consultantName || '-' }}</td>
-                <td class="px-4 py-3 text-sm text-slate-600">{{ binding.serviceStartDate }} ~ {{ binding.serviceEndDate || '至今' }}</td>
-                <td class="px-4 py-3 text-center">
-                  <span
-                    :class="{
-                      'px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-800': binding.status === 'active',
-                      'px-2 py-1 rounded text-xs font-semibold bg-yellow-100 text-yellow-800': binding.status === 'paused',
-                      'px-2 py-1 rounded text-xs font-semibold bg-slate-100 text-slate-600': binding.status === 'ended'
-                    }"
-                  >
-                    {{ binding.status === 'active' ? '服务中' : binding.status === 'paused' ? '已暂停' : '已结束' }}
-                  </span>
-                </td>
-                <td class="px-4 py-3">
-                  <div class="flex items-center justify-center gap-2">
-                    <button
-                      @click="editBinding(binding)"
-                      class="px-2 py-1 text-xs text-indigo-600 hover:bg-indigo-50 rounded border border-indigo-200"
-                    >
-                      编辑
-                    </button>
-                    <button
-                      @click="confirmDeleteBinding(binding.id)"
-                      class="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded border border-red-200"
-                    >
-                      删除
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <!-- 搜索统计提示 -->
-          <div v-if="filteredBindings.length > 0" class="px-4 py-3 bg-slate-50 border-t border-slate-200">
-            <div class="flex items-center justify-between text-xs text-slate-600">
-              <span>
-                显示 {{ filteredBindings.length }} 条记录，共 {{ userBindings.length }} 条绑定关系
-              </span>
-              <span v-if="bindingSearchText || bindingFilterType !== 'all' || bindingFilterStatus !== 'all'" class="text-blue-600">
-                <Search :size="12" class="inline mr-1" />
-                搜索/筛选模式 - 点击"清除筛选"可查看全部数据
-              </span>
-            </div>
-          </div>
-          <div v-if="filteredBindings.length === 0" class="p-12 text-center text-slate-400">
-            <Users :size="48" class="mx-auto mb-4" />
-            <p class="font-medium">暂无绑定数据</p>
-            <p class="text-sm mt-1">请调整筛选条件或新增绑定关系</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- 结算明细 Tab - 添加教练提报按钮 -->
-      <div v-if="activeTab === 'settlements'" class="space-y-3">
-        <!-- 教练提报操作栏 -->
-        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-3">
-          <div class="flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-              <AlertCircle :size="18" class="text-blue-600" />
-              <div class="flex items-center gap-2">
-                <span class="text-sm font-semibold text-blue-900">教练结算数据提报</span>
-                <span class="text-xs text-blue-700">
-                  提报期限：每日可提报 | 当前状态：
-                  <span class="text-green-600 font-semibold">
-                    开放中
-                  </span>
-                </span>
-              </div>
-            </div>
-            <button
-              @click="openCoachReportDialog"
-              class="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-1.5 text-xs font-medium"
-            >
-              <Plus :size="14" /> 新增教练提报
-            </button>
-          </div>
-        </div>
-
-        <!-- 教练提报记录列表 - 紧凑布局 -->
-        <div v-if="coachReports.length > 0" class="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-          <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-3 py-2 flex items-center justify-between">
-            <h3 class="text-white text-sm font-semibold">教练提报记录</h3>
-            <span class="text-[10px] text-blue-100">{{ coachReports.length }} 条记录</span>
-          </div>
-          <div class="p-3">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              <div
-                v-for="report in coachReports"
-                :key="report.id"
-                class="border border-slate-200 rounded-lg p-3 hover:shadow-md transition-shadow"
-              >
-                <div class="flex items-center justify-between mb-2">
-                  <div class="flex items-center gap-2">
-                    <span class="text-sm font-semibold text-slate-900">{{ report.coachName }}</span>
-                    <span
-                      :class="`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
-                        report.status === 'submitted'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : report.status === 'approved'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }`"
-                    >
-                      {{ report.status === 'submitted' ? '待审核' : report.status === 'approved' ? '已通过' : '已驳回' }}
-                    </span>
-                  </div>
-                  <span class="text-base font-bold text-blue-600">¥{{ report.totalAmount.toLocaleString() }}</span>
-                </div>
-                <div class="space-y-1 text-xs">
-                  <div class="flex justify-between">
-                    <span class="text-slate-600">新用户</span>
-                    <span class="font-semibold">{{ report.newUserCount }}人 × ¥400</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-slate-600">老用户</span>
-                    <span class="font-semibold">{{ report.oldUserCount }}人 × ¥100</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-slate-600">医生上线</span>
-                    <span class="font-semibold">{{ report.doctorOnlineCount }}次 × ¥200</span>
-                  </div>
-                </div>
-                <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
-                  <span class="text-[10px] text-slate-500">
-                    提交时间：{{ report.submittedAt }}
-                  </span>
-                  <!-- 审核操作按钮 -->
-                  <div v-if="report.status === 'submitted'" class="flex items-center gap-1">
-                    <button
-                      @click="approveCoachReport(report.id)"
-                      class="px-2 py-1 text-[10px] bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-0.5"
-                    >
-                      <CheckCircle :size="10" /> 通过
-                    </button>
-                    <button
-                      @click="rejectCoachReport(report.id)"
-                      class="px-2 py-1 text-[10px] bg-red-600 text-white rounded hover:bg-red-700 flex items-center gap-0.5"
-                    >
-                      <X :size="10" /> 驳回
-                    </button>
-                  </div>
-                  <span v-else-if="report.status === 'approved'" class="text-[10px] text-green-600 font-semibold">
-                    ✓ 已审核通过
-                  </span>
-                  <span v-else class="text-[10px] text-red-600 font-semibold">
-                    ✗ 已驳回
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <EmployeesTab
         v-if="activeTab === 'employees'"
         :employees="filteredEmployees"
@@ -330,17 +86,16 @@
         :settlements="filteredSettlements"
         :selected-period="selectedPeriod"
         :employees="employees"
-        :generation-status="currentPeriodGenerationStatus"
         @update:period="selectedPeriod = $event"
-        @generate="handleGenerateSettlement"
+        @add="handleAddSettlement"
+        @update="handleUpdateSettlement"
+        @delete="handleDeleteSettlement"
         @approve="handleApproveSettlement"
         @reject="handleRejectSettlement"
         @pay="handleProcessPayment"
         @view="viewSettlementDetail"
-        @viewHistory="viewHistory"
         @export="handleExportSettlements"
         @batchApprove="handleBatchApprove"
-        @clearSelection="() => {}"
       />
       <PaymentsTab
         v-if="activeTab === 'payments'"
@@ -731,131 +486,6 @@
       </template>
     </Modal>
 
-    <!-- 教练选择器弹窗 -->
-    <Modal v-model:show="showCoachSelector" title="选择健康教练" size="md">
-      <div class="space-y-4">
-        <div class="relative">
-          <Search :size="18" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            v-model="coachSearchText"
-            type="text"
-            placeholder="搜索教练姓名或ID..."
-            class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
-        <div class="max-h-64 overflow-y-auto space-y-2">
-          <div
-            v-for="coach in filteredCoachList"
-            :key="coach.id"
-            @click="selectCoach(coach)"
-            :class="`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-              bindingForm.coachId === coach.id
-                ? 'border-indigo-500 bg-indigo-50'
-                : 'border-slate-200 hover:border-indigo-300 hover:bg-indigo-50'
-            }`"
-          >
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-                <User :size="20" class="text-indigo-600" />
-              </div>
-              <div class="flex-1">
-                <div class="font-medium text-slate-900">{{ coach.name }}</div>
-                <div class="text-xs text-slate-500">ID: {{ coach.id }}</div>
-              </div>
-              <Check v-if="bindingForm.coachId === coach.id" :size="18" class="text-indigo-600" />
-            </div>
-          </div>
-          <div v-if="filteredCoachList.length === 0" class="text-center py-8 text-slate-400">
-            <Search :size="32" class="mx-auto mb-2 opacity-50" />
-            <p>未找到匹配的教练</p>
-          </div>
-        </div>
-      </div>
-      <template #footer>
-        <button @click="showCoachSelector = false" class="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50">取消</button>
-        <button @click="confirmCoachSelection" :disabled="!bindingForm.coachId" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">确认选择</button>
-      </template>
-    </Modal>
-
-    <!-- 教练提报弹窗 -->
-    <Modal v-model:show="showCoachReportDialog" title="教练结算数据提报" size="lg">
-      <div class="space-y-4">
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
-          <div class="flex items-center gap-2 font-semibold mb-1">
-            <AlertCircle :size="16" />
-            提报规则说明
-          </div>
-          <ul class="text-xs space-y-1 ml-6">
-            <li>• 新用户（满3个月内）：400元/人/月</li>
-            <li>• 老用户（满3个月后）：100元/人/月</li>
-            <li>• 医生上线服务：200元/次（仅老用户）</li>
-          </ul>
-        </div>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">选择教练 *</label>
-            <select v-model="coachReportForm.coachId" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-              <option value="">请选择教练</option>
-              <option v-for="emp in filteredEmployees.filter(e => e.status === 'active')" :key="emp.id" :value="emp.id">{{ emp.name }}</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">提报月份</label>
-            <input v-model="coachReportForm.period" type="month" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500" />
-          </div>
-        </div>
-        <div class="grid grid-cols-3 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">新用户数（3个月内）</label>
-            <input v-model.number="coachReportForm.newUserCount" type="number" min="0" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500" />
-            <p class="text-xs text-slate-500 mt-1">¥400/人</p>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">老用户数（3个月后）</label>
-            <input v-model.number="coachReportForm.oldUserCount" type="number" min="0" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500" />
-            <p class="text-xs text-slate-500 mt-1">¥100/人</p>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">医生上线次数</label>
-            <input v-model.number="coachReportForm.doctorOnlineCount" type="number" min="0" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500" />
-            <p class="text-xs text-slate-500 mt-1">¥200/次</p>
-          </div>
-        </div>
-        <!-- 金额预览 -->
-        <div class="bg-slate-50 border border-slate-200 rounded-lg p-4">
-          <h4 class="text-sm font-semibold text-slate-900 mb-3">金额预览</h4>
-          <div class="space-y-2 text-sm">
-            <div class="flex justify-between">
-              <span class="text-slate-600">新用户费用：{{ coachReportForm.newUserCount }}人 × ¥400</span>
-              <span class="font-semibold text-green-600">¥{{ (coachReportForm.newUserCount * 400).toLocaleString() }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-slate-600">老用户费用：{{ coachReportForm.oldUserCount }}人 × ¥100</span>
-              <span class="font-semibold text-green-600">¥{{ (coachReportForm.oldUserCount * 100).toLocaleString() }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-slate-600">医生上线费：{{ coachReportForm.doctorOnlineCount }}次 × ¥200</span>
-              <span class="font-semibold text-green-600">¥{{ (coachReportForm.doctorOnlineCount * 200).toLocaleString() }}</span>
-            </div>
-            <div class="border-t border-slate-300 pt-2 mt-2">
-              <div class="flex justify-between">
-                <span class="font-semibold text-slate-900">合计</span>
-                <span class="font-bold text-lg text-indigo-600">¥{{ calculateCoachReportAmount().totalAmount.toLocaleString() }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-2">备注</label>
-          <textarea v-model="coachReportForm.remark" rows="2" placeholder="填写备注信息..." class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500" />
-        </div>
-      </div>
-      <template #footer>
-        <button @click="showCoachReportDialog = false" class="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50">取消</button>
-        <button @click="submitCoachReport" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">提交提报</button>
-      </template>
-    </Modal>
-
     <!-- 结算详情弹窗 - 使用新的零工结算详情组件 -->
     <SettlementDetailModal
       :show="showSettlementDetail"
@@ -882,11 +512,8 @@ import {
   Receipt,
   Download,
   X,
-  Smartphone,
-  UserCog,
   Info,
-  User,
-  Check
+  User
 } from 'lucide-vue-next'
 import * as XLSX from 'xlsx'
 import { useToast } from '../composables/useToast'
@@ -910,7 +537,7 @@ const props = withDefaults(defineProps<Props>(), {
   currentRole: undefined
 })
 
-type TabType = 'bindings' | 'employees' | 'settlements' | 'mypayslips' | 'payments' | 'reports' | 'rules'
+type TabType = 'employees' | 'settlements' | 'mypayslips' | 'payments' | 'reports' | 'rules'
 
 // 获取当前角色信息
 const { currentRole: globalRole, currentRoleConfig } = useRole()
@@ -927,26 +554,6 @@ const isCoach = computed(() => {
 })
 
 // 用户绑定相关接口
-interface UserBinding {
-  id: string
-  userId: string
-  userName: string
-  serviceType: 'basic' | 'deep'  // 基础干预 / 深度干预
-  bindingType?: 'auto' | 'manual'  // 绑定方式：auto=小程序自动绑定, manual=运营手动分配
-  firstServiceDate: string
-  currentServicePeriod: string
-  coachId?: string
-  coachName?: string
-  doctorId?: string
-  doctorName?: string
-  consultantId?: string
-  consultantName?: string
-  serviceStartDate: string
-  serviceEndDate?: string
-  status: 'active' | 'paused' | 'ended'
-  remark?: string
-}
-
 interface ServiceRecord {
   id: string
   userId: string
@@ -964,7 +571,9 @@ interface ServiceRecord {
 interface Employee {
   id: string
   name: string
+  position?: string
   phone: string
+  email?: string
   idCard: string
   bankName: string
   bankAccount: string
@@ -995,6 +604,10 @@ interface SettlementRecord {
   id: string
   employeeId: string
   employeeName: string
+  position?: string
+  department?: string
+  phone?: string
+  email?: string
   period: string
   totalUsers: number
   newUsers: number
@@ -1002,12 +615,12 @@ interface SettlementRecord {
   newUserAmount: number
   oldUserAmount: number
   performanceBonus: number
+  managementFee: number
   totalAmount: number
   status: 'pending' | 'approved' | 'paid' | 'rejected'
   createdAt: string
   approvedAt?: string
   paidAt?: string
-  department?: string
   newUserRate?: number
   oldUserRate?: number
   serviceCount?: number // 服务次数 - 零工结算用
@@ -1047,7 +660,6 @@ const toast = useToast()
 
 // State
 const tabs = [
-  { id: 'bindings' as TabType, label: '用户绑定', icon: Users },
   { id: 'employees' as TabType, label: '员工管理', icon: Users },
   { id: 'settlements' as TabType, label: '结算明细', icon: FileText },
   { id: 'mypayslips' as TabType, label: '我的账单', icon: Receipt },
@@ -1056,7 +668,7 @@ const tabs = [
   { id: 'rules' as TabType, label: '规则配置', icon: Settings }
 ]
 
-const activeTab = ref<TabType>('bindings')
+const activeTab = ref<TabType>('employees')
 const expandedEmployees = ref<Set<string>>(new Set())
 const selectedPeriod = ref('2026-02')
 const employeeSearchText = ref('')
@@ -1143,333 +755,6 @@ const settlementRules = ref<SettlementRule[]>([{
 }])
 
 const currentRule = computed(() => settlementRules.value[0])
-
-// 用户绑定数据
-const userBindings = ref<UserBinding[]>([
-  {
-    id: 'ub001',
-    userId: 'U001',
-    userName: '王小红',
-    serviceType: 'basic',
-    firstServiceDate: '2023-12-01',
-    currentServicePeriod: '2024-02',
-    bindingType: 'auto', // 小程序自动绑定
-    coachId: '1',
-    coachName: '张教练',
-    serviceStartDate: '2023-12-01',
-    status: 'active'
-  },
-  {
-    id: 'ub002',
-    userId: 'U002',
-    userName: '李大明',
-    serviceType: 'deep',
-    firstServiceDate: '2023-06-15',
-    currentServicePeriod: '2024-02',
-    bindingType: 'manual', // 运营手动分配
-    coachId: '1',
-    coachName: '张教练',
-    doctorId: 'doc001',
-    doctorName: '刘医生',
-    serviceStartDate: '2023-06-15',
-    status: 'active'
-  },
-  {
-    id: 'ub003',
-    userId: 'U003',
-    userName: '陈美丽',
-    serviceType: 'basic',
-    firstServiceDate: '2024-01-10',
-    currentServicePeriod: '2024-02',
-    bindingType: 'auto',
-    coachId: '2',
-    coachName: '李教练',
-    serviceStartDate: '2024-01-10',
-    status: 'active'
-  }
-])
-
-// 用户绑定搜索和筛选状态
-const bindingSearchText = ref('')
-const bindingFilterType = ref<'all' | 'coach' | 'doctor' | 'consultant'>('all')
-const bindingFilterStatus = ref<'all' | 'active' | 'paused' | 'ended'>('all')
-
-// 用户绑定编辑弹窗状态
-const showBindingDialog = ref(false)
-const editingBinding = ref<UserBinding | null>(null)
-const bindingForm = ref({
-  userId: '',
-  userName: '',
-  serviceType: 'basic' as 'basic' | 'deep',
-  firstServiceDate: '',
-  currentServicePeriod: '',
-  bindingType: 'manual' as 'auto' | 'manual', // 绑定方式：auto=小程序自动绑定, manual=运营手动分配
-  coachId: '',
-  coachName: '',
-  doctorId: '',
-  consultantId: '',
-  serviceStartDate: '',
-  serviceEndDate: '',
-  status: 'active' as 'active' | 'paused' | 'ended',
-  remark: ''
-})
-
-// 教练选择器相关状态
-const showCoachSelector = ref(false)
-const coachSearchText = ref('')
-
-// 用户绑定筛选计算属性
-const filteredBindings = computed(() => {
-  let filtered = userBindings.value
-
-  // 搜索筛选
-  if (bindingSearchText.value) {
-    const searchLower = bindingSearchText.value.toLowerCase()
-    filtered = filtered.filter(b =>
-      b.userId.toLowerCase().includes(searchLower) ||
-      b.userName.toLowerCase().includes(searchLower) ||
-      b.coachName?.toLowerCase().includes(searchLower) ||
-      b.doctorName?.toLowerCase().includes(searchLower) ||
-      b.consultantName?.toLowerCase().includes(searchLower)
-    )
-  }
-
-  // 角色筛选
-  if (bindingFilterType.value !== 'all') {
-    filtered = filtered.filter(b => {
-      switch (bindingFilterType.value) {
-        case 'coach': return !!b.coachId
-        case 'doctor': return !!b.doctorId
-        case 'consultant': return !!b.consultantId
-        default: return true
-      }
-    })
-  }
-
-  // 状态筛选
-  if (bindingFilterStatus.value !== 'all') {
-    filtered = filtered.filter(b => b.status === bindingFilterStatus.value)
-  }
-
-  return filtered
-})
-
-// 清除用户绑定筛选
-const clearBindingFilters = () => {
-  bindingSearchText.value = ''
-  bindingFilterType.value = 'all'
-  bindingFilterStatus.value = 'all'
-  toast.info('筛选已清除', '显示全部绑定关系')
-}
-
-// 用户绑定相关方法
-const openBindingDialog = () => {
-  editingBinding.value = null
-  bindingForm.value = {
-    userId: '',
-    userName: '',
-    serviceType: 'basic',
-    bindingType: 'manual', // 默认为运营手动分配
-    firstServiceDate: new Date().toISOString().split('T')[0],
-    currentServicePeriod: new Date().toISOString().slice(0, 7).replace('-', '-'),
-    coachId: '',
-    coachName: '',
-    doctorId: '',
-    consultantId: '',
-    serviceStartDate: new Date().toISOString().split('T')[0],
-    serviceEndDate: '',
-    status: 'active',
-    remark: ''
-  }
-  showBindingDialog.value = true
-}
-
-const editBinding = (binding: UserBinding) => {
-  editingBinding.value = binding
-  bindingForm.value = {
-    userId: binding.userId,
-    userName: binding.userName,
-    serviceType: binding.serviceType,
-    firstServiceDate: binding.firstServiceDate,
-    currentServicePeriod: binding.currentServicePeriod,
-    coachId: binding.coachId || '',
-    doctorId: binding.doctorId || '',
-    consultantId: binding.consultantId || '',
-    serviceStartDate: binding.serviceStartDate,
-    serviceEndDate: binding.serviceEndDate || '',
-    status: binding.status,
-    remark: binding.remark || ''
-  }
-  showBindingDialog.value = true
-}
-
-const saveBinding = () => {
-  if (!bindingForm.value.userId || !bindingForm.value.userName) {
-    toast.error('验证失败', '请输入用户ID和姓名')
-    return
-  }
-
-  if (!bindingForm.value.coachId) {
-    toast.error('验证失败', '请选择健康教练')
-    return
-  }
-
-  if (editingBinding.value) {
-    // 更新现有绑定
-    const index = userBindings.value.findIndex(b => b.id === editingBinding.value!.id)
-    if (index !== -1) {
-      userBindings.value[index] = {
-        ...userBindings.value[index],
-        userId: bindingForm.value.userId,
-        userName: bindingForm.value.userName,
-        serviceType: bindingForm.value.serviceType,
-        firstServiceDate: bindingForm.value.firstServiceDate,
-        currentServicePeriod: bindingForm.value.currentServicePeriod,
-        coachId: bindingForm.value.coachId,
-        coachName: bindingForm.value.coachName,
-        doctorId: bindingForm.value.doctorId,
-        doctorName: bindingForm.value.doctorId || '',
-        consultantId: bindingForm.value.consultantId,
-        consultantName: bindingForm.value.consultantId || '',
-        serviceStartDate: bindingForm.value.serviceStartDate,
-        serviceEndDate: bindingForm.value.serviceEndDate || undefined,
-        status: bindingForm.value.status,
-        remark: bindingForm.value.remark
-      }
-    }
-    toast.success('更新成功', `用户 "${bindingForm.value.userName}" 的绑定关系已更新`)
-  } else {
-    // 新增绑定
-    const newBinding: UserBinding = {
-      id: `ub${Date.now()}`,
-      userId: bindingForm.value.userId,
-      userName: bindingForm.value.userName,
-      serviceType: bindingForm.value.serviceType,
-      firstServiceDate: bindingForm.value.firstServiceDate,
-      currentServicePeriod: bindingForm.value.currentServicePeriod,
-      coachId: bindingForm.value.coachId,
-      coachName: coach?.name,
-      doctorId: bindingForm.value.doctorId,
-      doctorName: bindingForm.value.doctorId || '',
-      consultantId: bindingForm.value.consultantId,
-      consultantName: bindingForm.value.consultantId || '',
-      serviceStartDate: bindingForm.value.serviceStartDate,
-      serviceEndDate: bindingForm.value.serviceEndDate || undefined,
-      status: bindingForm.value.status,
-      remark: bindingForm.value.remark
-    }
-    userBindings.value.push(newBinding)
-    toast.success('添加成功', `用户 "${bindingForm.value.userName}" 的绑定关系已创建`)
-  }
-
-  showBindingDialog.value = false
-}
-
-const confirmDeleteBinding = (bindingId: string) => {
-  const binding = userBindings.value.find(b => b.id === bindingId)
-  if (!binding) return
-
-  confirm.value = {
-    show: true,
-    title: '删除绑定关系',
-    message: `确定要删除用户 "${binding.userName}" 的绑定关系吗？此操作不可恢复。`,
-    type: 'danger',
-    onConfirm: () => {
-      userBindings.value = userBindings.value.filter(b => b.id !== bindingId)
-      toast.success('删除成功', '绑定关系已删除')
-      confirm.value.show = false
-    },
-    onCancel: () => {
-      confirm.value.show = false
-    }
-  }
-}
-
-// 教练选择相关方法
-const filteredCoachList = computed(() => {
-  if (!coachSearchText.value) {
-    return employees.value.filter(e => e.status === 'active')
-  }
-  const searchLower = coachSearchText.value.toLowerCase()
-  return employees.value.filter(e =>
-    e.status === 'active' &&
-    (e.name.toLowerCase().includes(searchLower) ||
-     e.id.toLowerCase().includes(searchLower))
-  )
-})
-
-const openCoachSelector = () => {
-  coachSearchText.value = ''
-  showCoachSelector.value = true
-}
-
-const selectCoach = (coach: any) => {
-  bindingForm.value.coachId = coach.id
-  bindingForm.value.coachName = coach.name
-}
-
-const confirmCoachSelection = () => {
-  showCoachSelector.value = false
-}
-
-// 提报相关接口和状态
-interface CoachReport {
-  id: string
-  coachId: string
-  coachName: string
-  period: string
-  newUserCount: number  // 满3个月内用户数
-  oldUserCount: number  // 满3个月后用户数
-  doctorOnlineCount: number  // 医生上线次数（仅满3个月后用户）
-  newUserAmount: number  // 400元/月
-  oldUserAmount: number  // 100元/月
-  doctorOnlineAmount: number  // 200元/次
-  totalAmount: number
-  status: 'draft' | 'submitted' | 'approved' | 'rejected'
-  submittedAt?: string
-  remark?: string
-}
-
-// 提报数据
-const coachReports = ref<CoachReport[]>([
-  {
-    id: 'cr001',
-    coachId: '1',
-    coachName: '张教练',
-    period: '2026-02',
-    newUserCount: 18,
-    oldUserCount: 34,
-    doctorOnlineCount: 12,
-    newUserAmount: 7200,
-    oldUserAmount: 3400,
-    doctorOnlineAmount: 2400,
-    totalAmount: 13000,
-    status: 'submitted',
-    submittedAt: '2026-02-07 10:30'
-  }
-])
-
-// 提报弹窗状态
-const showCoachReportDialog = ref(false)
-const editingCoachReport = ref<CoachReport | null>(null)
-
-const coachReportForm = ref({
-  coachId: '',
-  period: new Date().toISOString().slice(0, 7).replace('-', '-'),
-  newUserCount: 0,
-  oldUserCount: 0,
-  doctorOnlineCount: 0,
-  remark: ''
-})
-
-const consultantReportForm = ref({
-  consultantId: '',
-  consultantName: '',
-  period: new Date().toISOString().slice(0, 7).replace('-', '-'),
-  basicServiceUsers: 0,
-  deepServiceUsers: 0,
-  remark: ''
-})
 
 // 我的账单数据
 interface MonthlyBill {
@@ -1783,7 +1068,9 @@ const employees = ref<Employee[]>([
   {
     id: '1',
     name: '张教练',
+    position: '高级教练',
     phone: '13800138001',
+    email: 'zhang.coach@example.com',
     idCard: '310101199001011234',
     bankName: '中国工商银行',
     bankAccount: '6212260200001234567',
@@ -1842,7 +1129,9 @@ const employees = ref<Employee[]>([
   {
     id: '2',
     name: '李教练',
+    position: '中级教练',
     phone: '13800138002',
+    email: 'li.coach@example.com',
     idCard: '310101199002022345',
     bankName: '中国建设银行',
     bankAccount: '6217000030001234567',
@@ -1881,6 +1170,10 @@ const settlements = ref<SettlementRecord[]>([
     id: '1',
     employeeId: '1',
     employeeName: '张教练',
+    position: '高级教练',
+    department: '运动康复部',
+    phone: '13800138001',
+    email: 'zhang.coach@example.com',
     period: '2026-02',
     totalUsers: 52,
     newUsers: 18,
@@ -1888,10 +1181,10 @@ const settlements = ref<SettlementRecord[]>([
     newUserAmount: 7200,
     oldUserAmount: 3400,
     performanceBonus: 800,
+    managementFee: 0,
     totalAmount: 11400,
     status: 'pending',
     createdAt: '2026-02-24',
-    department: '运动康复部',
     newUserRate: 400,
     oldUserRate: 100,
     serviceCount: 156,
@@ -1948,6 +1241,10 @@ const settlements = ref<SettlementRecord[]>([
     id: '2',
     employeeId: '2',
     employeeName: '李教练',
+    position: '中级教练',
+    department: '体能训练部',
+    phone: '13800138002',
+    email: 'li.coach@example.com',
     period: '2026-02',
     totalUsers: 41,
     newUsers: 12,
@@ -1955,11 +1252,11 @@ const settlements = ref<SettlementRecord[]>([
     newUserAmount: 4800,
     oldUserAmount: 2900,
     performanceBonus: 600,
+    managementFee: 0,
     totalAmount: 8300,
     status: 'approved',
     createdAt: '2026-02-20',
     approvedAt: '2026-02-22',
-    department: '体能训练部',
     newUserRate: 400,
     oldUserRate: 100,
     serviceCount: 123,
@@ -2396,6 +1693,90 @@ const handleGenerateSettlement = () => {
   setTimeout(() => {
     toast.success('生成成功', `本月结算单已生成（生成日期：${generatedAt}，管理费用：¥${managementFee.toLocaleString()}）`)
   }, 1500)
+}
+
+// 新增结算记录
+const handleAddSettlement = (data: Omit<SettlementRecord, 'id' | 'createdAt'>) => {
+  const newSettlement: SettlementRecord = {
+    id: `settle${Date.now()}`,
+    ...data,
+    createdAt: new Date().toISOString().split('T')[0]
+  }
+  settlements.value.push(newSettlement)
+
+  // 自动同步到管理费
+  syncSettlementToManagementFee(newSettlement)
+
+  toast.success('添加成功', `已添加 ${data.employeeName} 的结算记录`)
+}
+
+// 更新结算记录
+const handleUpdateSettlement = (id: string, data: Partial<SettlementRecord>) => {
+  const settlement = settlements.value.find(s => s.id === id)
+  if (settlement) {
+    Object.assign(settlement, data)
+    // 同步更新管理费
+    syncSettlementToManagementFee(settlement as SettlementRecord)
+    toast.success('更新成功', `已更新 ${settlement.employeeName} 的结算记录`)
+  }
+}
+
+// 删除结算记录
+const handleDeleteSettlement = (id: string) => {
+  const index = settlements.value.findIndex(s => s.id === id)
+  if (index !== -1) {
+    const settlement = settlements.value[index]
+    settlements.value.splice(index, 1)
+    // 从管理费中删除对应的记录
+    removeSettlementFromManagementFee(settlement.id)
+    toast.success('删除成功', `已删除 ${settlement.employeeName} 的结算记录`)
+  }
+}
+
+// 同步结算记录到管理费模块
+const syncSettlementToManagementFee = (settlement: SettlementRecord) => {
+  // 这里应该调用 ManagementFeeManager 的方法来添加/更新管理费记录
+  // 由于跨组件通信，我们使用事件总线或者通过 composable 共享数据
+  // 暂时用 localStorage 来模拟跨组件数据共享
+
+  const managementFeeKey = `mgmt_fee_${settlement.employeeId}_${settlement.period}`
+  const feeData = {
+    id: managementFeeKey,
+    settlementId: settlement.id,
+    employeeId: settlement.employeeId,
+    employeeName: settlement.employeeName,
+    feeType: '团队管理费',
+    amount: settlement.managementFee || 0,
+    confirmed: settlement.status === 'approved' || settlement.status === 'paid',
+    period: settlement.period,
+    sourceType: 'settlement', // 标记来源为结算模块
+    createdAt: settlement.createdAt,
+    remark: `来自${settlement.period}结算`
+  }
+
+  // 保存到 localStorage，供管理费模块读取
+  localStorage.setItem(managementFeeKey, JSON.stringify(feeData))
+
+  console.log('已同步结算到管理费:', feeData)
+}
+
+// 从管理费中删除结算记录
+const removeSettlementFromManagementFee = (settlementId: string) => {
+  // 遍历所有 localStorage 中的管理费记录，找到并删除匹配的记录
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i)
+    if (key && key.startsWith('mgmt_fee_')) {
+      try {
+        const data = JSON.parse(localStorage.getItem(key) || '')
+        if (data.settlementId === settlementId) {
+          localStorage.removeItem(key)
+          console.log('已从管理费删除记录:', key)
+        }
+      } catch (e) {
+        // 忽略解析错误
+      }
+    }
+  }
 }
 
 const handleApproveSettlement = (id: string) => {

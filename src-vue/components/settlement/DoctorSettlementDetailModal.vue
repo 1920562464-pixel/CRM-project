@@ -1,6 +1,6 @@
 <template>
   <Teleport to="body">
-    <div v-if="show" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div v-if="show && settlement" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <!-- 头部 -->
         <div class="sticky top-0 bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 flex items-center justify-between">
@@ -243,7 +243,7 @@ interface DoctorSettlementRecord {
 
 const props = defineProps<{
   show: boolean
-  settlement: DoctorSettlementRecord
+  settlement: DoctorSettlementRecord | null
 }>()
 
 const emit = defineEmits<{

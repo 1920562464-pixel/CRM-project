@@ -46,71 +46,41 @@
     <!-- 应付列表 -->
     <div v-if="activeTab === 'list'" class="space-y-4">
       <!-- 统计概览 -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-5 text-white shadow-lg shadow-orange-200">
           <div class="flex items-center justify-between mb-3">
-            <span class="text-sm font-medium opacity-90">应付总额</span>
+            <span class="text-sm font-medium opacity-90">应付总数</span>
             <Receipt :size="20" />
           </div>
-          <div class="text-3xl font-bold">¥{{ statistics.totalPayable.toLocaleString() }}</div>
-          <div class="text-xs opacity-75 mt-2">{{ statistics.totalCount }} 笔</div>
+          <div class="text-3xl font-bold">{{ statistics.totalCount }}</div>
+          <div class="text-xs opacity-75 mt-2">笔待处理</div>
         </div>
 
         <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-5 text-white shadow-lg shadow-emerald-200">
           <div class="flex items-center justify-between mb-3">
-            <span class="text-sm font-medium opacity-90">工资条应付</span>
-            <FileText :size="20" />
+            <span class="text-sm font-medium opacity-90">教练/医生</span>
+            <Users :size="20" />
           </div>
-          <div class="text-3xl font-bold">¥{{ statistics.salaryPayable.toLocaleString() }}</div>
-          <div class="text-xs opacity-75 mt-2">{{ statistics.salaryCount }} 人</div>
+          <div class="text-3xl font-bold">{{ statistics.personnelCount }}</div>
+          <div class="text-xs opacity-75 mt-2">人力相关</div>
         </div>
 
         <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-5 text-white shadow-lg shadow-blue-200">
           <div class="flex items-center justify-between mb-3">
-            <span class="text-sm font-medium opacity-90">已付金额</span>
-            <CheckCircle :size="20" />
+            <span class="text-sm font-medium opacity-90">供应商</span>
+            <Building :size="20" />
           </div>
-          <div class="text-3xl font-bold">¥{{ statistics.totalPaid.toLocaleString() }}</div>
-          <div class="text-xs opacity-75 mt-2">已结算</div>
+          <div class="text-3xl font-bold">{{ statistics.vendorCount }}</div>
+          <div class="text-xs opacity-75 mt-2">外部合作</div>
         </div>
 
-        <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-5 text-white shadow-lg shadow-red-200">
+        <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-5 text-white shadow-lg shadow-amber-200">
           <div class="flex items-center justify-between mb-3">
-            <span class="text-sm font-medium opacity-90">应付余额</span>
+            <span class="text-sm font-medium opacity-90">特殊记录</span>
             <AlertCircle :size="20" />
           </div>
-          <div class="text-3xl font-bold">¥{{ statistics.totalBalance.toLocaleString() }}</div>
-          <div class="text-xs opacity-75 mt-2">待支付</div>
-        </div>
-
-        <div class="bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl p-5 text-white shadow-lg shadow-pink-200">
-          <div class="flex items-center justify-between mb-3">
-            <span class="text-sm font-medium opacity-90">逾期金额</span>
-            <Clock :size="20" />
-          </div>
-          <div class="text-3xl font-bold">¥{{ statistics.overdueAmount.toLocaleString() }}</div>
-          <div class="text-xs opacity-75 mt-2">{{ statistics.overdueCount }} 笔逾期</div>
-        </div>
-      </div>
-
-      <!-- 同步按钮区域 -->
-      <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-200">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div class="p-2 bg-indigo-600 rounded-lg">
-              <RefreshCw :size="20" class="text-white" />
-            </div>
-            <div>
-              <div class="font-semibold text-indigo-900">数据同步</div>
-              <div class="text-sm text-indigo-600">从薪酬管理模块同步已审核的工资条</div>
-            </div>
-          </div>
-          <div class="flex items-center gap-3">
-            <button @click="syncFromSalary" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center gap-2 text-sm font-medium shadow-sm transition-colors">
-              <FileText :size="16" />
-              同步工资条
-            </button>
-          </div>
+          <div class="text-3xl font-bold">{{ statistics.specialRecordCount }}</div>
+          <div class="text-xs opacity-75 mt-2">需关注</div>
         </div>
       </div>
 
@@ -120,11 +90,6 @@
           <button @click="openAddModal" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2 text-sm font-medium shadow-sm transition-colors">
             <Plus :size="16" />
             添加应付
-          </button>
-
-          <button @click="batchPay" :disabled="!hasSelectedItems" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 text-sm font-medium shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-            <CreditCard :size="16" />
-            批量支付 ({{ selectedItems.length }})
           </button>
 
           <button @click="exportData" class="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 flex items-center gap-2 text-sm font-medium shadow-sm transition-colors">
@@ -137,31 +102,19 @@
             <input
               v-model="searchText"
               type="text"
-              placeholder="搜索供应商、单号..."
+              placeholder="搜索收款人、单号..."
               class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
             />
           </div>
 
           <select
-            v-model="sourceTypeFilter"
+            v-model="payeeTypeFilter"
             class="px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
           >
-            <option value="all">所有来源</option>
-            <option value="salary">工资条</option>
-            <option value="procurement">采购订单</option>
-            <option value="service">服务费用</option>
-            <option value="other">其他</option>
-          </select>
-
-          <select
-            v-model="statusFilter"
-            class="px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
-          >
-            <option value="all">所有状态</option>
-            <option value="pending">待支付</option>
-            <option value="partial">部分支付</option>
-            <option value="paid">已付清</option>
-            <option value="overdue">已逾期</option>
+            <option value="all">所有类型</option>
+            <option value="employee">员工（教练/医生）</option>
+            <option value="vendor">供应商</option>
+            <option value="consultant">顾问</option>
           </select>
         </div>
       </div>
@@ -171,22 +124,13 @@
         <table class="w-full">
           <thead class="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
             <tr>
-              <th class="px-4 py-3 text-center w-10">
-                <input
-                  type="checkbox"
-                  v-model="selectAllItems"
-                  @change="toggleSelectAll"
-                  class="rounded"
-                />
-              </th>
               <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase w-24">来源</th>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">供应商/员工</th>
-              <th class="px-4 py-3 text-right text-xs font-semibold text-slate-700 uppercase">总金额</th>
-              <th class="px-4 py-3 text-right text-xs font-semibold text-slate-700 uppercase">已付金额</th>
-              <th class="px-4 py-3 text-right text-xs font-semibold text-slate-700 uppercase">应付余额</th>
-              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-700 uppercase">状态</th>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">到期日</th>
-              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-700 uppercase w-40">操作</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">收款人信息</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">关联单据号</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">备注说明</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-700 uppercase">特殊记录</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">创建时间</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-700 uppercase w-36">操作</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200">
@@ -194,16 +138,8 @@
               v-for="item in filteredItems"
               :key="item.id"
               class="hover:bg-gradient-to-r hover:from-slate-50 hover:to-indigo-50/50 transition-colors"
-              :class="{ 'bg-red-50/30': item.status === 'overdue', 'bg-indigo-50/30': selectedItems.includes(item.id) }"
+              :class="{ 'bg-amber-50/30': item.specialRecords && item.specialRecords.length > 0 }"
             >
-              <td class="px-4 py-3 text-center">
-                <input
-                  type="checkbox"
-                  v-model="selectedItems"
-                  :value="item.id"
-                  class="rounded"
-                />
-              </td>
               <td class="px-4 py-3">
                 <div class="flex items-center gap-2">
                   <component :is="getSourceTypeIcon(item.sourceType)" :size="16" />
@@ -212,55 +148,52 @@
               </td>
               <td class="px-4 py-3">
                 <div>
-                  <div class="font-medium text-slate-900 text-sm">{{ item.supplierName }}</div>
-                  <div class="text-xs text-slate-500">{{ getSupplierTypeLabel(item.supplierType) }}</div>
+                  <div class="font-medium text-slate-900 text-sm">{{ item.payeeName }}</div>
+                  <div class="text-xs text-slate-500">{{ getPayeeTypeLabel(item.payeeType) }}</div>
                 </div>
               </td>
-              <td class="px-4 py-3 text-right text-sm text-slate-900">
-                ¥{{ item.amount.toLocaleString() }}
-              </td>
-              <td class="px-4 py-3 text-right text-sm text-green-600 font-medium">
-                ¥{{ item.paidAmount.toLocaleString() }}
-              </td>
-              <td class="px-4 py-3 text-right">
-                <div class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-base font-bold"
-                     :class="item.balance > 0 ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'">
-                  ¥{{ item.balance.toLocaleString() }}
-                </div>
-              </td>
-              <td class="px-4 py-3 text-center">
-                <span class="px-3 py-1 rounded-full text-xs font-medium border" :class="getStatusBadgeClass(item.status)">
-                  {{ getStatusLabel(item.status) }}
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center px-2 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-medium">
+                  {{ item.relatedDocId }}
                 </span>
               </td>
               <td class="px-4 py-3 text-sm text-slate-600">
-                {{ item.dueDate }}
+                {{ item.remark || '-' }}
+              </td>
+              <td class="px-4 py-3 text-center">
+                <span
+                  v-if="item.specialRecords && item.specialRecords.length > 0"
+                  class="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-medium"
+                >
+                  <AlertCircle :size="12" />
+                  {{ item.specialRecords.length }}
+                </span>
+                <span v-else class="text-slate-400 text-sm">-</span>
+              </td>
+              <td class="px-4 py-3 text-sm text-slate-600">
+                {{ item.createdAt }}
               </td>
               <td class="px-4 py-3">
                 <div class="flex items-center justify-center gap-1">
                   <button
-                    v-if="item.status === 'pending' || item.status === 'partial' || item.status === 'overdue'"
-                    @click="openPaymentModal(item)"
-                    class="px-2 py-1 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 flex items-center gap-1 shadow-sm transition-colors"
-                  >
-                    <CreditCard :size="12" />
-                    支付
-                  </button>
-                  <button
-                    @click="viewItem(item)"
-                    class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    title="查看详情"
-                  >
-                    <Eye :size="14" />
-                  </button>
-                  <button
                     @click="editItem(item)"
-                    class="p-1.5 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                    class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                     title="编辑"
                   >
-                    <Edit :size="14" />
+                    <Edit3 :size="14" />
                   </button>
-                  <button @click="deleteItem(item.id)" class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="删除">
+                  <button
+                    @click="openSpecialRecordModal(item)"
+                    class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                    title="特殊记录"
+                  >
+                    <AlertCircle :size="14" />
+                  </button>
+                  <button
+                    @click="deleteItem(item.id)"
+                    class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="删除"
+                  >
                     <Trash2 :size="14" />
                   </button>
                 </div>
@@ -274,7 +207,7 @@
             <Search :size="32" />
           </div>
           <p class="text-sm font-medium">暂无应付账款记录</p>
-          <p class="text-xs mt-1">点击"同步工资条"从薪酬管理导入数据</p>
+          <p class="text-xs mt-1">点击"添加应付"创建新记录</p>
         </div>
       </div>
     </div>
@@ -389,6 +322,16 @@
               上线服务
             </button>
             <button
+              @click="salarySubTab = 'allowance'"
+              class="px-3 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2 whitespace-nowrap"
+              :class="salarySubTab === 'allowance'
+                ? 'bg-amber-600 text-white shadow-sm'
+                : 'text-slate-600 hover:bg-slate-100'"
+            >
+              <Coffee :size="15" />
+              津贴补贴
+            </button>
+            <button
               @click="salarySubTab = 'social-insurance'"
               class="px-3 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2 whitespace-nowrap"
               :class="salarySubTab === 'social-insurance'
@@ -446,16 +389,21 @@
           <div v-else-if="salarySubTab === 'social-insurance'">
             <SocialInsuranceManager :selected-month="selectedMonth" />
           </div>
+
+          <!-- 津贴补贴 -->
+          <div v-else-if="salarySubTab === 'allowance'">
+            <AllowanceManager :selected-month="selectedMonth" />
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- 添加应付账款模态框 -->
+    <!-- 添加/编辑应付账款模态框 -->
     <Teleport to="body">
       <div v-if="showAddModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
           <div class="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
-            <h3 class="text-lg font-bold text-slate-900">添加应付账款</h3>
+            <h3 class="text-lg font-bold text-slate-900">{{ editingItem ? '编辑应付' : '添加应付' }}</h3>
             <button @click="showAddModal = false" class="p-1 hover:bg-slate-100 rounded-lg transition-colors">
               <X :size="20" class="text-slate-500" />
             </button>
@@ -464,24 +412,60 @@
           <div class="p-6 space-y-4">
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1.5">应付金额 *</label>
-                <input v-model="formData.amount" type="number" placeholder="请输入金额" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                <label class="block text-sm font-medium text-slate-700 mb-1.5">来源类型 *</label>
+                <select
+                  v-model="formData.sourceType"
+                  class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="coach">教练结算</option>
+                  <option value="doctor">医生结算</option>
+                  <option value="commission">顾问分成</option>
+                  <option value="inventory">库存采购</option>
+                  <option value="other">其他</option>
+                </select>
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1.5">到期日 *</label>
-                <input v-model="formData.dueDate" type="date" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                <label class="block text-sm font-medium text-slate-700 mb-1.5">收款人类型 *</label>
+                <select
+                  v-model="formData.payeeType"
+                  class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="employee">员工</option>
+                  <option value="vendor">供应商</option>
+                  <option value="consultant">顾问</option>
+                </select>
               </div>
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1.5">供应商名称 *</label>
-              <input v-model="formData.supplierName" type="text" placeholder="请输入供应商名称" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">收款人名称 *</label>
+              <input
+                v-model="formData.payeeName"
+                type="text"
+                placeholder="请输入收款人名称"
+                class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">关联单据号 *</label>
+              <input
+                v-model="formData.relatedDocId"
+                type="text"
+                placeholder="请输入关联单据号（工资条ID、采购订单号等）"
+                class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
             </div>
 
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-1.5">备注</label>
-              <textarea v-model="formData.remark" placeholder="请输入备注信息" rows="3" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+              <textarea
+                v-model="formData.remark"
+                placeholder="请输入备注信息"
+                rows="3"
+                class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+              ></textarea>
             </div>
           </div>
 
@@ -497,63 +481,65 @@
       </div>
     </Teleport>
 
-    <!-- 支付模态框 -->
+    <!-- 特殊项目记录模态框 -->
     <Teleport to="body">
-      <div v-if="showPaymentModal && selectedItem" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg">
-          <div class="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
-            <h3 class="text-lg font-bold text-slate-900">支付应付账款</h3>
-            <button @click="showPaymentModal = false" class="p-1 hover:bg-slate-100 rounded-lg transition-colors">
-              <X :size="20" class="text-slate-500" />
+      <div v-if="showSpecialRecordModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md">
+          <div class="sticky top-0 bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+            <div>
+              <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <AlertCircle :size="20" />
+                特殊项目记录
+              </h3>
+              <p class="text-sm text-amber-100 mt-0.5">记录异常、特殊约定等</p>
+            </div>
+            <button @click="showSpecialRecordModal = false" class="p-1 hover:bg-white/20 rounded-lg transition-colors">
+              <X :size="20" class="text-white" />
             </button>
           </div>
 
           <div class="p-6 space-y-4">
-            <div class="bg-slate-50 rounded-lg p-4">
-              <div class="flex justify-between mb-2">
-                <span class="text-sm text-slate-600">供应商</span>
-                <span class="font-semibold text-slate-900">{{ selectedItem.supplierName }}</span>
-              </div>
-              <div class="flex justify-between mb-2">
-                <span class="text-sm text-slate-600">应付金额</span>
-                <span class="font-semibold text-slate-900">¥{{ selectedItem.amount.toLocaleString() }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-sm text-slate-600">应付余额</span>
-                <span class="font-bold text-red-600">¥{{ selectedItem.balance.toLocaleString() }}</span>
-              </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">记录类型 *</label>
+              <select
+                v-model="specialRecordForm.type"
+                class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">请选择类型</option>
+                <option value="特殊约定">特殊约定</option>
+                <option value="付款异常">付款异常</option>
+                <option value="争议处理">争议处理</option>
+                <option value="延期安排">延期安排</option>
+                <option value="其他特殊">其他特殊</option>
+              </select>
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1.5">支付金额 *</label>
-              <input
-                v-model="paymentFormData.amount"
-                type="number"
-                placeholder="请输入支付金额"
-                class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">特殊说明 *</label>
+              <textarea
+                v-model="specialRecordForm.description"
+                placeholder="请详细描述特殊情况..."
+                rows="4"
+                class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
               />
             </div>
 
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1.5">支付方式</label>
-              <select
-                v-model="paymentFormData.paymentMethod"
-                class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="bank">银行转账</option>
-                <option value="alipay">支付宝</option>
-                <option value="wechat">微信支付</option>
-                <option value="cash">现金</option>
-              </select>
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <div class="flex items-start gap-2">
+                <AlertCircle :size="16" class="text-amber-600 mt-0.5" />
+                <div class="text-xs text-amber-800">
+                  该记录将永久保存，用于追溯特殊情况的处理过程
+                </div>
+              </div>
             </div>
           </div>
 
           <div class="sticky bottom-0 bg-white border-t border-slate-200 px-6 py-4 flex items-center justify-end gap-3">
-            <button @click="showPaymentModal = false" class="px-4 py-2 text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+            <button @click="showSpecialRecordModal = false" class="px-4 py-2 text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
               取消
             </button>
-            <button @click="processPayment" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors">
-              确认支付
+            <button @click="saveSpecialRecord" class="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-medium transition-colors">
+              保存记录
             </button>
           </div>
         </div>
@@ -574,29 +560,22 @@ import {
   Search,
   AlertCircle,
   Users,
-  Package,
-  DollarSign,
-  CreditCard,
-  CheckCircle,
-  Clock,
-  FileText,
-  RefreshCw,
-  BarChart3,
   Building,
-  Truck,
   Receipt,
   Trash2,
+  Edit3,
   X,
-  Target,
   Download,
+  FileText,
   Calculator,
-  Award,
-  Link2,
-  Stethoscope,
-  Shield,
+  Package,
+  BarChart3,
   Briefcase,
-  Eye,
-  Edit
+  DollarSign,
+  Award,
+  Clock,
+  Shield,
+  Coffee
 } from 'lucide-vue-next'
 import * as XLSX from 'xlsx'
 import { useToast } from '../composables/useToast'
@@ -611,30 +590,32 @@ import UnifiedCommissionManager from '../components/UnifiedCommissionManager.vue
 import RichBiscuitManager from '../components/RichBiscuitManager.vue'
 import OnlineServiceManager from '../components/OnlineServiceManager.vue'
 import SalarySlipManager from '../components/SalarySlipManager.vue'
+import AllowanceManager from '../components/AllowanceManager.vue'
 
 interface PayableItem {
   id: string
-  type: 'settlement' | 'purchase' | 'service' | 'other'
-  typeLabel: string
-  sourceType: 'coach' | 'doctor' | 'commission' | 'inventory'
+  sourceType: 'coach' | 'doctor' | 'commission' | 'inventory' | 'other'
   sourceLabel: string
-  sourceId: string
-  amount: number
-  paidAmount: number
-  balance: number
-  supplierId: string
-  supplierName: string
-  supplierType: 'employee' | 'vendor' | 'consultant'
-  dueDate: string
-  status: 'pending' | 'partial' | 'paid' | 'overdue'
-  statusLabel: string
-  createdAt: string
+  payeeType: 'employee' | 'vendor' | 'consultant'
+  payeeName: string
+  payeeId: string
+  relatedDocId: string // 关联单据号（工资条ID、采购订单号等）
   remark?: string
+  createdAt: string
+  // 特殊项目记录
+  specialRecords?: SpecialRecord[]
+}
+
+interface SpecialRecord {
+  id: string
+  type: string // 特殊项目类型
+  description: string // 特殊说明
+  operator: string // 操作人
+  createdAt: string // 操作时间
 }
 
 type TabType = 'list' | 'salary-management'
-type StatusFilter = 'all' | 'pending' | 'partial' | 'paid' | 'overdue'
-type SourceFilter = 'all' | 'salary' | 'procurement' | 'service' | 'other'
+type PayeeTypeFilter = 'all' | 'employee' | 'vendor' | 'consultant'
 type SalarySubTab = 'overview' | 'base-salary' | 'management-fee' | 'commission' | 'rich-biscuit' | 'online-service' | 'social-insurance' | 'salary-slip'
 
 const { currentRole } = useRole()
@@ -642,13 +623,11 @@ const activeTab = ref<TabType>('list')
 const salarySubTab = ref<SalarySubTab>('salary-slip')
 const selectedMonth = ref('2025-02')
 const searchText = ref('')
-const statusFilter = ref<StatusFilter>('all')
-const sourceTypeFilter = ref<SourceFilter>('all')
+const payeeTypeFilter = ref<PayeeTypeFilter>('all')
 const showAddModal = ref(false)
-const showPaymentModal = ref(false)
-const selectedItem = ref<PayableItem | null>(null)
-const selectedItems = ref<string[]>([])
-const selectAllItems = ref(false)
+const showSpecialRecordModal = ref(false)
+const editingItem = ref<PayableItem | null>(null)
+const selectedPayable = ref<PayableItem | null>(null)
 
 const { toast: toastFunc } = useToast()
 
@@ -662,132 +641,118 @@ const confirm = ref({
 })
 
 const formData = ref({
-  type: 'settlement' as PayableItem['type'],
-  amount: '',
-  supplierName: '',
-  supplierType: 'vendor' as Supplier['type'],
-  dueDate: '',
+  sourceType: 'coach' as PayableItem['sourceType'],
+  payeeName: '',
+  payeeType: 'employee' as PayableItem['payeeType'],
+  relatedDocId: '',
   remark: ''
 })
 
-const paymentFormData = ref({
-  amount: '',
-  paymentMethod: 'bank',
-  remark: ''
+const specialRecordForm = ref({
+  type: '',
+  description: ''
 })
 
 const payableItems = ref<PayableItem[]>([
   {
     id: 'AP001',
-    type: 'settlement',
-    typeLabel: '教练结算',
     sourceType: 'coach',
     sourceLabel: '教练结算',
-    sourceId: 'S001',
-    amount: 8100,
-    paidAmount: 8100,
-    balance: 0,
-    supplierId: 'E001',
-    supplierName: '张教练',
-    supplierType: 'employee',
-    dueDate: '2024-02-10',
-    status: 'paid',
-    statusLabel: '已付清',
+    payeeType: 'employee',
+    payeeName: '张教练',
+    payeeId: 'E001',
+    relatedDocId: 'SAL202402001',
     createdAt: '2024-02-01'
   },
   {
     id: 'AP002',
-    type: 'settlement',
-    typeLabel: '医生结算',
     sourceType: 'doctor',
     sourceLabel: '医生结算',
-    sourceId: 'S002',
-    amount: 5600,
-    paidAmount: 0,
-    balance: 5600,
-    supplierId: 'E002',
-    supplierName: '李医生',
-    supplierType: 'employee',
-    dueDate: '2024-02-20',
-    status: 'pending',
-    statusLabel: '待支付',
+    payeeType: 'employee',
+    payeeName: '李医生',
+    payeeId: 'E002',
+    relatedDocId: 'SAL202402002',
+    remark: '本月专家门诊分成',
     createdAt: '2024-02-05'
   },
   {
     id: 'AP003',
-    type: 'purchase',
-    typeLabel: '库存采购',
     sourceType: 'inventory',
     sourceLabel: '库存采购',
-    sourceId: 'PO001',
-    amount: 12500,
-    paidAmount: 5000,
-    balance: 7500,
-    supplierId: 'V001',
-    supplierName: '营养品供应商A',
-    supplierType: 'vendor',
-    dueDate: '2024-02-25',
-    status: 'partial',
-    statusLabel: '部分支付',
+    payeeType: 'vendor',
+    payeeName: '营养品供应商A',
+    payeeId: 'V001',
+    relatedDocId: 'PO20240210001',
+    remark: '2月份营养品采购',
     createdAt: '2024-02-10'
+  },
+  {
+    id: 'AP004',
+    sourceType: 'commission',
+    sourceLabel: '顾问分成',
+    payeeType: 'consultant',
+    payeeName: '健康顾问王明',
+    payeeId: 'C001',
+    relatedDocId: 'COMM202402001',
+    createdAt: '2024-02-15',
+    specialRecords: [
+      {
+        id: 'SR001',
+        type: '特殊约定',
+        description: '该顾问为特殊合作方，结算周期为季度结算',
+        operator: '财务部',
+        createdAt: '2024-02-15'
+      }
+    ]
   }
 ])
 
 const statistics = computed(() => {
   const totalCount = payableItems.value.length
-  const totalPayable = payableItems.value.reduce((sum, item) => sum + item.amount, 0)
-  const totalPaid = payableItems.value.reduce((sum, item) => sum + item.paidAmount, 0)
-  const totalBalance = payableItems.value.reduce((sum, item) => sum + item.balance, 0)
 
-  // 工资条相关统计
-  const salaryItems = payableItems.value.filter(item => item.sourceType === 'salary')
-  const salaryPayable = salaryItems.reduce((sum, item) => sum + item.balance, 0)
-  const salaryCount = salaryItems.length
+  // 教练/医生相关统计
+  const personnelItems = payableItems.value.filter(item =>
+    item.sourceType === 'coach' || item.sourceType === 'doctor'
+  )
+  const personnelCount = personnelItems.length
 
-  const overdueItems = payableItems.value.filter(item => item.status === 'overdue')
-  const overdueAmount = overdueItems.reduce((sum, item) => sum + item.balance, 0)
+  // 供应商相关统计
+  const vendorItems = payableItems.value.filter(item => item.payeeType === 'vendor')
+  const vendorCount = vendorItems.length
+
+  // 特殊记录统计
+  const specialRecordCount = payableItems.value.filter(item =>
+    item.specialRecords && item.specialRecords.length > 0
+  ).length
 
   return {
     totalCount,
-    totalPayable,
-    totalPaid,
-    totalBalance,
-    salaryPayable,
-    salaryCount,
-    overdueAmount,
-    overdueCount: overdueItems.length
+    personnelCount,
+    vendorCount,
+    specialRecordCount
   }
 })
-
-const hasSelectedItems = computed(() => selectedItems.value.length > 0)
 
 const filteredItems = computed(() => {
   return payableItems.value.filter(item => {
     const matchSearch = !searchText.value ||
-      item.supplierName.includes(searchText.value) ||
+      item.payeeName.includes(searchText.value) ||
+      item.relatedDocId.includes(searchText.value) ||
       item.id.toLowerCase().includes(searchText.value.toLowerCase())
 
-    const matchStatus = statusFilter.value === 'all' || item.status === statusFilter.value
+    const matchPayeeType = payeeTypeFilter.value === 'all' || item.payeeType === payeeTypeFilter.value
 
-    const matchSource = sourceTypeFilter.value === 'all' ||
-      (sourceTypeFilter.value === 'salary' && item.sourceType === 'salary') ||
-      (sourceTypeFilter.value === 'procurement' && item.sourceType === 'inventory') ||
-      (sourceTypeFilter.value === 'service' && item.type === 'service') ||
-      (sourceTypeFilter.value === 'other' && !['salary', 'inventory', 'service'].includes(item.sourceType))
-
-    return matchSearch && matchStatus && matchSource
+    return matchSearch && matchPayeeType
   })
 })
 
 const getSourceTypeIcon = (sourceType: string) => {
   switch (sourceType) {
-    case 'salary':
-      return FileText
     case 'coach':
     case 'doctor':
       return Users
     case 'commission':
-      return DollarSign
+      return Receipt
     case 'inventory':
       return Package
     default:
@@ -795,27 +760,7 @@ const getSourceTypeIcon = (sourceType: string) => {
   }
 }
 
-const getStatusBadgeClass = (status: string) => {
-  const statusMap: Record<string, string> = {
-    pending: 'bg-blue-100 text-blue-800 border-blue-200',
-    partial: 'bg-amber-100 text-amber-800 border-amber-200',
-    paid: 'bg-green-100 text-green-800 border-green-200',
-    overdue: 'bg-red-100 text-red-800 border-red-200'
-  }
-  return statusMap[status] || statusMap.pending
-}
-
-const getStatusLabel = (status: string) => {
-  const labels: Record<string, string> = {
-    pending: '待支付',
-    partial: '部分支付',
-    paid: '已付清',
-    overdue: '已逾期'
-  }
-  return labels[status] || '待支付'
-}
-
-const getSupplierTypeLabel = (type: string) => {
+const getPayeeTypeLabel = (type: string) => {
   const labels: Record<string, string> = {
     employee: '员工',
     vendor: '供应商',
@@ -825,101 +770,121 @@ const getSupplierTypeLabel = (type: string) => {
 }
 
 const openAddModal = () => {
+  editingItem.value = null
   formData.value = {
-    type: 'settlement',
-    amount: '',
-    supplierName: '',
-    supplierType: 'vendor',
-    dueDate: '',
+    sourceType: 'coach',
+    payeeName: '',
+    payeeType: 'employee',
+    relatedDocId: '',
     remark: ''
   }
   showAddModal.value = true
 }
 
 const saveAdd = () => {
-  if (!formData.value.supplierName || !formData.value.amount || !formData.value.dueDate) {
+  if (!formData.value.payeeName || !formData.value.relatedDocId) {
     toastFunc.error('请填写必填项')
     return
   }
 
-  const newItem: PayableItem = {
-    id: `AP${Date.now()}`,
-    type: formData.value.type,
-    typeLabel: {
-      settlement: '结算支付',
-      purchase: '库存采购',
-      service: '服务费用',
-      other: '其他应付'
-    }[formData.value.type],
-    sourceType: formData.value.type === 'settlement' ? 'coach' : 'inventory',
-    sourceLabel: formData.value.type === 'settlement' ? '结算支付' : '库存采购',
-    sourceId: `SRC${Date.now()}`,
-    amount: parseFloat(formData.value.amount),
-    paidAmount: 0,
-    balance: parseFloat(formData.value.amount),
-    supplierId: `S${Date.now()}`,
-    supplierName: formData.value.supplierName,
-    supplierType: formData.value.supplierType,
-    dueDate: formData.value.dueDate,
-    status: 'pending',
-    statusLabel: '待支付',
-    createdAt: new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-'),
-    remark: formData.value.remark
+  if (editingItem.value) {
+    // 编辑模式
+    payableItems.value = payableItems.value.map(item =>
+      item.id === editingItem.value!.id
+        ? {
+            ...item,
+            sourceType: formData.value.sourceType,
+            sourceLabel: {
+              coach: '教练结算',
+              doctor: '医生结算',
+              commission: '顾问分成',
+              inventory: '库存采购',
+              other: '其他'
+            }[formData.value.sourceType],
+            payeeType: formData.value.payeeType,
+            payeeName: formData.value.payeeName,
+            relatedDocId: formData.value.relatedDocId,
+            remark: formData.value.remark
+          }
+        : item
+    )
+    toastFunc.success('应付已更新')
+  } else {
+    // 新增模式
+    const newItem: PayableItem = {
+      id: `AP${Date.now()}`,
+      sourceType: formData.value.sourceType,
+      sourceLabel: {
+        coach: '教练结算',
+        doctor: '医生结算',
+        commission: '顾问分成',
+        inventory: '库存采购',
+        other: '其他'
+      }[formData.value.sourceType],
+      payeeType: formData.value.payeeType,
+      payeeName: formData.value.payeeName,
+      payeeId: `P${Date.now()}`,
+      relatedDocId: formData.value.relatedDocId,
+      remark: formData.value.remark,
+      createdAt: new Date().toISOString().split('T')[0]
+    }
+
+    payableItems.value.unshift(newItem)
+    toastFunc.success('应付已添加')
   }
 
-  payableItems.value.unshift(newItem)
   showAddModal.value = false
-  toastFunc.success('添加成功', `已添加应付账款 ¥${formData.value.amount}`)
 }
 
-const openPaymentModal = (item: PayableItem) => {
-  selectedItem.value = item
-  paymentFormData.value = {
-    amount: String(item.balance),
-    paymentMethod: 'bank',
-    remark: ''
+const editItem = (item: PayableItem) => {
+  editingItem.value = item
+  formData.value = {
+    sourceType: item.sourceType,
+    payeeName: item.payeeName,
+    payeeType: item.payeeType,
+    relatedDocId: item.relatedDocId,
+    remark: item.remark || ''
   }
-  showPaymentModal.value = true
+  showAddModal.value = true
 }
 
-const processPayment = () => {
-  if (!selectedItem.value || !paymentFormData.value.amount) {
-    toastFunc.error('请填写支付金额')
+const openSpecialRecordModal = (item: PayableItem) => {
+  selectedPayable.value = item
+  specialRecordForm.value = {
+    type: '',
+    description: ''
+  }
+  showSpecialRecordModal.value = true
+}
+
+const saveSpecialRecord = () => {
+  if (!specialRecordForm.value.type || !specialRecordForm.value.description) {
+    toastFunc.error('请填写必填项')
     return
   }
 
-  const paymentAmount = parseFloat(paymentFormData.value.amount)
-  const newPaidAmount = selectedItem.value.paidAmount + paymentAmount
-  const newBalance = selectedItem.value.amount - newPaidAmount
+  if (!selectedPayable.value) return
 
-  confirm.value = {
-    show: true,
-    title: '确认支付',
-    message: `确认支付 ¥${paymentAmount.toLocaleString()} 给 "${selectedItem.value.supplierName}" 吗？`,
-    type: 'warning',
-    onConfirm: () => {
-      payableItems.value = payableItems.value.map(item =>
-        item.id === selectedItem.value!.id
-          ? {
-              ...item,
-              paidAmount: newPaidAmount,
-              balance: newBalance,
-              status: newBalance === 0 ? 'paid' as const : newBalance < item.amount ? 'partial' as const : item.status,
-              statusLabel: newBalance === 0 ? '已付清' : newBalance < item.amount ? '部分支付' : item.statusLabel
-            }
-          : item
-      )
-
-      showPaymentModal.value = false
-      const supplierName = selectedItem.value.supplierName
-      selectedItem.value = null
-      toastFunc.success('支付成功', `已支付 ¥${paymentAmount.toLocaleString()} 给 ${supplierName}`)
-      confirm.value.show = false
-    },
-    onCancel: () => {
-      confirm.value.show = false
-    }
+  const newRecord: SpecialRecord = {
+    id: `SR${Date.now()}`,
+    type: specialRecordForm.value.type,
+    description: specialRecordForm.value.description,
+    operator: '当前用户',
+    createdAt: new Date().toISOString().split('T')[0]
   }
+
+  payableItems.value = payableItems.value.map(item =>
+    item.id === selectedPayable.value!.id
+      ? {
+          ...item,
+          specialRecords: [...(item.specialRecords || []), newRecord]
+        }
+      : item
+  )
+
+  showSpecialRecordModal.value = false
+  selectedPayable.value = null
+  toastFunc.success('特殊记录已添加')
 }
 
 const deleteItem = (id: string) => {
@@ -1050,68 +1015,6 @@ const syncFromSalary = () => {
   }
 }
 
-// 全选/取消全选
-const toggleSelectAll = () => {
-  if (selectAllItems.value) {
-    selectedItems.value = filteredItems.value.map(item => item.id)
-  } else {
-    selectedItems.value = []
-  }
-}
-
-// 批量支付
-const batchPay = () => {
-  if (selectedItems.value.length === 0) {
-    toastFunc.error('请先选择要支付的款项')
-    return
-  }
-
-  confirm.value = {
-    show: true,
-    title: '批量支付',
-    message: `确定要批量支付选中的 ${selectedItems.value.length} 笔款项吗？`,
-    type: 'warning',
-    onConfirm: () => {
-      let count = 0
-      payableItems.value = payableItems.value.map(item => {
-        if (selectedItems.value.includes(item.id) && item.balance > 0) {
-          count++
-          return {
-            ...item,
-            paidAmount: item.amount,
-            balance: 0,
-            status: 'paid' as const,
-            statusLabel: '已付清'
-          }
-        }
-        return item
-      })
-
-      selectedItems.value = []
-      selectAllItems.value = false
-      toastFunc.success('支付成功', `已批量支付${count}笔款项`)
-      confirm.value.show = false
-    },
-    onCancel: () => {
-      confirm.value.show = false
-    }
-  }
-}
-
-// 查看详情
-const viewItem = (item: PayableItem) => {
-  toastFunc.info('查看详情', `${item.supplierName} - ¥${item.amount.toLocaleString()}`)
-}
-
-// 编辑项
-const editItem = (item: PayableItem) => {
-  toastFunc.info('编辑功能', '编辑功能开发中...')
-}
-
-const syncFromSettlement = () => {
-  toastFunc.warning('已废弃', '请使用"同步工资条"功能')
-}
-
 // 导出数据
 const exportData = () => {
   toastFunc.info('导出中', '正在导出应付账款数据...')
@@ -1120,16 +1023,12 @@ const exportData = () => {
     const exportData = filteredItems.value.map(item => ({
       '应付单号': item.id,
       '来源类型': item.sourceLabel,
-      '应付类型': item.typeLabel,
-      '供应商': item.supplierName,
-      '供应商类型': getSupplierTypeLabel(item.supplierType),
-      '应付金额': item.amount,
-      '已付金额': item.paidAmount,
-      '应付余额': item.balance,
-      '到期日': item.dueDate,
-      '状态': getStatusLabel(item.status),
-      '创建时间': item.createdAt,
-      '备注': item.remark || '-'
+      '收款人': item.payeeName,
+      '收款人类型': getPayeeTypeLabel(item.payeeType),
+      '关联单据号': item.relatedDocId,
+      '备注': item.remark || '-',
+      '特殊项目数': item.specialRecords?.length || 0,
+      '创建时间': item.createdAt
     }))
 
     const wb = XLSX.utils.book_new()
@@ -1138,16 +1037,12 @@ const exportData = () => {
     ws['!cols'] = [
       { wch: 15 }, // 应付单号
       { wch: 12 }, // 来源类型
-      { wch: 12 }, // 应付类型
-      { wch: 15 }, // 供应商
-      { wch: 12 }, // 供应商类型
-      { wch: 12 }, // 应付金额
-      { wch: 12 }, // 已付金额
-      { wch: 12 }, // 应付余额
-      { wch: 12 }, // 到期日
-      { wch: 10 }, // 状态
-      { wch: 20 }, // 创建时间
-      { wch: 20 }  // 备注
+      { wch: 15 }, // 收款人
+      { wch: 12 }, // 收款人类型
+      { wch: 18 }, // 关联单据号
+      { wch: 30 }, // 备注
+      { wch: 12 }, // 特殊项目数
+      { wch: 12 }  // 创建时间
     ]
 
     XLSX.utils.book_append_sheet(wb, ws, '应付账款')

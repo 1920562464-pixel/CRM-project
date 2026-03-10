@@ -6,8 +6,8 @@
       <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-start justify-between hover:shadow-md transition-shadow">
         <div>
           <div class="text-xs text-slate-500 font-medium mb-1">总活跃线索</div>
-          <div class="text-2xl font-bold text-slate-800 mb-1">128</div>
-          <div class="text-xs font-medium text-emerald-500">+5 本周</div>
+          <div class="text-2xl font-bold text-slate-800 mb-1">{{ MOCK_LEADS.length }}</div>
+          <div class="text-xs font-medium text-emerald-500">+{{ MOCK_LEADS.filter(l => l.progress > 7).length }} 本周新增</div>
         </div>
         <div class="p-2.5 rounded-lg bg-indigo-500 shadow-sm">
           <Target :size="20" class="text-white" />
@@ -18,8 +18,8 @@
       <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-start justify-between hover:shadow-md transition-shadow">
         <div>
           <div class="text-xs text-slate-500 font-medium mb-1">今日需跟进</div>
-          <div class="text-2xl font-bold text-slate-800 mb-1">15</div>
-          <div class="text-xs font-medium text-red-500">3 逾期</div>
+          <div class="text-2xl font-bold text-slate-800 mb-1">{{ MOCK_LEADS.filter(l => l.progress % 7 === 0 && l.progress > 0).length }}</div>
+          <div class="text-xs font-medium text-red-500">{{ MOCK_LEADS.filter(l => l.compliance === '差').length }} 依从度差</div>
         </div>
         <div class="p-2.5 rounded-lg bg-orange-500 shadow-sm">
           <AlertCircle :size="20" class="text-white" />
@@ -29,11 +29,11 @@
       <!-- 本周转化率 -->
       <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-start justify-between hover:shadow-md transition-shadow">
         <div>
-          <div class="text-xs text-slate-500 font-medium mb-1">本周转化率</div>
-          <div class="text-2xl font-bold text-slate-800 mb-1">24.5%</div>
-          <div class="text-xs font-medium text-emerald-500">↑ 2.1%</div>
+          <div class="text-xs text-slate-500 font-medium mb-1">付费用户</div>
+          <div class="text-2xl font-bold text-slate-800 mb-1">{{ MOCK_LEADS.filter(l => l.isPaid).length }}</div>
+          <div class="text-xs font-medium text-blue-500">{{ Math.round((MOCK_LEADS.filter(l => l.isPaid).length / MOCK_LEADS.length) * 100) }}% 付费率</div>
         </div>
-        <div class="p-2.5 rounded-lg bg-emerald-500 shadow-sm">
+        <div class="p-2.5 rounded-lg bg-blue-500 shadow-sm">
           <Trophy :size="20" class="text-white" />
         </div>
       </div>
@@ -64,9 +64,9 @@
     </div>
 
     <!-- Main Content Area -->
-    <div class="flex gap-6 h-[600px]">
-      <!-- Left: Main Content (Table) -->
-      <div class="flex-1 flex flex-col bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <div class="h-[600px]">
+      <!-- Main Content (Table) -->
+      <div class="flex-1 flex flex-col bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-full">
         <!-- Toolbar -->
         <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
           <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
@@ -83,6 +83,9 @@
             </button>
           </div>
           <div class="flex items-center gap-3">
+            <div class="text-sm text-slate-500">
+              共 <span class="font-bold text-slate-900">{{ filteredLeads.length }}</span> 位用户
+            </div>
             <div class="relative group">
               <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" :size="16" />
               <input
@@ -104,17 +107,19 @@
         </div>
 
         <!-- Table Header -->
-        <div class="grid grid-cols-[60px_100px_60px_60px_100px_3fr_120px_100px_100px_100px_120px_80px] gap-2 items-center px-6 py-3 bg-slate-50/50 text-xs font-bold text-slate-500 border-b border-slate-100 uppercase tracking-wider">
-          <div class="text-center">头像</div>
+        <div class="grid gap-2 items-center px-6 py-3 bg-slate-50/50 text-xs font-bold text-slate-500 border-b border-slate-100 uppercase tracking-wider"
+             :class="activeTab === '全部' ? 'grid-cols-[120px_50px_50px_4fr_100px_80px_80px_100px_100px]' : activeTab === '已付费' ? 'grid-cols-[120px_50px_50px_90px_3fr_100px_100px_100px_80px_100px_100px]' : 'grid-cols-[120px_50px_50px_90px_3fr_100px_80px_80px_100px_100px_100px]'">
           <div>姓名</div>
           <div class="text-center">性别</div>
           <div class="text-center">年龄</div>
-          <div>开始日期</div>
-          <div>14天目标</div>
-          <div>进度</div>
+          <div v-if="activeTab !== '全部'">开始日期</div>
+          <div>目标</div>
+          <div v-if="activeTab === '14天' || activeTab === '已暂停'" class="text-center">进度</div>
           <div>销转等级</div>
-          <div class="text-center">预约</div>
-          <div>依从度</div>
+          <div v-if="activeTab !== '全部'" class="text-center">预约</div>
+          <div class="text-center">依从度</div>
+          <div v-if="activeTab === '已付费'">成单金额</div>
+          <div v-if="activeTab === '全部'">状态</div>
           <div>支持团队</div>
           <div class="text-center">操作</div>
         </div>
@@ -122,27 +127,20 @@
         <!-- Table Body -->
         <div class="flex-1 overflow-y-auto divide-y divide-slate-50">
           <div
-            v-for="lead in MOCK_LEADS"
+            v-for="lead in filteredLeads"
             :key="lead.id"
-            class="grid grid-cols-[60px_100px_60px_60px_100px_3fr_120px_100px_100px_100px_120px_80px] gap-2 items-center px-6 py-4 hover:bg-slate-50 transition-colors text-sm group cursor-pointer"
+            class="grid gap-2 items-center px-6 py-3 hover:bg-slate-50 transition-colors text-sm group cursor-pointer"
+            :class="activeTab === '全部' ? 'grid-cols-[120px_50px_50px_4fr_100px_80px_80px_100px_100px]' : activeTab === '已付费' ? 'grid-cols-[120px_50px_50px_90px_3fr_100px_100px_100px_80px_100px_100px]' : 'grid-cols-[120px_50px_50px_90px_3fr_100px_80px_80px_100px_100px_100px]'"
             @click="navigateToProfile(lead.id)"
           >
-            <!-- Avatar -->
-            <div class="flex justify-center relative">
-              <div :class="`w-10 h-10 rounded-full ${lead.avatarColor} text-white flex items-center justify-center font-bold shadow-sm border-2 border-white ring-1 ring-slate-100`">
-                {{ lead.name.charAt(0) }}
-              </div>
-              <div class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></div>
-            </div>
-
             <!-- Name -->
-            <div>
-              <div class="font-bold text-slate-800">{{ lead.name }}</div>
-              <div v-if="lead.tags && lead.tags.length > 0" class="flex gap-1 mt-1">
+            <div class="min-w-0">
+              <div class="font-bold text-slate-800 truncate">{{ lead.name }}</div>
+              <div v-if="lead.tags && lead.tags.length > 0" class="flex gap-1 mt-1 flex-wrap">
                 <span
                   v-for="(tag, i) in lead.tags"
                   :key="i"
-                  class="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded border border-slate-200"
+                  class="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded border border-slate-200 whitespace-nowrap"
                 >
                   {{ tag }}
                 </span>
@@ -162,99 +160,149 @@
             </div>
 
             <!-- Age -->
-            <div class="text-center text-slate-600 font-medium">{{ lead.age }}</div>
+            <div class="text-center text-slate-600 font-medium">{{ lead.age }}岁</div>
 
-            <!-- Start Date -->
-            <div class="text-slate-500 text-xs font-mono">{{ lead.startDate.slice(5) }}</div>
+            <!-- Start Date (非全部状态显示) -->
+            <div v-if="activeTab !== '全部'" class="text-slate-500 text-xs font-mono whitespace-nowrap">{{ lead.startDate.slice(5).replace('-', '/') }}</div>
 
             <!-- Goal -->
-            <div class="text-xs text-slate-500 line-clamp-2 pr-4 leading-relaxed cursor-help relative group/tooltip">
+            <div class="text-xs text-slate-500 truncate pr-2 cursor-help relative group/tooltip">
               {{ lead.goal }}
               <div class="absolute left-0 bottom-full mb-2 w-64 bg-slate-800 text-white text-xs p-2 rounded shadow-xl hidden group-hover/tooltip:block z-10">
                 {{ lead.goal }}
               </div>
             </div>
 
-            <!-- Progress -->
-            <div>
-              <div class="flex gap-[2px] mb-1">
+            <!-- Progress (仅在14天和已暂停状态显示) -->
+            <div v-if="activeTab === '14天' || activeTab === '已暂停'" class="flex flex-col gap-1">
+              <div class="flex gap-[2px]">
                 <div
                   v-for="i in 14"
                   :key="i"
-                  class="h-4 w-1.5 rounded-sm transition-all"
+                  class="h-3 w-1.5 rounded-sm transition-all"
                   :class="i < lead.progress ? 'bg-orange-500' : 'bg-slate-200'"
                 />
               </div>
-              <div class="text-[10px] text-slate-400 font-medium text-right mr-2">{{ Math.round((lead.progress / 14) * 100) }}%</div>
+              <div class="text-[10px] text-slate-400 font-medium text-right">{{ Math.round((lead.progress / 14) * 100) }}%</div>
             </div>
 
             <!-- Sales Level -->
-            <div @click.stop>
-              <div class="relative">
+            <div class="text-center" @click.stop>
+              <div class="relative inline-block">
                 <select
                   :value="lead.level"
                   @change="updateLevel(lead.id, $event)"
-                  class="w-full appearance-none border text-xs py-1.5 pl-2 pr-6 rounded focus:outline-none focus:border-indigo-500 shadow-sm font-medium"
+                  class="w-full appearance-none border text-xs py-1 pl-2 pr-5 rounded focus:outline-none focus:border-indigo-500 shadow-sm font-medium cursor-pointer"
                   :class="getLevelClass(lead.level)"
                 >
-                  <option value="选...">选...</option>
-                  <option value="L1">L1 (意向)</option>
-                  <option value="L2">L2 (犹豫)</option>
-                  <option value="L3">L3 (拒绝)</option>
+                  <option value="L1">L1</option>
+                  <option value="L2">L2</option>
+                  <option value="L3">L3</option>
                 </select>
                 <ChevronDown :size="12" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
             </div>
 
-            <!-- Appointment -->
-            <div class="flex justify-center" @click.stop>
-              <button
-                class="px-2 py-1 border text-xs rounded transition-colors font-medium"
-                :class="lead.appointment !== '未预约'
-                  ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                  : 'border-slate-200 text-slate-400 hover:bg-slate-50'"
-              >
-                {{ lead.appointment }}
-              </button>
+            <!-- Appointment (非全部状态显示) -->
+            <div v-if="activeTab !== '全部'" class="flex justify-center" @click.stop>
+              <div class="relative inline-block">
+                <select
+                  :value="lead.appointment"
+                  @change="updateAppointment(lead, $event)"
+                  class="appearance-none border text-xs py-1 px-2 pr-6 rounded focus:outline-none focus:border-indigo-500 shadow-sm font-medium cursor-pointer transition-colors whitespace-nowrap"
+                  :class="getAppointmentClass(lead.appointment)"
+                >
+                  <option value="未预约">未预约</option>
+                  <option value="已预约">已预约</option>
+                  <option value="无需预约">无需预约</option>
+                </select>
+                <ChevronDown :size="12" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
             </div>
 
             <!-- Compliance -->
-            <div>
-              <span
-                class="flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium border"
-                :class="getComplianceClass(lead.compliance)"
-              >
-                <div
-                  class="w-1.5 h-1.5 rounded-full"
-                  :class="getComplianceDotClass(lead.compliance)"
-                />
-                {{ lead.compliance }}
-              </span>
+            <div class="text-center" @click.stop>
+              <div class="relative inline-block">
+                <select
+                  :value="lead.compliance"
+                  @change="updateCompliance(lead, $event)"
+                  class="appearance-none border text-xs py-1 pl-2 pr-5 rounded focus:outline-none focus:border-indigo-500 shadow-sm font-medium cursor-pointer transition-colors"
+                  :class="getComplianceClass(lead.compliance)"
+                >
+                  <option value="优">优</option>
+                  <option value="良">良</option>
+                  <option value="差">差</option>
+                </select>
+                <ChevronDown :size="12" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
+
+            <!-- Amount (只在已付费tab显示) -->
+            <div v-if="activeTab === '已付费'" class="text-center">
+              <span class="text-sm font-bold text-emerald-600">¥{{ (lead.amount || 0).toLocaleString() }}</span>
+            </div>
+
+            <!-- Status (只在全部tab显示) -->
+            <div v-if="activeTab === '全部'" class="text-center" @click.stop>
+              <div class="relative inline-block">
+                <select
+                  :value="getStatusValue(lead)"
+                  @change="updateLeadStatus(lead, $event)"
+                  class="w-full appearance-none border text-xs py-1 pl-2 pr-5 rounded focus:outline-none focus:border-indigo-500 shadow-sm font-medium cursor-pointer transition-colors"
+                  :class="getStatusClass(lead)"
+                >
+                  <option value="active">14天</option>
+                  <option value="paid">已付费</option>
+                  <option value="paused">已暂停</option>
+                </select>
+                <ChevronDown :size="12" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
             </div>
 
             <!-- Team -->
-            <div class="text-xs text-slate-600 flex items-center gap-2">
-              <div class="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-[10px] font-bold">
+            <div class="text-xs text-slate-600 flex items-center justify-center gap-1.5">
+              <div class="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-[10px] font-bold flex-shrink-0">
                 {{ lead.coach.charAt(0) }}
               </div>
-              {{ lead.coach }}
+              <span class="truncate">{{ lead.coach }}</span>
             </div>
 
             <!-- Actions -->
-            <div class="flex items-center justify-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity" @click.stop>
-              <button class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors" title="查看计划">
-                <ExternalLink :size="16" />
+            <div class="flex items-center justify-center gap-1" @click.stop>
+              <button
+                @click="handleViewPlan(lead)"
+                class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                title="查看计划"
+              >
+                <ExternalLink :size="14" />
               </button>
-              <button class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded transition-colors">
-                <MoreHorizontal :size="16" />
+              <button
+                @click="toggleActionMenu(lead.id)"
+                class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded transition-colors relative"
+                title="更多操作"
+              >
+                <MoreHorizontal :size="14" />
               </button>
             </div>
+          </div>
+
+          <!-- 空状态 -->
+          <div
+            v-if="filteredLeads.length === 0"
+            class="flex flex-col items-center justify-center py-20 text-slate-400"
+          >
+            <Users :size="64" class="mb-4 opacity-30" />
+            <p class="text-lg font-medium mb-2">暂无用户数据</p>
+            <p class="text-sm">
+              {{ activeTab === '全部' ? '当前没有用户数据' : activeTab === '14天' ? '当前没有14天用户' : activeTab === '已付费' ? '当前没有已付费用户' : '当前没有已暂停用户' }}
+            </p>
+            <p v-if="searchQuery" class="text-xs mt-2">尝试清除搜索条件</p>
           </div>
         </div>
 
         <!-- Pagination Footer -->
         <div class="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
-          <span class="text-xs text-slate-500">显示 1-{{ MOCK_LEADS.length }} 共 {{ MOCK_LEADS.length }} 条</span>
+          <span class="text-xs text-slate-500">显示 1-{{ filteredLeads.length }} 共 {{ filteredLeads.length }} 条</span>
           <div class="flex gap-2">
             <button class="px-3 py-1 bg-white border border-slate-200 rounded text-xs text-slate-600 hover:bg-slate-50 disabled:opacity-50" disabled>
               上一页
@@ -265,70 +313,12 @@
           </div>
         </div>
       </div>
-
-      <!-- Right Sidebar: Today's Focus -->
-      <div class="w-80 flex flex-col gap-4">
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col h-full overflow-hidden">
-          <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-            <h3 class="font-bold text-slate-800 flex items-center gap-2 text-sm">
-              <Calendar :size="16" class="text-indigo-600" />
-              今日重点待办
-            </h3>
-            <span class="text-xs text-slate-400">3项</span>
-          </div>
-
-          <div class="p-4 space-y-3 overflow-y-auto flex-1">
-            <div class="p-3 bg-red-50 border border-red-100 rounded-xl relative overflow-hidden group hover:shadow-md transition-all cursor-pointer">
-              <div class="absolute top-0 right-0 w-16 h-16 bg-red-500/5 rounded-full -mr-4 -mt-4"></div>
-              <div class="flex items-start gap-2 mb-1 relative z-10">
-                <AlertCircle :size="16" class="text-red-500 mt-0.5" />
-                <span class="text-sm font-bold text-slate-800">首通电话逾期 (2人)</span>
-              </div>
-              <div class="text-xs text-slate-600 ml-6 mb-3 relative z-10">
-                刘测试 (181...)<br/>
-                张建国 (139...)
-              </div>
-              <button class="ml-6 text-xs text-white bg-red-500 px-3 py-1.5 rounded-lg hover:bg-red-600 shadow-sm transition-colors flex items-center gap-1 w-fit">
-                立即拨打 <ArrowRight :size="12" />
-              </button>
-            </div>
-
-            <div class="p-3 bg-white border border-slate-200 rounded-xl hover:border-indigo-200 hover:shadow-md transition-all cursor-pointer group">
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-sm font-medium text-slate-800 group-hover:text-indigo-600 transition-colors">第3天问卷跟进</span>
-                <span class="text-xs font-mono text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">14:00</span>
-              </div>
-              <div class="text-xs text-slate-500 mb-2">需确认 5 位用户的饮食记录完整性。</div>
-              <div class="flex items-center justify-between">
-                <div class="flex -space-x-1.5">
-                  <div class="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center text-[9px] text-slate-500 border border-white">A</div>
-                  <div class="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center text-[9px] text-slate-500 border border-white">B</div>
-                  <div class="w-6 h-6 bg-slate-50 rounded-full flex items-center justify-center text-[9px] text-slate-500 border border-white">+3</div>
-                </div>
-                <button class="text-xs text-indigo-600 font-medium hover:underline opacity-0 group-hover:opacity-100 transition-opacity">查看详情</button>
-              </div>
-            </div>
-
-            <div class="p-3 bg-white border border-slate-200 rounded-xl hover:border-indigo-200 hover:shadow-md transition-all cursor-pointer">
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-sm font-medium text-slate-800">L3 客户回访</span>
-                <span class="text-xs font-mono text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">16:30</span>
-              </div>
-              <div class="text-xs text-slate-500">尝试挽回 2 位高意向流失客户。</div>
-            </div>
-          </div>
-
-          <div class="p-3 border-t border-slate-100 bg-slate-50 text-center">
-            <button class="text-xs text-slate-500 hover:text-indigo-600 transition-colors">查看全部日程</button>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   MoreHorizontal,
@@ -338,11 +328,10 @@ import {
   Trophy,
   AlertCircle,
   Clock,
-  Calendar,
   Filter,
   Download,
   Search,
-  ArrowRight
+  Users
 } from 'lucide-vue-next'
 
 interface Lead {
@@ -359,11 +348,43 @@ interface Lead {
   coach: string
   avatarColor: string
   tags: string[]
+  amount?: number  // 成单金额
+  isPaid?: boolean
+  isPaused?: boolean
 }
 
 const router = useRouter()
 const activeTab = ref('14天')
 const searchQuery = ref('')
+
+// 过滤后的线索列表
+const filteredLeads = computed(() => {
+  let leads = MOCK_LEADS
+
+  // 根据标签页过滤
+  if (activeTab.value === '已付费') {
+    leads = leads.filter(lead => lead.isPaid)
+  } else if (activeTab.value === '已暂停') {
+    leads = leads.filter(lead => lead.isPaused)
+  } else if (activeTab.value === '14天') {
+    // 14天显示未付费且未暂停的用户
+    leads = leads.filter(lead => !lead.isPaid && !lead.isPaused)
+  }
+  // '全部' 显示所有用户
+
+  // 根据搜索关键词过滤
+  if (searchQuery.value.trim()) {
+    const keyword = searchQuery.value.toLowerCase().trim()
+    leads = leads.filter(lead =>
+      lead.name.toLowerCase().includes(keyword) ||
+      lead.coach.toLowerCase().includes(keyword) ||
+      lead.goal.toLowerCase().includes(keyword) ||
+      lead.tags.some(tag => tag.toLowerCase().includes(keyword))
+    )
+  }
+
+  return leads
+})
 
 const MOCK_LEADS: Lead[] = [
   {
@@ -379,7 +400,9 @@ const MOCK_LEADS: Lead[] = [
     compliance: '良',
     coach: '泰敏',
     avatarColor: 'bg-orange-400',
-    tags: ['高风险', '老年']
+    tags: ['高风险', '老年'],
+    isPaid: false,
+    isPaused: false
   },
   {
     id: 2,
@@ -394,7 +417,10 @@ const MOCK_LEADS: Lead[] = [
     compliance: '优',
     coach: '郝佳乐',
     avatarColor: 'bg-yellow-400',
-    tags: ['减重']
+    tags: ['减重'],
+    amount: 12800,
+    isPaid: true,
+    isPaused: false
   },
   {
     id: 3,
@@ -409,7 +435,9 @@ const MOCK_LEADS: Lead[] = [
     compliance: '中',
     coach: '郝佳乐',
     avatarColor: 'bg-orange-400',
-    tags: ['睡眠']
+    tags: ['睡眠'],
+    isPaid: false,
+    isPaused: false
   },
   {
     id: 4,
@@ -424,7 +452,10 @@ const MOCK_LEADS: Lead[] = [
     compliance: '优',
     coach: '张华灿',
     avatarColor: 'bg-yellow-400',
-    tags: ['痛风']
+    tags: ['痛风'],
+    amount: 12800,
+    isPaid: true,
+    isPaused: false
   },
   {
     id: 5,
@@ -439,7 +470,10 @@ const MOCK_LEADS: Lead[] = [
     compliance: '良',
     coach: '冯瑞',
     avatarColor: 'bg-yellow-500',
-    tags: ['备孕']
+    tags: ['备孕'],
+    amount: 25800,
+    isPaid: true,
+    isPaused: false
   },
   {
     id: 6,
@@ -454,11 +488,259 @@ const MOCK_LEADS: Lead[] = [
     compliance: '差',
     coach: '张书允',
     avatarColor: 'bg-yellow-600',
-    tags: ['职场压力']
+    tags: ['职场压力'],
+    isPaid: false,
+    isPaused: false
+  },
+  {
+    id: 7,
+    name: '王芳',
+    gender: 'F',
+    age: 38,
+    startDate: '2026-02-01',
+    goal: '产后恢复、塑形、增强体质',
+    progress: 5,
+    level: 'L2',
+    appointment: '已预约',
+    compliance: '优',
+    coach: '李教练',
+    avatarColor: 'bg-pink-400',
+    tags: ['产后', '塑形'],
+    amount: 12800,
+    isPaid: true,
+    isPaused: false
+  },
+  {
+    id: 8,
+    name: '张伟',
+    gender: 'M',
+    age: 42,
+    startDate: '2026-02-02',
+    goal: '增肌训练、提高体能',
+    progress: 3,
+    level: 'L1',
+    appointment: '未预约',
+    compliance: '良',
+    coach: '王教练',
+    avatarColor: 'bg-blue-400',
+    tags: ['增肌'],
+    isPaid: false,
+    isPaused: false
+  },
+  {
+    id: 9,
+    name: '李娜',
+    gender: 'F',
+    age: 35,
+    startDate: '2026-02-03',
+    goal: '瑜伽冥想、缓解压力',
+    progress: 7,
+    level: 'L3',
+    appointment: '未预约',
+    compliance: '中',
+    coach: '陈教练',
+    avatarColor: 'bg-purple-400',
+    tags: ['瑜伽', '减压'],
+    amount: 25800,
+    isPaid: true,
+    isPaused: false
+  },
+  {
+    id: 10,
+    name: '赵强',
+    gender: 'M',
+    age: 55,
+    startDate: '2026-01-25',
+    goal: '控制血压、改善睡眠',
+    progress: 11,
+    level: 'L2',
+    appointment: '未预约',
+    compliance: '优',
+    coach: '刘教练',
+    avatarColor: 'bg-green-400',
+    tags: ['高血压'],
+    isPaid: false,
+    isPaused: false
+  },
+  {
+    id: 11,
+    name: '周梅',
+    gender: 'F',
+    age: 41,
+    startDate: '2026-02-04',
+    goal: '减脂塑形、健康饮食',
+    progress: 2,
+    level: 'L1',
+    appointment: '未预约',
+    compliance: '差',
+    coach: '杨教练',
+    avatarColor: 'bg-red-400',
+    tags: ['减脂'],
+    isPaid: false,
+    isPaused: false
+  },
+  {
+    id: 12,
+    name: '吴婷',
+    gender: 'F',
+    age: 28,
+    startDate: '2026-02-05',
+    goal: '普拉提、核心训练',
+    progress: 4,
+    level: 'L3',
+    appointment: '已预约',
+    compliance: '良',
+    coach: '周教练',
+    avatarColor: 'bg-indigo-400',
+    tags: ['普拉提'],
+    amount: 25800,
+    isPaid: true,
+    isPaused: false
+  },
+  {
+    id: 13,
+    name: '孙丽',
+    gender: 'F',
+    age: 33,
+    startDate: '2026-01-28',
+    goal: '产后修复、盆底肌训练',
+    progress: 6,
+    level: 'L2',
+    appointment: '未预约',
+    compliance: '优',
+    coach: '吴教练',
+    avatarColor: 'bg-teal-400',
+    tags: ['产后', 'VIP'],
+    amount: 25800,
+    isPaid: true,
+    isPaused: false
+  },
+  {
+    id: 14,
+    name: '黄勇',
+    gender: 'M',
+    age: 47,
+    startDate: '2026-01-24',
+    goal: '康复训练、关节保护',
+    progress: 10,
+    level: 'L3',
+    appointment: '未预约',
+    compliance: '中',
+    coach: '郑教练',
+    avatarColor: 'bg-orange-500',
+    tags: ['康复'],
+    isPaid: false,
+    isPaused: true
+  },
+  {
+    id: 15,
+    name: '林敏',
+    gender: 'F',
+    age: 39,
+    startDate: '2026-02-06',
+    goal: '力量训练、体能提升',
+    progress: 1,
+    level: 'L1',
+    appointment: '未预约',
+    compliance: '良',
+    coach: '王教练',
+    avatarColor: 'bg-cyan-400',
+    tags: ['力量'],
+    isPaid: false,
+    isPaused: false
+  },
+  {
+    id: 16,
+    name: '徐芳',
+    gender: 'F',
+    age: 44,
+    startDate: '2026-01-23',
+    goal: '健康管理、预防保健',
+    progress: 12,
+    level: 'L2',
+    appointment: '未预约',
+    compliance: '优',
+    coach: '李教练',
+    avatarColor: 'bg-lime-400',
+    tags: ['健康'],
+    amount: 12800,
+    isPaid: true,
+    isPaused: false
+  },
+  {
+    id: 17,
+    name: '马强',
+    gender: 'M',
+    age: 52,
+    startDate: '2026-01-22',
+    goal: '心血管健康、有氧训练',
+    progress: 13,
+    level: 'L3',
+    appointment: '未预约',
+    compliance: '良',
+    coach: '张教练',
+    avatarColor: 'bg-rose-400',
+    tags: ['心血管'],
+    amount: 25800,
+    isPaid: true,
+    isPaused: false
+  },
+  {
+    id: 18,
+    name: '郭娜',
+    gender: 'F',
+    age: 31,
+    startDate: '2026-02-07',
+    goal: '舞蹈健身、形体塑造',
+    progress: 2,
+    level: 'L1',
+    appointment: '未预约',
+    compliance: '中',
+    coach: '陈教练',
+    avatarColor: 'bg-fuchsia-400',
+    tags: ['舞蹈'],
+    isPaid: false,
+    isPaused: false
+  },
+  {
+    id: 19,
+    name: '梁杰',
+    gender: 'M',
+    age: 36,
+    startDate: '2026-02-08',
+    goal: '拳击训练、反应速度',
+    progress: 3,
+    level: 'L2',
+    appointment: '未预约',
+    compliance: '优',
+    coach: '刘教练',
+    avatarColor: 'bg-sky-400',
+    tags: ['拳击'],
+    amount: 25800,
+    isPaid: true,
+    isPaused: false
+  },
+  {
+    id: 20,
+    name: '高丽',
+    gender: 'F',
+    age: 27,
+    startDate: '2026-02-09',
+    goal: '芭蕾形体、优雅仪态',
+    progress: 1,
+    level: 'L1',
+    appointment: '未预约',
+    compliance: '良',
+    coach: '杨教练',
+    avatarColor: 'bg-violet-400',
+    tags: ['芭蕾', 'VIP'],
+    amount: 39800,
+    isPaid: true,
+    isPaused: false
   }
 ]
 
-const TABS = ['14天', '已付费', '已暂停']
+const TABS = ['全部', '14天', '已付费', '已暂停']
 
 const getLevelClass = (level: string) => {
   switch (level) {
@@ -501,5 +783,105 @@ const navigateToProfile = (leadId: number) => {
 const updateLevel = (leadId: number, event: Event) => {
   const target = event.target as HTMLSelectElement
   console.log('更新等级:', leadId, target.value)
+
+  // 更新数据中的等级
+  const lead = MOCK_LEADS.find(l => l.id === leadId)
+  if (lead) {
+    lead.level = target.value as 'L1' | 'L2' | 'L3'
+  }
+}
+
+// 获取预约状态样式
+const getAppointmentClass = (appointment: string) => {
+  if (appointment === '已预约') {
+    return 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100'
+  }
+  if (appointment === '无需预约') {
+    return 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
+  }
+  return 'border-slate-200 text-slate-400 hover:bg-slate-50 hover:text-slate-600'
+}
+
+// 更新预约状态
+const updateAppointment = (lead: Lead, event: Event) => {
+  const target = event.target as HTMLSelectElement
+  const newAppointment = target.value
+  console.log('更新预约状态:', lead.name, '从', lead.appointment, '到', newAppointment)
+  lead.appointment = newAppointment
+}
+
+// 查看计划按钮处理
+const handleViewPlan = (lead: Lead) => {
+  console.log('查看计划:', lead.name)
+  navigateToProfile(lead.id)
+  // 可以打开计划详情模态框或导航到详情页
+}
+
+// 更多操作菜单状态
+const actionMenuOpen = ref<number | null>(null)
+
+// 切换操作菜单显示
+const toggleActionMenu = (leadId: number) => {
+  actionMenuOpen.value = actionMenuOpen.value === leadId ? null : leadId
+}
+
+// 关闭操作菜单（点击外部时使用）
+const closeActionMenu = () => {
+  actionMenuOpen.value = null
+}
+
+// 获取状态文本
+const getStatusText = (lead: Lead) => {
+  if (lead.isPaused) return '已暂停'
+  if (lead.isPaid) return '已付费'
+  return '14天'
+}
+
+// 获取状态值（用于 select 绑定）
+const getStatusValue = (lead: Lead) => {
+  if (lead.isPaused) return 'paused'
+  if (lead.isPaid) return 'paid'
+  return 'active'
+}
+
+// 获取状态样式
+const getStatusClass = (lead: Lead) => {
+  if (lead.isPaused) {
+    return 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'
+  }
+  if (lead.isPaid) {
+    return 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+  }
+  return 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100'
+}
+
+// 更新用户状态
+const updateLeadStatus = (lead: Lead, event: Event) => {
+  const target = event.target as HTMLSelectElement
+  const newStatus = target.value
+
+  console.log('更新状态:', lead.name, '从', getStatusValue(lead), '到', newStatus)
+
+  // 根据选择更新状态
+  if (newStatus === 'paid') {
+    lead.isPaid = true
+    lead.isPaused = false
+  } else if (newStatus === 'paused') {
+    lead.isPaid = false
+    lead.isPaused = true
+  } else {
+    lead.isPaid = false
+    lead.isPaused = false
+  }
+
+  console.log('更新后状态:', getStatusText(lead))
+}
+
+// 更新依从度
+const updateCompliance = (lead: Lead, event: Event) => {
+  const target = event.target as HTMLSelectElement
+  const newCompliance = target.value
+  console.log('更新依从度:', lead.name, '从', lead.compliance, '到', newCompliance)
+  lead.compliance = newCompliance
 }
 </script>

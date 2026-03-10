@@ -48,13 +48,19 @@
 
       <!-- 当前规则提示 -->
       <div v-if="activeTab !== 'rules'" class="bg-blue-50 border border-blue-200 rounded-xl p-4">
-        <div class="flex items-center gap-2">
-          <AlertCircle :size="18" class="text-blue-600" />
-          <div>
-            <span class="font-semibold text-blue-900">当前结算规则：</span>
-            <span class="text-sm text-blue-800 ml-2">
-              新用户 ¥{{ currentRule.newUserRate }}/人/月，上线服务 ¥{{ currentRule.onlineRate }}/次
-            </span>
+        <div class="space-y-2">
+          <div class="flex items-center gap-2">
+            <AlertCircle :size="18" class="text-blue-600" />
+            <div>
+              <span class="font-semibold text-blue-900">医生结算规则：</span>
+            </div>
+          </div>
+          <div class="text-sm text-blue-800 space-y-1 ml-7">
+            <div>• 上线服务费：¥{{ currentRule.onlineRate }}/次</div>
+            <div>• 销转提成：7000元以上产品5%提成，中低客单无提成</div>
+            <div>• 免费赠送服务：仍需结算¥{{ currentRule.onlineRate }}上线费</div>
+            <div>• 多人套餐：按实际人数核算5%提成总额</div>
+            <div>• 结算周期：3个月无退费期后结算</div>
           </div>
         </div>
       </div>
@@ -291,6 +297,7 @@ interface DoctorSettlementRule {
   name: string
   newUserRate: number
   onlineRate: number
+  salesCommissionRate: number // 销转提成比例
   effectiveDate: string
   description: string
 }
@@ -303,9 +310,10 @@ interface DoctorSettlementRecord {
   totalUsers: number
   newUsers: number
   oldUsers: number
-  newUserAmount: number
+  newUserAmount: number // 已废弃，保留为0
   onlineCount: number
   onlineAmount: number
+  salesCommissionAmount: number // 销转提成
   totalAmount: number
   status: 'pending' | 'approved' | 'paid' | 'rejected'
   createdAt: string
@@ -315,6 +323,7 @@ interface DoctorSettlementRecord {
   specialty?: string
   newUserRate?: number
   onlineRate?: number
+  salesCommissionRate?: number
   serviceCount?: number // 服务次数 - 零工结算用
   averageRating?: number // 平均评分
   orderCount?: number // 订单数量
@@ -328,6 +337,7 @@ interface DoctorSettlementRecord {
     interventionDuration: number
     rating: number
     amount: number
+    salesCommission?: number // 单条记录的销转提成
   }>
 }
 
@@ -380,10 +390,11 @@ const currentSettlement = ref<DoctorSettlementRecord | null>(null)
 const settlementRules = ref<DoctorSettlementRule[]>([{
   id: '1',
   name: '医生结算标准规则',
-  newUserRate: 500,
-  onlineRate: 200,
+  newUserRate: 0, // 医生无新用户管理费
+  onlineRate: 200, // 上线服务费200元/次
+  salesCommissionRate: 5, // 销转提成5%
   effectiveDate: '2023-01-01',
-  description: '新用户500元/人/月，上线服务200元/次'
+  description: '上线服务200元/次，7000元以上产品5%销转提成'
 }])
 
 const currentRule = computed(() => settlementRules.value[0])
@@ -421,9 +432,10 @@ const employees = ref<DoctorEmployee[]>([
         serviceHours: 2,
         onlineCount: 2,
         managementDuration: 45,
-        newUserAmount: 500,
-        onlineAmount: 400,
-        totalAmount: 900,
+        newUserAmount: 0, // 医生无新用户管理费
+        onlineAmount: 400, // 2次 × 200元
+        salesCommission: 0, // 无销转提成
+        totalAmount: 400,
         avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=WangFang'
       },
       {
@@ -437,7 +449,8 @@ const employees = ref<DoctorEmployee[]>([
         onlineCount: 1,
         managementDuration: 214,
         newUserAmount: 0,
-        onlineAmount: 200,
+        onlineAmount: 200, // 1次 × 200元
+        salesCommission: 0,
         totalAmount: 200,
         avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=LiJun'
       }

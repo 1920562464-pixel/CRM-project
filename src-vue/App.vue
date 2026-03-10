@@ -121,7 +121,7 @@
           <!-- 预警中心横条 -->
           <div class="relative">
             <div
-              @click="showAlertCenter = !showAlertCenter"
+              @click="goToAlertList"
               class="flex items-center gap-3 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
               style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2);"
               @mouseenter="$event.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)'"
@@ -663,38 +663,7 @@ interface Notification {
 }
 
 const notifications = ref<Notification[]>([
-  {
-    id: '1',
-    type: 'warning',
-    title: '库存预警',
-    message: '鱼油胶囊 库存低于预警值，请及时补货',
-    time: '10分钟前',
-    read: false
-  },
-  {
-    id: '2',
-    type: 'error',
-    title: '缺货提醒',
-    message: '电子血压计 已缺货，请及时处理',
-    time: '30分钟前',
-    read: false
-  },
-  {
-    id: '3',
-    type: 'info',
-    title: '系统通知',
-    message: '您有3条待审批的报销申请需要处理',
-    time: '1小时前',
-    read: true
-  },
-  {
-    id: '4',
-    type: 'success',
-    title: '结算完成',
-    message: '本月教练结算已完成，请查看详情',
-    time: '2小时前',
-    read: true
-  }
+  // 默认没有通知，避免页面加载时显示不必要的提示
 ])
 
 // 未读通知数量
@@ -752,7 +721,7 @@ const handleAlertClick = (alert: AlertItem) => {
 
 const goToAlertList = () => {
   // 可以跳转到完整的预警列表页面
-  router.push('/alerts')
+  router.push('/alert-center')
   showAlertCenter.value = false
 }
 

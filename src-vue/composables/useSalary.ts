@@ -1,5 +1,37 @@
 import { ref, computed } from 'vue'
-import type { SalarySlip, SalaryScheme, SalaryStatus } from '../types/salary'
+import type { SalarySlip, SalaryScheme, SalaryStatus, ServiceType } from '../types/salary'
+
+// 工资条ID计数器（确保唯一性）
+let salarySlipIdCounter = 0
+
+// 餐补每日标准
+const MEAL_ALLOWANCE_DAILY_RATE = 40
+
+// 获取餐补金额（兼容新旧数据结构）
+const getMealAllowanceAmount = (meal: any): number => {
+  if (typeof meal === 'object' && meal !== null) {
+    return meal.amount || 0
+  }
+  return meal || 0
+}
+
+// 计算月份工作日天数（排除周末）
+const calculateWorkdays = (year: number, month: number): number => {
+  let workdays = 0
+  const daysInMonth = new Date(year, month, 0).getDate()
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(year, month - 1, day)
+    const dayOfWeek = date.getDay()
+
+    // 0是周日，6是周六，只计算周一到周五（1-5）
+    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+      workdays++
+    }
+  }
+
+  return workdays
+}
 
 // 薪资方案配置
 const SALARY_SCHEMES: SalaryScheme[] = [
@@ -17,7 +49,7 @@ const SALARY_SCHEMES: SalaryScheme[] = [
     allowances: {
       traffic: 500,
       communication: 200,
-      meal: 300
+      meal: 0  // 餐补按工作日动态计算
     },
     socialInsurance: {
       pension: 0.08,
@@ -39,6 +71,29 @@ const SALARY_SCHEMES: SalaryScheme[] = [
     },
     allowances: {
       traffic: 300,
+      communication: 200,
+      meal: 0  // 餐补按工作日动态计算
+    },
+    socialInsurance: {
+      pension: 0.08,
+      medical: 0.02,
+      unemployment: 0.005,
+      housingFund: 0.12
+    }
+  },
+  {
+    id: 'consultant-a',
+    name: '顾问方案A - 底薪+提成',
+    type: 'consultant',
+    baseSalary: 4000,
+    commissionRules: {
+      newUserRate: 200,
+      oldUserRate: 50,
+      doctorOnlineRate: 100,
+      productCommission: 0.04
+    },
+    allowances: {
+      traffic: 400,
       communication: 200,
       meal: 300
     },
@@ -104,6 +159,13 @@ export function useSalary() {
       throw new Error('薪资方案不存在')
     }
 
+    // 解析月份获取年月
+    const [year, monthNum] = month.split('-').map(Number)
+
+    // 计算工作日天数
+    const workdays = calculateWorkdays(year, monthNum)
+    const mealAllowanceAmount = workdays * MEAL_ALLOWANCE_DAILY_RATE
+
     // 获取员工绑定的用户数据
     const bindings = getEmployeeBindings(employeeId, month)
     const newUserCount = bindings.filter(b => {
@@ -146,7 +208,7 @@ export function useSalary() {
     const totalDeductions = socialInsurance + tax
 
     const salarySlip: SalarySlip = {
-      id: `slip${Date.now()}`,
+      id: `slip${Date.now()}_${++salarySlipIdCounter}`,
       employeeId,
       employeeName: '张教练', // 从员工数据获取
       department: '健康服务部',
@@ -189,7 +251,11 @@ export function useSalary() {
         allowances: {
           traffic: scheme.allowances.traffic || 0,
           communication: scheme.allowances.communication || 0,
-          meal: scheme.allowances.meal || 0,
+          meal: {
+            amount: mealAllowanceAmount,
+            workdays: workdays,
+            dailyRate: MEAL_ALLOWANCE_DAILY_RATE
+          },
           housing: scheme.allowances.housing || 0
         },
         bonus: {
@@ -380,7 +446,7 @@ export function useSalary() {
 
     const copy: SalarySlip = {
       ...JSON.parse(JSON.stringify(original)),
-      id: `slip${Date.now()}`,
+      id: `slip${Date.now()}_${++salarySlipIdCounter}`,
       status: 'draft',
       employeeName: original.employeeName + ' (副本)',
       createdAt: new Date(),
@@ -432,7 +498,15 @@ export function useSalary() {
       '富贵饼': slip.income.commission.richBiscuits.value,
       '交通补贴': slip.income.allowances.traffic,
       '通讯补贴': slip.income.allowances.communication,
-      '餐补': slip.income.allowances.meal,
+      '餐补': typeof slip.income.allowances.meal === 'object'
+        ? slip.income.allowances.meal.amount
+        : slip.income.allowances.meal,
+      '餐补工作日': typeof slip.income.allowances.meal === 'object'
+        ? slip.income.allowances.meal.workdays
+        : '-',
+      '餐补标准': typeof slip.income.allowances.meal === 'object'
+        ? `¥${slip.income.allowances.meal.dailyRate}/天`
+        : '-',
       '房补': slip.income.allowances.housing,
       '养老保险': slip.deductions.socialInsurance.pension,
       '医疗保险': slip.deductions.socialInsurance.medical,

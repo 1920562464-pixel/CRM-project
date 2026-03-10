@@ -1,5 +1,206 @@
 <template>
-  <div class="space-y-6 animate-in fade-in duration-500">
+  <div class="flex gap-6 h-screen animate-in fade-in duration-500" :style="{ padding: '1.5rem', background: 'var(--background)' }">
+    <!-- 左侧：群组和用户列表 -->
+    <div class="w-80 flex-shrink-0 flex flex-col gap-4 overflow-hidden">
+      <!-- 群组列表 -->
+      <div class="rounded-xl shadow-sm flex-1 flex flex-col overflow-hidden" :style="{
+        background: 'var(--card)',
+        border: '1px solid var(--border)'
+      }">
+        <div class="p-4" style="border-bottom: 1px solid var(--border-light);">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold flex items-center gap-2">
+              <Users :size="18" :style="{ color: isBlackGold.value ? '#B8860B' : '#4f46e5' }" />
+              群组列表
+            </h3>
+            <button class="text-xs px-2 py-1 rounded" :style="{
+              background: isBlackGold.value ? 'rgba(184, 134, 11, 0.1)' : 'rgba(79, 70, 229, 0.1)',
+              color: isBlackGold.value ? '#B8860B' : '#4f46e5'
+            }">
+              管理群组
+            </button>
+          </div>
+          <div class="relative">
+            <Search class="absolute left-3 top-1/2 -translate-y-1/2" :size="14" :style="{ color: 'var(--text-placeholder)' }" />
+            <input
+              v-model="groupSearch"
+              type="text"
+              placeholder="搜索群组..."
+              class="w-full pl-9 pr-3 py-2 text-sm rounded-lg focus:outline-none focus:ring-2"
+              :style="{
+                border: '1px solid var(--border)',
+                background: 'var(--background)',
+                color: 'var(--text-primary)'
+              }"
+            />
+          </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-2">
+          <!-- 返回群列表按钮（当在成员视图时显示） -->
+          <button
+            v-if="selectedGroup"
+            @click="selectedGroup = null; selectedUser = null"
+            class="w-full mb-2 p-2 rounded-lg text-left text-sm flex items-center gap-2 transition-colors"
+            :style="{
+              background: 'var(--fill-light)',
+              color: 'var(--text-regular)'
+            }"
+          >
+            <ArrowLeft :size="16" />
+            <span>返回群列表</span>
+          </button>
+
+          <!-- 群列表视图 -->
+          <div v-if="!selectedGroup" class="space-y-1">
+            <div
+              v-for="group in filteredGroups"
+              :key="group.id"
+              @click="selectGroup(group)"
+              class="p-3 rounded-lg cursor-pointer transition-all hover:shadow-md"
+              :style="{
+                background: 'var(--fill-light)',
+                border: '1px solid var(--border)',
+                cursor: 'pointer'
+              }"
+              @mouseenter="$event.currentTarget.style.background = 'var(--fill)'"
+              @mouseleave="$event.currentTarget.style.background = 'var(--fill-light)'"
+            >
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                  <div class="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold"
+                    :style="{ background: group.color }">
+                    {{ group.name.charAt(0) }}
+                  </div>
+                  <div>
+                    <div class="font-semibold text-sm">{{ group.name }}</div>
+                    <div class="text-xs" :style="{ color: 'var(--text-secondary)' }">
+                      {{ group.memberCount }} 位成员
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs px-2 py-1 rounded"
+                    :style="{
+                      background: group.completionRate >= 80 ? 'rgba(16, 185, 129, 0.1)' :
+                              group.completionRate >= 60 ? 'rgba(245, 158, 11, 0.1)' :
+                              'rgba(239, 68, 68, 0.1)',
+                      color: group.completionRate >= 80 ? '#10b981' :
+                             group.completionRate >= 60 ? '#f59e0b' :
+                             '#ef4444'
+                    }">
+                    {{ group.completionRate }}%
+                  </span>
+                  <ChevronRight :size="16" :style="{ color: 'var(--text-disabled)' }" />
+                </div>
+              </div>
+              <div class="flex items-center gap-2 text-xs" :style="{ color: 'var(--text-secondary)' }">
+                <Calendar :size="12" />
+                <span>今日 {{ group.todayCompleted }}/{{ group.memberCount }} 人已打卡</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 群成员视图 -->
+          <div v-else class="space-y-1">
+            <div
+              v-for="member in selectedGroup.members"
+              :key="member.id"
+              @click="selectUser(member)"
+              class="p-3 rounded-lg cursor-pointer transition-all hover:shadow-md"
+              :style="{
+                background: selectedUser?.id === member.id ? 'var(--fill)' : 'var(--fill-light)',
+                border: selectedUser?.id === member.id ? `2px solid ${isBlackGold.value ? '#B8860B' : '#4f46e5'}` : '1px solid var(--border)',
+                cursor: 'pointer'
+              }"
+            >
+              <div class="flex items-center gap-3">
+                <div class="relative">
+                  <div class="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold"
+                    :style="{ background: member.avatarColor }">
+                    {{ member.name.charAt(0) }}
+                  </div>
+                  <div
+                    class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2"
+                    :style="{
+                      background: member.todayCompleted ? '#10b981' : '#ef4444',
+                      borderColor: 'var(--card)'
+                    }"
+                  ></div>
+                </div>
+                <div class="flex-1">
+                  <div class="font-semibold text-sm">{{ member.name }}</div>
+                  <div class="text-xs" :style="{ color: 'var(--text-secondary)' }">
+                    {{ member.todayCompleted ? '今日已完成打卡' : '今日未打卡' }}
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div class="text-xs px-2 py-1 rounded"
+                    :style="{
+                      background: member.completionRate >= 80 ? 'rgba(16, 185, 129, 0.1)' :
+                              member.completionRate >= 60 ? 'rgba(245, 158, 11, 0.1)' :
+                              'rgba(239, 68, 68, 0.1)',
+                      color: member.completionRate >= 80 ? '#10b981' :
+                             member.completionRate >= 60 ? '#f59e0b' :
+                             '#ef4444'
+                    }">
+                    {{ member.completionRate }}%
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 选中用户信息（如果选择了用户） -->
+      <div v-if="selectedUser" class="rounded-xl shadow-sm p-4" :style="{
+        background: 'var(--card)',
+        border: '1px solid var(--border)'
+      }">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold"
+            :style="{ background: selectedUser.avatarColor }">
+            {{ selectedUser.name.charAt(0) }}
+          </div>
+          <div>
+            <div class="font-bold">{{ selectedUser.name }}</div>
+            <div class="text-xs" :style="{ color: 'var(--text-secondary)' }">
+              {{ selectedUser.todayCompleted ? '今日已打卡' : '今日未打卡' }}
+            </div>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div class="p-2 rounded-lg" :style="{ background: 'var(--fill-light)' }">
+            <div :style="{ color: 'var(--text-secondary)' }">饮食上传</div>
+            <div class="font-semibold" :style="{ color: selectedUser.todayTasks.mealUploaded ? '#10b981' : '#ef4444' }">
+              {{ selectedUser.todayTasks.mealUploaded ? '已完成' : '未完成' }}
+            </div>
+          </div>
+          <div class="p-2 rounded-lg" :style="{ background: 'var(--fill-light)' }">
+            <div :style="{ color: 'var(--text-secondary)' }">热量核算</div>
+            <div class="font-semibold" :style="{ color: selectedUser.todayTasks.caloriesOnTarget ? '#10b981' : '#f59e0b' }">
+              {{ selectedUser.todayTasks.caloriesOnTarget ? '达标' : '未达标' }}
+            </div>
+          </div>
+          <div class="p-2 rounded-lg" :style="{ background: 'var(--fill-light)' }">
+            <div :style="{ color: 'var(--text-secondary)' }">营养素</div>
+            <div class="font-semibold" :style="{ color: selectedUser.todayTasks.nutrientsBalanced ? '#10b981' : '#f59e0b' }">
+              {{ selectedUser.todayTasks.nutrientsBalanced ? '平衡' : '需调整' }}
+            </div>
+          </div>
+          <div class="p-2 rounded-lg" :style="{ background: 'var(--fill-light)' }">
+            <div :style="{ color: 'var(--text-secondary)' }">习惯打卡</div>
+            <div class="font-semibold">
+              {{ selectedUser.todayTasks.habitsCompleted }}/{{ selectedUser.todayTasks.totalHabits }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧：原有工作台内容 -->
+    <div class="flex-1 overflow-y-auto space-y-6">
     <!-- Welcome Section -->
     <div class="flex justify-between items-center">
       <div>
@@ -412,6 +613,7 @@
         </div>
       </div>
     </div>
+    </div>
   </div>
 </template>
 
@@ -426,6 +628,7 @@ import {
   Users,
   Activity,
   ArrowRight,
+  ArrowLeft,
   Plus,
   Phone,
   FileText,
@@ -433,7 +636,8 @@ import {
   Award,
   Search,
   ShieldAlert,
-  CheckCircle
+  CheckCircle,
+  ChevronRight
 } from 'lucide-vue-next'
 import StatCard from '../components/StatCard.vue'
 import TaskItem from '../components/TaskItem.vue'
@@ -539,6 +743,226 @@ const tasks = ref<Task[]>([
     priority: 'medium'
   }
 ])
+
+// 群组相关状态
+const groupSearch = ref('')
+const selectedGroup = ref<Group | null>(null)
+const selectedUser = ref<GroupMember | null>(null)
+
+// 群组类型定义
+interface Group {
+  id: string
+  name: string
+  color: string
+  memberCount: number
+  completionRate: number
+  todayCompleted: number
+  members: GroupMember[]
+}
+
+interface GroupMember {
+  id: string
+  name: string
+  avatarColor: string
+  todayCompleted: boolean
+  completionRate: number
+  todayTasks: TodayTasks
+}
+
+interface TodayTasks {
+  mealUploaded: boolean
+  meals: {
+    breakfast: boolean
+    lunch: boolean
+    dinner: boolean
+  }
+  caloriesOnTarget: boolean
+  targetCalories: number
+  actualCalories: number
+  nutrientsBalanced: boolean
+  nutrients: {
+    protein: number
+    carbs: number
+    fat: number
+  }
+  habitsCompleted: number
+  totalHabits: number
+  habits: {
+    name: string
+    completed: boolean
+  }[]
+}
+
+// 模拟群数据
+const groups = ref<Group[]>([
+  {
+    id: '1',
+    name: '糖尿病管理A组',
+    color: '#4f46e5',
+    memberCount: 8,
+    completionRate: 75,
+    todayCompleted: 6,
+    members: [
+      {
+        id: '1',
+        name: '王芳',
+        avatarColor: '#4f46e5',
+        todayCompleted: true,
+        completionRate: 85,
+        todayTasks: {
+          mealUploaded: true,
+          meals: { breakfast: true, lunch: true, dinner: false },
+          caloriesOnTarget: true,
+          targetCalories: 1800,
+          actualCalories: 1650,
+          nutrientsBalanced: true,
+          nutrients: { protein: 85, carbs: 180, fat: 55 },
+          habitsCompleted: 3,
+          totalHabits: 4,
+          habits: [
+            { name: '测量血糖', completed: true },
+            { name: '服药', completed: true },
+            { name: '运动30分钟', completed: true },
+            { name: '喝水8杯', completed: false }
+          ]
+        }
+      },
+      {
+        id: '2',
+        name: '李明',
+        avatarColor: '#f59e0b',
+        todayCompleted: true,
+        completionRate: 72,
+        todayTasks: {
+          mealUploaded: true,
+          meals: { breakfast: true, lunch: false, dinner: false },
+          caloriesOnTarget: false,
+          targetCalories: 2000,
+          actualCalories: 2200,
+          nutrientsBalanced: false,
+          nutrients: { protein: 75, carbs: 250, fat: 70 },
+          habitsCompleted: 2,
+          totalHabits: 4,
+          habits: [
+            { name: '测量血糖', completed: true },
+            { name: '服药', completed: true },
+            { name: '运动30分钟', completed: false },
+            { name: '喝水8杯', completed: false }
+          ]
+        }
+      },
+      {
+        id: '3',
+        name: '张建国',
+        avatarColor: '#10b981',
+        todayCompleted: false,
+        completionRate: 65,
+        todayTasks: {
+          mealUploaded: false,
+          meals: { breakfast: false, lunch: false, dinner: false },
+          caloriesOnTarget: false,
+          targetCalories: 1900,
+          actualCalories: 0,
+          nutrientsBalanced: false,
+          nutrients: { protein: 0, carbs: 0, fat: 0 },
+          habitsCompleted: 0,
+          totalHabits: 4,
+          habits: [
+            { name: '测量血糖', completed: false },
+            { name: '服药', completed: false },
+            { name: '运动30分钟', completed: false },
+            { name: '喝水8杯', completed: false }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    id: '2',
+    name: '减脂塑形B组',
+    color: '#10b981',
+    memberCount: 10,
+    completionRate: 82,
+    todayCompleted: 9,
+    members: [
+      {
+        id: '4',
+        name: '赵丽',
+        avatarColor: '#ec4899',
+        todayCompleted: true,
+        completionRate: 90,
+        todayTasks: {
+          mealUploaded: true,
+          meals: { breakfast: true, lunch: true, dinner: true },
+          caloriesOnTarget: true,
+          targetCalories: 1500,
+          actualCalories: 1420,
+          nutrientsBalanced: true,
+          nutrients: { protein: 95, carbs: 120, fat: 45 },
+          habitsCompleted: 4,
+          totalHabits: 4,
+          habits: [
+            { name: '测量体重', completed: true },
+            { name: '有氧运动', completed: true },
+            { name: '力量训练', completed: true },
+            { name: '喝水10杯', completed: true }
+          ]
+        }
+      },
+      {
+        id: '5',
+        name: '孙强',
+        avatarColor: '#8b5cf6',
+        todayCompleted: true,
+        completionRate: 78,
+        todayTasks: {
+          mealUploaded: true,
+          meals: { breakfast: true, lunch: true, dinner: false },
+          caloriesOnTarget: true,
+          targetCalories: 1800,
+          actualCalories: 1750,
+          nutrientsBalanced: true,
+          nutrients: { protein: 110, carbs: 150, fat: 55 },
+          habitsCompleted: 3,
+          totalHabits: 4,
+          habits: [
+            { name: '测量体重', completed: true },
+            { name: '有氧运动', completed: true },
+            { name: '力量训练', completed: true },
+            { name: '喝水10杯', completed: false }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    id: '3',
+    name: '慢病康复C组',
+    color: '#f97316',
+    memberCount: 6,
+    completionRate: 68,
+    todayCompleted: 4,
+    members: []
+  }
+])
+
+// 群组筛选
+const filteredGroups = computed(() => {
+  if (!groupSearch.value) return groups.value
+  return groups.value.filter(g =>
+    g.name.toLowerCase().includes(groupSearch.value.toLowerCase())
+  )
+})
+
+// 群组选择方法
+const selectGroup = (group: Group) => {
+  selectedGroup.value = group
+  selectedUser.value = null
+}
+
+const selectUser = (user: GroupMember) => {
+  selectedUser.value = user
+}
 
 const filterStatus = ref<'all' | 'pending' | 'completed'>('all')
 const searchQuery = ref('')

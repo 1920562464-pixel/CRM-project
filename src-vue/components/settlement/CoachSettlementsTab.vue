@@ -33,18 +33,6 @@
             <option value="rejected">已驳回</option>
           </select>
 
-          <!-- 部门筛选 -->
-          <select
-            :model-value="departmentFilter"
-            @change="$emit('update:departmentFilter', ($event.target as HTMLSelectElement).value)"
-            class="px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
-          >
-            <option value="">全部部门</option>
-            <option value="运动康复部">运动康复部</option>
-            <option value="体能训练部">体能训练部</option>
-            <option value="营养指导部">营养指导部</option>
-          </select>
-
           <!-- 搜索框 -->
           <div class="relative">
             <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" :size="16" />
@@ -78,33 +66,16 @@
             导出
           </button>
 
-          <!-- 生成结算单按钮 -->
+          <!-- 新增结算记录按钮 -->
           <button
-            @click="$emit('generate')"
-            :disabled="generationStatus.generated"
-            :class="`px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm ${
-              generationStatus.generated
-                ? 'bg-slate-400 text-white cursor-not-allowed'
-                : 'bg-indigo-600 text-white hover:bg-indigo-700'
-            }`"
+            @click="openAddModal"
+            class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2 text-sm font-medium shadow-sm"
           >
             <Plus :size="16" />
-            {{ generationStatus.generated ? '已生成结算单' : '生成结算单' }}
+            新增结算
           </button>
         </div>
       </div>
-    </div>
-
-    <!-- 生成状态提示 -->
-    <div
-      v-if="generationStatus.generated"
-      class="bg-green-50 border border-green-200 rounded-lg px-4 py-2 flex items-center justify-between"
-    >
-      <span class="text-xs text-green-700">
-        <CheckCircle :size="14" class="inline mr-1" />
-        本月结算单已于 <strong>{{ generationStatus.generatedAt }}</strong> 生成
-        | 管理费用：¥{{ generationStatus.managementFee.toLocaleString() }}
-      </span>
     </div>
 
     <!-- 批量选择栏 -->
@@ -115,11 +86,11 @@
       <span class="text-xs text-indigo-700">
         已选择 <strong>{{ selectedSettlements.length }}</strong> 条结算记录
       </span>
-      <button @click="$emit('clearSelection')" class="text-indigo-600 hover:text-indigo-800 text-xs">取消选择</button>
+      <button @click="clearSelection" class="text-indigo-600 hover:text-indigo-800 text-xs">取消选择</button>
     </div>
 
     <!-- 统计卡片 - 紧凑布局 -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
       <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-3 text-white">
         <div class="flex items-center justify-between">
           <div>
@@ -156,6 +127,15 @@
           <Target :size="20" class="opacity-80" />
         </div>
       </div>
+      <div class="bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-lg p-3 text-white">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-[10px] opacity-90">管理费合计</div>
+            <div class="text-lg font-bold">¥{{ statistics.totalManagementFee.toLocaleString() }}</div>
+          </div>
+          <Briefcase :size="20" class="opacity-80" />
+        </div>
+      </div>
     </div>
 
     <!-- 结算列表 -->
@@ -171,11 +151,13 @@
                 class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
               />
             </th>
-            <th class="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">教练</th>
+            <th class="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">教练信息</th>
+            <th class="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">联系方式</th>
             <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 uppercase">用户数</th>
             <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 uppercase">新用户</th>
             <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 uppercase">老用户</th>
             <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 uppercase">绩效</th>
+            <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 uppercase">管理费</th>
             <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 uppercase">合计</th>
             <th class="px-3 py-2 text-center text-xs font-semibold text-slate-600 uppercase">状态</th>
             <th class="px-3 py-2 text-center text-xs font-semibold text-slate-600 uppercase">操作</th>
@@ -202,9 +184,13 @@
                 </div>
                 <div>
                   <div class="text-sm font-medium text-slate-900">{{ settlement.employeeName }}</div>
-                  <div class="text-[10px] text-slate-500">{{ settlement.department || '运动康复部' }}</div>
+                  <div class="text-[10px] text-slate-500">{{ settlement.position || '教练' }} · {{ settlement.department || '运动康复部' }}</div>
                 </div>
               </div>
+            </td>
+            <td class="px-3 py-2.5 text-xs">
+              <div class="text-slate-700">{{ settlement.phone || '-' }}</div>
+              <div class="text-[10px] text-slate-500">{{ settlement.email || '-' }}</div>
             </td>
             <td class="px-3 py-2.5 text-right text-sm">
               <div class="text-slate-900">{{ settlement.totalUsers }}</div>
@@ -219,6 +205,10 @@
               <div class="text-[10px] text-slate-500">({{ settlement.oldUsers }}人)</div>
             </td>
             <td class="px-3 py-2.5 text-right text-sm text-slate-600">{{ settlement.performanceBonus }}</td>
+            <td class="px-3 py-2.5 text-right text-sm">
+              <div class="font-semibold" :class="settlement.managementFee > 0 ? 'text-purple-600' : 'text-slate-400'">{{ settlement.managementFee }}</div>
+              <div class="text-[10px] text-slate-500">管理费</div>
+            </td>
             <td class="px-3 py-2.5 text-right font-bold text-indigo-600 text-sm">
               ¥{{ settlement.totalAmount.toLocaleString() }}
             </td>
@@ -238,6 +228,14 @@
             </td>
             <td class="px-3 py-2.5">
               <div class="flex items-center justify-center gap-1">
+                <button
+                  @click.stop="editSettlement(settlement)"
+                  class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="编辑"
+                  type="button"
+                >
+                  <Edit3 :size="14" />
+                </button>
                 <button
                   @click.stop="$emit('view', settlement)"
                   @click.middle="$emit('view', settlement)"
@@ -272,11 +270,11 @@
                   发放
                 </button>
                 <button
-                  @click="$emit('viewHistory', settlement)"
-                  class="p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-                  title="历史记录"
+                  @click="confirmDelete(settlement)"
+                  class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  title="删除"
                 >
-                  <History :size="14" />
+                  <Trash2 :size="14" />
                 </button>
               </div>
             </td>
@@ -290,20 +288,104 @@
           <FileText :size="24" />
         </div>
         <p class="text-sm font-medium">暂无结算记录</p>
-        <p class="text-xs mt-1">选择其他月份查看历史记录，或点击"生成结算单"创建本月结算</p>
+        <p class="text-xs mt-1">点击"新增结算"按钮添加结算记录</p>
       </div>
     </div>
+
+    <!-- 新增/编辑结算弹窗 -->
+    <Modal v-model:show="showModal" :title="isEdit ? '编辑结算记录' : '新增结算记录'" size="lg">
+      <form @submit.prevent="handleSave" class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">选择教练 *</label>
+            <select v-model="formData.employeeId" required :disabled="isEdit" class="w-full px-3 py-2 border border-slate-300 rounded-lg">
+              <option value="">请选择教练</option>
+              <option v-for="emp in employees" :key="emp.id" :value="emp.id">{{ emp.name }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">结算月份 *</label>
+            <input v-model="formData.period" type="month" required :disabled="isEdit" class="w-full px-3 py-2 border border-slate-300 rounded-lg" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">新用户数（3个月内）</label>
+            <input v-model.number="formData.newUsers" type="number" min="0" required class="w-full px-3 py-2 border border-slate-300 rounded-lg" />
+            <p class="text-xs text-slate-500 mt-1">¥400/人</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">老用户数（3个月后）</label>
+            <input v-model.number="formData.oldUsers" type="number" min="0" required class="w-full px-3 py-2 border border-slate-300 rounded-lg" />
+            <p class="text-xs text-slate-500 mt-1">¥100/人</p>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">绩效奖金</label>
+          <input v-model.number="formData.performanceBonus" type="number" min="0" step="0.01" class="w-full px-3 py-2 border border-slate-300 rounded-lg" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">管理费</label>
+          <input v-model.number="formData.managementFee" type="number" min="0" step="0.01" class="w-full px-3 py-2 border border-slate-300 rounded-lg" />
+          <p class="text-xs text-slate-500 mt-1">默认为0，可手动调整</p>
+        </div>
+
+        <!-- 计算结果预览 -->
+        <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
+          <div class="text-sm font-semibold text-indigo-900 mb-2">金额预览</div>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="flex justify-between">
+              <span class="text-slate-600">新用户金额：</span>
+              <span class="font-semibold">¥{{ calculatedAmounts.newUserAmount.toLocaleString() }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-600">老用户金额：</span>
+              <span class="font-semibold">¥{{ calculatedAmounts.oldUserAmount.toLocaleString() }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-600">绩效奖金：</span>
+              <span class="font-semibold">¥{{ calculatedAmounts.performanceBonus.toLocaleString() }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-600">管理费：</span>
+              <span class="font-semibold">¥{{ calculatedAmounts.managementFee.toLocaleString() }}</span>
+            </div>
+            <div class="flex justify-between border-t border-indigo-200 pt-1 col-span-2">
+              <span class="text-indigo-900 font-semibold">合计：</span>
+              <span class="font-bold text-indigo-600">¥{{ calculatedAmounts.totalAmount.toLocaleString() }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">备注</label>
+          <textarea v-model="formData.remark" rows="2" placeholder="填写备注信息..." class="w-full px-3 py-2 border border-slate-300 rounded-lg resize-none"></textarea>
+        </div>
+      </form>
+      <template #footer>
+        <button type="button" @click="closeModal" class="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50">取消</button>
+        <button type="button" @click="handleSave" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">{{ isEdit ? '保存' : '添加' }}</button>
+      </template>
+    </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Search, Plus, Eye, CheckCircle, XCircle, CreditCard, FileText, Users, Clock, Target, Calendar, Download, History, User } from 'lucide-vue-next'
+import { Search, Plus, Eye, CheckCircle, XCircle, CreditCard, FileText, Users, Clock, Target, Calendar, Download, User, Edit3, Trash2, Briefcase } from 'lucide-vue-next'
+import Modal from '../shared/Modal.vue'
 
 interface SettlementRecord {
   id: string
   employeeId: string
   employeeName: string
+  position?: string
+  department?: string
+  phone?: string
+  email?: string
   period: string
   totalUsers: number
   newUsers: number
@@ -311,17 +393,13 @@ interface SettlementRecord {
   newUserAmount: number
   oldUserAmount: number
   performanceBonus: number
+  managementFee: number
   totalAmount: number
   status: 'pending' | 'approved' | 'paid' | 'rejected'
   createdAt: string
   approvedAt?: string
   paidAt?: string
-  department?: string
-  newUserRate?: number
-  oldUserRate?: number
-  serviceCount?: number // 服务次数
-  averageRating?: number // 平均评分
-  orderCount?: number // 订单数量
+  remark?: string
 }
 
 interface SettlementStatistics {
@@ -329,41 +407,62 @@ interface SettlementStatistics {
   pendingAmount: number
   paidAmount: number
   activeCoaches: number
-}
-
-interface GenerationStatus {
-  generated: boolean
-  generatedAt: string
-  managementFee: number
+  totalManagementFee: number
 }
 
 const props = defineProps<{
   settlements: SettlementRecord[]
   selectedPeriod: string
   employees: any[]
-  generationStatus: GenerationStatus
 }>()
 
 const emit = defineEmits<{
-  'generate': []
+  'add': [data: Omit<SettlementRecord, 'id' | 'createdAt'>]
+  'update': [id: string, data: Partial<SettlementRecord>]
+  'delete': [id: string]
   'approve': [id: string]
   'reject': [id: string]
   'pay': [id: string]
   'view': [settlement: SettlementRecord]
-  'viewHistory': [settlement: SettlementRecord]
   'update:period': [period: string]
   'update:statusFilter': [filter: string]
-  'update:departmentFilter': [filter: string]
   'update:searchText': [text: string]
   'export': []
   'batchApprove': [ids: string[]]
-  'clearSelection': []
 }>()
 
 const selectedSettlements = ref<string[]>([])
 const statusFilter = ref('')
-const departmentFilter = ref('')
 const searchText = ref('')
+
+// Modal state
+const showModal = ref(false)
+const isEdit = ref(false)
+const editingId = ref<string | null>(null)
+
+const formData = ref({
+  employeeId: '',
+  period: new Date().toISOString().slice(0, 7),
+  newUsers: 0,
+  oldUsers: 0,
+  performanceBonus: 0,
+  managementFee: 0,
+  remark: ''
+})
+
+const calculatedAmounts = computed(() => {
+  const newUserAmount = formData.value.newUsers * 400
+  const oldUserAmount = formData.value.oldUsers * 100
+  const performanceBonus = formData.value.performanceBonus || 0
+  const managementFee = formData.value.managementFee || 0
+  return {
+    newUserAmount,
+    oldUserAmount,
+    performanceBonus,
+    managementFee,
+    totalAmount: newUserAmount + oldUserAmount + performanceBonus + managementFee
+  }
+})
 
 const selectAll = computed(() => {
   return props.settlements.length > 0 && selectedSettlements.value.length === props.settlements.length
@@ -385,16 +484,96 @@ const toggleSelectAll = () => {
   }
 }
 
+const clearSelection = () => {
+  selectedSettlements.value = []
+}
+
 const statistics = computed((): SettlementStatistics => {
   const totalAmount = props.settlements.reduce((sum, s) => sum + s.totalAmount, 0)
   const pendingAmount = props.settlements.filter(s => s.status === 'pending').reduce((sum, s) => sum + s.totalAmount, 0)
   const paidAmount = props.settlements.filter(s => s.status === 'paid').reduce((sum, s) => sum + s.totalAmount, 0)
   const activeCoaches = new Set(props.settlements.map(s => s.employeeId)).size
+  const totalManagementFee = props.settlements.reduce((sum, s) => sum + (s.managementFee || 0), 0)
 
-  return { totalAmount, pendingAmount, paidAmount, activeCoaches }
+  return { totalAmount, pendingAmount, paidAmount, activeCoaches, totalManagementFee }
 })
 
 const batchApprove = () => {
   emit('batchApprove', selectedSettlements.value)
+}
+
+const openAddModal = () => {
+  isEdit.value = false
+  editingId.value = null
+  formData.value = {
+    employeeId: '',
+    period: new Date().toISOString().slice(0, 7),
+    newUsers: 0,
+    oldUsers: 0,
+    performanceBonus: 0,
+    managementFee: 0,
+    remark: ''
+  }
+  showModal.value = true
+}
+
+const editSettlement = (settlement: SettlementRecord) => {
+  isEdit.value = true
+  editingId.value = settlement.id
+  formData.value = {
+    employeeId: settlement.employeeId,
+    period: settlement.period,
+    newUsers: settlement.newUsers,
+    oldUsers: settlement.oldUsers,
+    performanceBonus: settlement.performanceBonus,
+    managementFee: settlement.managementFee || 0,
+    remark: settlement.remark || ''
+  }
+  showModal.value = true
+}
+
+const closeModal = () => {
+  showModal.value = false
+  isEdit.value = false
+  editingId.value = null
+}
+
+const handleSave = () => {
+  const employee = props.employees.find(e => e.id === formData.value.employeeId)
+  if (!employee) return
+
+  const settlementData = {
+    employeeId: formData.value.employeeId,
+    employeeName: employee.name,
+    position: employee.position || '教练',
+    department: employee.department || '运动康复部',
+    phone: employee.phone,
+    email: employee.email,
+    period: formData.value.period,
+    newUsers: formData.value.newUsers,
+    oldUsers: formData.value.oldUsers,
+    newUserAmount: formData.value.newUsers * 400,
+    oldUserAmount: formData.value.oldUsers * 100,
+    performanceBonus: formData.value.performanceBonus || 0,
+    managementFee: formData.value.managementFee || 0,
+    totalAmount: calculatedAmounts.value.totalAmount,
+    totalUsers: formData.value.newUsers + formData.value.oldUsers,
+    status: 'pending' as const,
+    remark: formData.value.remark
+  }
+
+  if (isEdit.value && editingId.value) {
+    emit('update', editingId.value, settlementData)
+  } else {
+    emit('add', settlementData)
+  }
+
+  closeModal()
+}
+
+const confirmDelete = (settlement: SettlementRecord) => {
+  if (confirm(`确定要删除 ${settlement.employeeName} 的结算记录吗？`)) {
+    emit('delete', settlement.id)
+  }
 }
 </script>

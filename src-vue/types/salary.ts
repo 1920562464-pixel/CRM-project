@@ -50,7 +50,11 @@ export interface SalarySlip {
     allowances: {
       traffic: number
       communication: number
-      meal: number
+      meal: {
+        amount: number        // 餐补总额
+        workdays: number      // 工作日天数
+        dailyRate: number     // 每日标准（40元/天）
+      }
       housing: number
     }
     bonus: {

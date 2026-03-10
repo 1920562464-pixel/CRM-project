@@ -4,7 +4,7 @@
       <div
         v-if="show"
         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
-        @click.self="$emit('close')"
+        @click.self="emit('update:show', false); emit('close')"
       >
         <div
           :class="`bg-white rounded-xl shadow-2xl w-full ${sizeClass} max-h-[90vh] overflow-hidden flex flex-col`"
@@ -14,7 +14,7 @@
           <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200">
             <h3 class="text-lg font-semibold text-slate-900">{{ title }}</h3>
             <button
-              @click="$emit('close')"
+              @click="emit('update:show', false); emit('close')"
               class="p-1 hover:bg-slate-100 rounded-lg transition-colors"
             >
               <X :size="20" class="text-slate-500" />
@@ -46,12 +46,17 @@ interface Props {
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full'
 }
 
+defineOptions({
+  inheritAttrs: false
+})
+
 const props = withDefaults(defineProps<Props>(), {
   size: 'md'
 })
 
-defineEmits<{
+const emit = defineEmits<{
   close: []
+  'update:show': [value: boolean]
 }>()
 
 const sizeClass = computed(() => {

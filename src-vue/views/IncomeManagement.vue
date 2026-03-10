@@ -49,38 +49,38 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 text-white shadow-lg shadow-green-200">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-medium opacity-90">今日收入</span>
+            <span class="text-xs font-medium opacity-90">今日订单</span>
             <TrendingUp :size="18" />
           </div>
-          <div class="text-2xl font-bold">¥{{ statistics.todayIncome.toLocaleString() }}</div>
-          <div class="text-xs opacity-75 mt-1">{{ statistics.todayCount }} 笔交易</div>
+          <div class="text-2xl font-bold">{{ statistics.todayCount }}</div>
+          <div class="text-xs opacity-75 mt-1">新增收入记录</div>
         </div>
 
         <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white shadow-lg shadow-blue-200">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-medium opacity-90">本月收入</span>
+            <span class="text-xs font-medium opacity-90">本月订单</span>
             <Calendar :size="18" />
           </div>
-          <div class="text-2xl font-bold">¥{{ statistics.monthIncome.toLocaleString() }}</div>
-          <div class="text-xs opacity-75 mt-1">{{ statistics.monthCount }} 笔交易</div>
+          <div class="text-2xl font-bold">{{ statistics.monthCount }}</div>
+          <div class="text-xs opacity-75 mt-1">累计订单数</div>
         </div>
 
         <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-4 text-white shadow-lg shadow-amber-200">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-medium opacity-90">待确认金额</span>
-            <Clock :size="18" />
+            <span class="text-xs font-medium opacity-90">特殊项目</span>
+            <AlertCircle :size="18" />
           </div>
-          <div class="text-2xl font-bold">¥{{ statistics.pendingAmount.toLocaleString() }}</div>
-          <div class="text-xs opacity-75 mt-1">需及时确认</div>
+          <div class="text-2xl font-bold">{{ statistics.specialCount }}</div>
+          <div class="text-xs opacity-75 mt-1">需关注记录</div>
         </div>
 
         <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white shadow-lg shadow-purple-200">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-medium opacity-90">本年收入</span>
+            <span class="text-xs font-medium opacity-90">本年订单</span>
             <BarChart3 :size="18" />
           </div>
-          <div class="text-2xl font-bold">¥{{ statistics.yearIncome.toLocaleString() }}</div>
-          <div class="text-xs opacity-75 mt-1">累计收入</div>
+          <div class="text-2xl font-bold">{{ statistics.yearCount }}</div>
+          <div class="text-xs opacity-75 mt-1">累计订单数</div>
         </div>
       </div>
 
@@ -152,11 +152,10 @@
               <th class="px-4 py-4 text-left text-xs font-semibold text-slate-700 uppercase">业务线</th>
               <th class="px-4 py-4 text-left text-xs font-semibold text-slate-700 uppercase">产品周期</th>
               <th class="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase">会员信息</th>
-              <th class="px-6 py-4 text-right text-xs font-semibold text-slate-700 uppercase">金额</th>
-              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase">支付方式</th>
-              <th class="px-6 py-4 text-center text-xs font-semibold text-slate-700 uppercase">状态</th>
-              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase">销售人</th>
-              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase">时间</th>
+              <th class="px-4 py-4 text-left text-xs font-semibold text-slate-700 uppercase">收入类型</th>
+              <th class="px-4 py-4 text-left text-xs font-semibold text-slate-700 uppercase">订单号</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase">销售人员</th>
+              <th class="px-4 py-4 text-left text-xs font-semibold text-slate-700 uppercase">特殊备注</th>
               <th class="px-6 py-4 text-center text-xs font-semibold text-slate-700 uppercase">操作</th>
             </tr>
           </thead>
@@ -180,35 +179,35 @@
                   <div class="text-xs text-slate-400 mt-0.5">ID: {{ item.memberId }}</div>
                 </div>
               </td>
-              <td class="px-6 py-4 text-right">
-                <div class="inline-flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                  <span class="text-sm text-slate-600">¥</span>
-                  <span class="text-lg font-bold text-green-700">{{ item.amount.toLocaleString() }}</span>
-                </div>
-              </td>
-              <td class="px-6 py-4">
-                <span class="px-2 py-1 rounded-md text-xs font-medium border" :class="getPaymentMethodBadgeClass(item.paymentMethod)">
-                  {{ getPaymentMethodLabel(item.paymentMethod) }}
+              <td class="px-4 py-4">
+                <span class="px-2 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+                  {{ item.incomeType || '-' }}
                 </span>
               </td>
-              <td class="px-6 py-4 text-center">
-                <span class="px-3 py-1 rounded-full text-xs font-medium border" :class="getStatusBadgeClass(item.status)">
-                  {{ item.status === 'pending' ? '待确认' : item.status === 'confirmed' ? '已确认' : '已退款' }}
-                </span>
+              <td class="px-4 py-4">
+                <span class="text-sm text-slate-700 font-mono">{{ item.orderId || '-' }}</span>
               </td>
               <td class="px-6 py-4 text-sm text-slate-600">
                 {{ item.salesman || '-' }}
               </td>
-              <td class="px-6 py-4 text-sm text-slate-600">
-                {{ item.createdAt }}
+              <td class="px-4 py-4">
+                <div class="max-w-xs">
+                  <div v-if="item.specialRemark" class="text-sm text-slate-700 truncate" :title="item.specialRemark">
+                    {{ item.specialRemark }}
+                  </div>
+                  <span v-else class="text-sm text-slate-400">-</span>
+                </div>
               </td>
               <td class="px-6 py-4">
                 <div class="flex items-center justify-center gap-1">
-                  <button @click="confirmIncome(item.id)" v-if="item.status === 'pending'" class="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="确认收入">
-                    <CheckCircle :size="14" />
+                  <button @click="editItem(item)" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="编辑">
+                    <FileText :size="14" />
                   </button>
                   <button @click="deleteItem(item.id)" class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="删除">
                     <Trash2 :size="14" />
+                  </button>
+                  <button @click="addSpecialRecord(item)" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" title="特殊项目记录">
+                    <AlertCircle :size="14" />
                   </button>
                 </div>
               </td>
@@ -473,10 +472,10 @@
                       <th class="px-3 py-2 text-left text-xs font-semibold text-slate-700">产品周期</th>
                       <th class="px-3 py-2 text-left text-xs font-semibold text-slate-700">会员姓名 *</th>
                       <th class="px-3 py-2 text-left text-xs font-semibold text-slate-700">手机号</th>
-                      <th class="px-3 py-2 text-left text-xs font-semibold text-slate-700">金额 *</th>
-                      <th class="px-3 py-2 text-left text-xs font-semibold text-slate-700">支付方式</th>
+                      <th class="px-3 py-2 text-left text-xs font-semibold text-slate-700">收入类型</th>
+                      <th class="px-3 py-2 text-left text-xs font-semibold text-slate-700">订单号</th>
                       <th class="px-3 py-2 text-left text-xs font-semibold text-slate-700">销售人员</th>
-                      <th class="px-3 py-2 text-left text-xs font-semibold text-slate-700">备注</th>
+                      <th class="px-3 py-2 text-left text-xs font-semibold text-slate-700">特殊备注</th>
                       <th class="px-3 py-2 text-center text-xs font-semibold text-slate-700 w-16">操作</th>
                     </tr>
                   </thead>
@@ -484,7 +483,7 @@
                     <tr v-for="(item, index) in batchItems" :key="index" class="hover:bg-slate-50">
                       <td class="px-3 py-2 text-sm text-slate-500 font-medium">{{ index + 1 }}</td>
                       <td class="px-3 py-2">
-                        <select v-model="item.category" class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <select v-model="item.businessLine" class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                           <option value="">请选择</option>
                           <option value="减重">减重管理</option>
                           <option value="斑块逆转">斑块逆转</option>
@@ -493,7 +492,7 @@
                         </select>
                       </td>
                       <td class="px-3 py-2">
-                        <input v-model="item.remark" type="text" placeholder="产品周期" class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                        <input v-model="item.productType" type="text" placeholder="产品周期" class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                       </td>
                       <td class="px-3 py-2">
                         <input v-model="item.memberName" type="text" placeholder="姓名" class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
@@ -502,22 +501,22 @@
                         <input v-model="item.memberPhone" type="text" placeholder="手机号" class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                       </td>
                       <td class="px-3 py-2">
-                        <input v-model.number="item.amount" type="number" placeholder="金额" class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                        <select v-model="item.incomeType" class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                          <option value="">请选择</option>
+                          <option value="会员充值">会员充值</option>
+                          <option value="课程收入">课程收入</option>
+                          <option value="服务收入">服务收入</option>
+                          <option value="产品销售">产品销售</option>
+                        </select>
                       </td>
                       <td class="px-3 py-2">
-                        <select v-model="item.paymentMethod" class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                          <option value="wechat">微信</option>
-                          <option value="alipay">支付宝</option>
-                          <option value="bank">银行</option>
-                          <option value="cash">现金</option>
-                          <option value="pos">POS机</option>
-                        </select>
+                        <input v-model="item.orderId" type="text" placeholder="订单号" class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                       </td>
                       <td class="px-3 py-2">
                         <input v-model="item.salesman" type="text" placeholder="销售人员" class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                       </td>
                       <td class="px-3 py-2">
-                        <input v-model="item.type" type="text" placeholder="备注" class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                        <input v-model="item.specialRemark" type="text" placeholder="特殊备注" class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-300" />
                       </td>
                       <td class="px-3 py-2 text-center">
                         <button @click="removeBatchRow(index)" class="p-1 text-red-600 hover:bg-red-50 rounded" title="删除此行">
@@ -546,13 +545,13 @@
                     <span class="font-bold text-indigo-700 ml-2">{{ batchItems.length }} 条</span>
                   </div>
                   <div class="text-sm">
-                    <span class="text-slate-600">总金额:</span>
-                    <span class="font-bold text-xl text-green-600 ml-2">¥{{ batchTotalAmount.toLocaleString() }}</span>
+                    <span class="text-slate-600">已完成:</span>
+                    <span class="font-bold text-green-600 ml-2">{{ completedBatchItems }} 条</span>
                   </div>
                 </div>
                 <div class="text-xs text-slate-500">
                   <CheckCircle :size="14" class="inline mr-1" />
-                  已填写: {{ completedBatchItems }} / {{ batchItems.length }}
+                  业务线、会员、销售信息完整
                 </div>
               </div>
             </div>
@@ -591,7 +590,7 @@
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1.5">业务线 *</label>
-                <select v-model="formData.businessLine" @change="onBusinessLineChange" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <select v-model="formData.businessLine" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                   <option value="">请选择业务线</option>
                   <option value="减重">减重管理</option>
                   <option value="斑块逆转">斑块逆转</option>
@@ -616,19 +615,19 @@
 
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1.5">收入金额 *</label>
-                <input v-model="formData.amount" type="number" placeholder="请输入金额" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                <label class="block text-sm font-medium text-slate-700 mb-1.5">收入类型 *</label>
+                <select v-model="formData.incomeType" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  <option value="">请选择收入类型</option>
+                  <option value="会员充值">会员充值</option>
+                  <option value="课程收入">课程收入</option>
+                  <option value="服务收入">服务收入</option>
+                  <option value="产品销售">产品销售</option>
+                </select>
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1.5">支付方式</label>
-                <select v-model="formData.paymentMethod" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                  <option value="wechat">微信支付</option>
-                  <option value="alipay">支付宝</option>
-                  <option value="bank">银行转账</option>
-                  <option value="cash">现金</option>
-                  <option value="pos">POS机</option>
-                </select>
+                <label class="block text-sm font-medium text-slate-700 mb-1.5">订单号</label>
+                <input v-model="formData.orderId" type="text" placeholder="请输入订单号" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
               </div>
             </div>
 
@@ -650,8 +649,9 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1.5">备注</label>
-              <textarea v-model="formData.remark" placeholder="请输入备注信息" rows="3" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">特殊备注</label>
+              <textarea v-model="formData.specialRemark" placeholder="特殊项目记录（如：折扣优惠、额外服务、特殊安排等）" rows="3" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-300 resize-none"></textarea>
+              <p class="text-xs text-slate-500 mt-1">用于记录特殊项目、优惠、异常情况等</p>
             </div>
           </div>
 
@@ -661,6 +661,72 @@
             </button>
             <button @click="saveAdd" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors">
               保存
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- 特殊项目记录模态框 -->
+    <Teleport to="body">
+      <div v-if="showSpecialRecordModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md">
+          <div class="sticky top-0 bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4 flex items-center justify-between">
+            <div>
+              <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <AlertCircle :size="20" />
+                特殊项目记录
+              </h3>
+              <p class="text-sm text-amber-100 mt-0.5">记录异常、优惠、特殊安排等</p>
+            </div>
+            <button @click="showSpecialRecordModal = false" class="p-1 hover:bg-white/20 rounded-lg transition-colors">
+              <X :size="20" class="text-white" />
+            </button>
+          </div>
+
+          <div class="p-6 space-y-4">
+            <div v-if="currentSpecialItem" class="p-3 bg-slate-50 rounded-lg mb-4">
+              <div class="text-xs text-slate-600 mb-2">关联收入记录</div>
+              <div class="flex items-center justify-between">
+                <div class="text-sm">
+                  <span class="font-medium text-slate-900">{{ currentSpecialItem.memberName }}</span>
+                  <span class="text-slate-500 mx-2">|</span>
+                  <span class="text-slate-600">{{ currentSpecialItem.businessLine }}</span>
+                </div>
+                <div class="text-xs text-slate-500">{{ currentSpecialItem.id }}</div>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">特殊项目类型 *</label>
+              <select v-model="specialRecordForm.type" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
+                <option value="">请选择类型</option>
+                <option value="特殊优惠">特殊优惠</option>
+                <option value="额外服务">额外服务</option>
+                <option value="特殊安排">特殊安排</option>
+                <option value="异常处理">异常处理</option>
+                <option value="折扣返利">折扣返利</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">特殊说明 *</label>
+              <textarea
+                v-model="specialRecordForm.description"
+                placeholder="详细描述特殊项目的内容、原因、金额等"
+                rows="4"
+                class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="sticky bottom-0 bg-white border-t border-slate-200 px-6 py-4 flex items-center justify-end gap-3">
+            <button @click="showSpecialRecordModal = false" class="px-4 py-2 text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+              取消
+            </button>
+            <button @click="saveSpecialRecord" class="px-6 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 font-medium transition-colors">
+              保存记录
             </button>
           </div>
         </div>
@@ -691,6 +757,7 @@ import {
   CreditCard,
   CheckCircle,
   Clock,
+  AlertCircle,
   FileText,
   BarChart3,
   Users,
@@ -709,23 +776,26 @@ import ConfirmDialog from '../components/shared/ConfirmDialog.vue'
 
 interface IncomeItem {
   id: string
-  type: 'recharge' | 'course' | 'service' | 'product' | 'card' | 'other'
-  typeLabel: string
-  amount: number
+  businessLine?: string // 业务线：减重、斑块逆转、慢病管理、超越百岁
+  productType?: string // 产品周期：14天体验、三个月、六个月、一年期
   memberId: string
   memberName: string
   memberPhone: string
-  paymentMethod: 'wechat' | 'alipay' | 'bank' | 'cash' | 'pos'
-  paymentMethodLabel: string
-  status: 'pending' | 'confirmed' | 'refunded'
-  statusLabel: string
-  category: string
-  productType?: string // 产品周期：14天体验、三个月、六个月、一年期
-  businessLine?: string // 业务线：减重、斑块逆转、慢病管理、超越百岁
-  salesman?: string
-  remark?: string
+  incomeType?: string // 收入类型：会员充值、课程收入、服务收入、产品销售
+  orderId?: string // 订单号
+  salesman?: string // 销售人员
+  specialRemark?: string // 特殊备注（特殊项目记录）
   createdAt: string
-  confirmedAt?: string
+  // 特殊项目记录
+  specialRecords?: SpecialRecord[]
+}
+
+interface SpecialRecord {
+  id: string
+  type: string // 特殊项目类型
+  description: string // 特殊说明
+  operator: string // 操作人
+  createdAt: string // 操作时间
 }
 
 interface IncomeCategory {
@@ -775,147 +845,109 @@ const confirm = ref({
 })
 
 const formData = ref({
-  type: 'service' as IncomeItem['type'],
-  amount: '',
+  businessLine: '',
+  productType: '',
   memberId: '',
   memberName: '',
   memberPhone: '',
-  paymentMethod: 'wechat' as IncomeItem['paymentMethod'],
-  category: '',
-  businessLine: '',
-  productType: '',
+  incomeType: '',
+  orderId: '',
   salesman: '',
-  remark: ''
+  specialRemark: ''
 })
 
 const incomeItems = ref<IncomeItem[]>([
   {
     id: 'INC001',
-    type: 'service',
-    typeLabel: '服务收入',
-    amount: 29800,
+    businessLine: '减重',
+    productType: '六个月',
     memberId: 'M001',
     memberName: '王芳',
     memberPhone: '138****1234',
-    paymentMethod: 'wechat',
-    paymentMethodLabel: '微信支付',
-    status: 'confirmed',
-    statusLabel: '已确认',
-    category: '减重 - 六个月',
-    businessLine: '减重',
-    productType: '六个月',
+    incomeType: '课程收入',
+    orderId: 'ORD202402150001',
     salesman: '张顾问',
-    createdAt: '2024-02-15 14:30:00',
-    confirmedAt: '2024-02-15 14:30:00'
+    createdAt: '2024-02-15 14:30:00'
   },
   {
     id: 'INC002',
-    type: 'service',
-    typeLabel: '服务收入',
-    amount: 39800,
+    businessLine: '斑块逆转',
+    productType: '一年期',
     memberId: 'M002',
     memberName: '李明',
     memberPhone: '139****5678',
-    paymentMethod: 'alipay',
-    paymentMethodLabel: '支付宝',
-    status: 'confirmed',
-    statusLabel: '已确认',
-    category: '斑块逆转 - 一年期',
-    businessLine: '斑块逆转',
-    productType: '一年期',
+    incomeType: '课程收入',
+    orderId: 'ORD202402150002',
     salesman: '李教练',
-    createdAt: '2024-02-15 13:20:00',
-    confirmedAt: '2024-02-15 13:20:00'
+    createdAt: '2024-02-15 13:20:00'
   },
   {
     id: 'INC003',
-    type: 'service',
-    typeLabel: '服务收入',
-    amount: 49800,
+    businessLine: '慢病管理',
+    productType: '一年期',
     memberId: 'M003',
     memberName: '赵丽',
     memberPhone: '137****9012',
-    paymentMethod: 'bank',
-    paymentMethodLabel: '银行转账',
-    status: 'confirmed',
-    statusLabel: '已确认',
-    category: '慢病管理 - 一年期',
-    businessLine: '慢病管理',
-    productType: '一年期',
+    incomeType: '服务收入',
+    orderId: 'ORD202402150003',
     salesman: '王医生',
-    remark: '高血压管理套餐',
-    createdAt: '2024-02-15 11:15:00'
+    specialRemark: '高血压管理套餐',
+    createdAt: '2024-02-15 11:15:00',
+    specialRecords: [
+      {
+        id: 'SR001',
+        type: '特殊优惠',
+        description: '年度套餐9折优惠',
+        operator: '系统管理员',
+        createdAt: '2024-02-15 11:15:00'
+      }
+    ]
   },
   {
     id: 'INC004',
-    type: 'service',
-    typeLabel: '服务收入',
-    amount: 999,
+    businessLine: '超越百岁',
+    productType: '999会员',
     memberId: 'M004',
     memberName: '孙伟',
     memberPhone: '136****3456',
-    paymentMethod: 'wechat',
-    paymentMethodLabel: '微信支付',
-    status: 'pending',
-    statusLabel: '待确认',
-    category: '超越百岁 - 999会员',
-    businessLine: '超越百岁',
-    productType: '999会员',
+    incomeType: '会员充值',
+    orderId: 'ORD202402150004',
     salesman: '陈顾问',
-    createdAt: '2024-02-15 10:45:00',
-    remark: '超越百岁999会员'
+    createdAt: '2024-02-15 10:45:00'
   },
   {
     id: 'INC005',
-    type: 'service',
-    typeLabel: '服务收入',
-    amount: 1980,
+    businessLine: '减重',
+    productType: '14天体验',
     memberId: 'M005',
     memberName: '周涛',
     memberPhone: '135****7890',
-    paymentMethod: 'alipay',
-    paymentMethodLabel: '支付宝',
-    status: 'confirmed',
-    statusLabel: '已确认',
-    category: '减重 - 14天体验',
-    businessLine: '减重',
-    productType: '14天体验',
+    incomeType: '课程收入',
+    orderId: 'ORD202402140001',
     salesman: '张顾问',
     createdAt: '2024-02-14 16:50:00'
   },
   {
     id: 'INC006',
-    type: 'service',
-    typeLabel: '服务收入',
-    amount: 16800,
+    businessLine: '慢病管理',
+    productType: '三个月',
     memberId: 'M006',
     memberName: '吴秀兰',
     memberPhone: '133****2233',
-    paymentMethod: 'wechat',
-    paymentMethodLabel: '微信支付',
-    status: 'confirmed',
-    statusLabel: '已确认',
-    category: '慢病管理 - 三个月',
-    businessLine: '慢病管理',
-    productType: '三个月',
+    incomeType: '服务收入',
+    orderId: 'ORD202402140002',
     salesman: '李医生',
     createdAt: '2024-02-14 15:30:00'
   },
   {
     id: 'INC007',
-    type: 'service',
-    typeLabel: '服务收入',
-    amount: 24800,
+    businessLine: '斑块逆转',
+    productType: '三个月',
     memberId: 'M007',
     memberName: '郑国强',
     memberPhone: '132****4455',
-    paymentMethod: 'pos',
-    paymentMethodLabel: 'POS机',
-    status: 'pending',
-    statusLabel: '待确认',
-    category: '斑块逆转 - 三个月',
-    businessLine: '斑块逆转',
-    productType: '三个月',
+    incomeType: '课程收入',
+    orderId: 'ORD202402140003',
     salesman: '王医生',
     createdAt: '2024-02-14 14:20:00'
   }
@@ -973,18 +1005,21 @@ const categories = ref<IncomeCategory[]>([
 ])
 
 const statistics = computed(() => {
-  const todayItems = incomeItems.value.filter(item => item.status === 'confirmed')
-  const todayIncome = todayItems.reduce((sum, item) => sum + item.amount, 0)
-  const pendingItems = incomeItems.value.filter(item => item.status === 'pending')
-  const pendingAmount = pendingItems.reduce((sum, item) => sum + item.amount, 0)
+  const todayItems = incomeItems.value.filter(item => {
+    const itemDate = new Date(item.createdAt)
+    const today = new Date()
+    return itemDate.toDateString() === today.toDateString()
+  })
+
+  const specialCount = incomeItems.value.filter(item =>
+    item.specialRemark || (item.specialRecords && item.specialRecords.length > 0)
+  ).length
 
   return {
-    todayIncome,
-    monthIncome: todayIncome * 20,
-    yearIncome: todayIncome * 100,
     todayCount: todayItems.length,
-    monthCount: todayItems.length * 20,
-    pendingAmount
+    monthCount: incomeItems.value.length,
+    yearCount: incomeItems.value.length * 12,
+    specialCount
   }
 })
 
@@ -994,15 +1029,13 @@ const filteredItems = computed(() => {
       item.memberName.includes(searchText.value) ||
       item.memberPhone.includes(searchText.value) ||
       item.id.toLowerCase().includes(searchText.value.toLowerCase())
-    const matchStatus = statusFilter.value === 'all' || item.status === statusFilter.value
-    const matchType = typeFilter.value === 'all' || item.type === typeFilter.value
-    return matchSearch && matchStatus && matchType
+    return matchSearch
   })
 })
 
 // 业务线统计
 const businessLineStats = computed(() => {
-  const totalAmount = incomeItems.value.reduce((sum, item) => sum + item.amount, 0)
+  const totalCount = incomeItems.value.length
   const stats = [
     { name: '减重', icon: Activity, color: '#3B82F6', bgColor: '#EFF6FF', textColor: '#1D4ED8', iconBg: '#DBEAFE' },
     { name: '斑块逆转', icon: Heart, color: '#8B5CF6', bgColor: '#F5F3FF', textColor: '#7C3AED', iconBg: '#EDE9FE' },
@@ -1012,12 +1045,10 @@ const businessLineStats = computed(() => {
 
   return stats.map(stat => {
     const items = incomeItems.value.filter(item => item.businessLine === stat.name)
-    const total = items.reduce((sum, item) => sum + item.amount, 0)
     return {
       ...stat,
-      total,
       count: items.length,
-      percentage: totalAmount > 0 ? ((total / totalAmount) * 100).toFixed(1) : '0.0'
+      percentage: totalCount > 0 ? ((items.length / totalCount) * 100).toFixed(1) : '0.0'
     }
   })
 })
@@ -1025,20 +1056,18 @@ const businessLineStats = computed(() => {
 // 产品周期统计
 const productTypeStats = computed(() => {
   const productTypes = ['14天体验', '三个月', '六个月', '一年期', '999会员']
-  const totalAmount = incomeItems.value.reduce((sum, item) => sum + item.amount, 0)
+  const totalCount = incomeItems.value.length
   const colors = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444']
 
   return productTypes.map((type, index) => {
     const items = incomeItems.value.filter(item => item.productType === type)
-    const total = items.reduce((sum, item) => sum + item.amount, 0)
     return {
       name: type,
-      total,
       count: items.length,
-      percentage: totalAmount > 0 ? (total / totalAmount) * 100 : 0,
+      percentage: totalCount > 0 ? ((items.length / totalCount) * 100).toFixed(1) : '0.0',
       color: colors[index]
     }
-  }).filter(p => p.count > 0).sort((a, b) => b.total - a.total)
+  })
 })
 
 // 月度统计
@@ -1436,7 +1465,7 @@ const deleteItem = (id: string) => {
   confirm.value = {
     show: true,
     title: '删除收入记录',
-    message: `确定要删除来自 "${item.memberName}" 的 ¥${item.amount.toLocaleString()} 收入记录吗？`,
+    message: `确定要删除来自 "${item.memberName}" 的收入记录吗？`,
     type: 'danger',
     onConfirm: () => {
       incomeItems.value = incomeItems.value.filter(i => i.id !== id)
@@ -1449,6 +1478,63 @@ const deleteItem = (id: string) => {
   }
 }
 
+// 编辑收入项目
+const editItem = (item: IncomeItem) => {
+  Object.assign(formData.value, {
+    businessLine: item.businessLine || '',
+    productType: item.productType || '',
+    memberId: item.memberId,
+    memberName: item.memberName,
+    memberPhone: item.memberPhone,
+    incomeType: item.incomeType || '',
+    orderId: item.orderId || '',
+    salesman: item.salesman || '',
+    specialRemark: item.specialRemark || ''
+  })
+  showAddModal.value = true
+}
+
+// 添加特殊项目记录
+const showSpecialRecordModal = ref(false)
+const currentSpecialItem = ref<IncomeItem | null>(null)
+
+const specialRecordForm = ref({
+  type: '',
+  description: ''
+})
+
+const addSpecialRecord = (item: IncomeItem) => {
+  currentSpecialItem.value = item
+  specialRecordForm.value = {
+    type: '',
+    description: ''
+  }
+  showSpecialRecordModal.value = true
+}
+
+const saveSpecialRecord = () => {
+  if (!currentSpecialItem.value || !specialRecordForm.value.type) {
+    toastFunc.warning('警告', '请填写特殊项目类型')
+    return
+  }
+
+  if (!currentSpecialItem.value.specialRecords) {
+    currentSpecialItem.value.specialRecords = []
+  }
+
+  currentSpecialItem.value.specialRecords.push({
+    id: `SR${Date.now()}`,
+    type: specialRecordForm.value.type,
+    description: specialRecordForm.value.description,
+    operator: '当前用户',
+    createdAt: new Date().toISOString()
+  })
+
+  toastFunc.success('成功', '特殊项目记录已添加')
+  showSpecialRecordModal.value = false
+  specialRecordForm.value = { type: '', description: '' }
+}
+
 // 导出数据
 const exportData = () => {
   toastFunc.info('导出中', '正在导出收入数据...')
@@ -1456,18 +1542,17 @@ const exportData = () => {
   try {
     const exportData = filteredItems.value.map(item => ({
       '收入单号': item.id,
-      '收入类型': item.typeLabel,
-      '收入分类': item.category,
+      '业务线': item.businessLine || '-',
+      '产品周期': item.productType || '-',
       '会员姓名': item.memberName,
       '会员手机': item.memberPhone,
       '会员ID': item.memberId,
-      '收入金额': item.amount,
-      '支付方式': item.paymentMethodLabel,
-      '状态': item.statusLabel,
+      '收入类型': item.incomeType || '-',
+      '订单号': item.orderId || '-',
       '销售人员': item.salesman || '-',
-      '备注': item.remark || '-',
+      '特殊备注': item.specialRemark || '-',
       '创建时间': item.createdAt,
-      '确认时间': item.confirmedAt || '-'
+      '特殊项目数': item.specialRecords?.length || 0
     }))
 
     const wb = XLSX.utils.book_new()
@@ -1475,18 +1560,17 @@ const exportData = () => {
 
     ws['!cols'] = [
       { wch: 15 }, // 收入单号
-      { wch: 12 }, // 收入类型
-      { wch: 12 }, // 收入分类
+      { wch: 12 }, // 业务线
+      { wch: 12 }, // 产品周期
       { wch: 12 }, // 会员姓名
       { wch: 15 }, // 会员手机
       { wch: 12 }, // 会员ID
-      { wch: 12 }, // 收入金额
-      { wch: 12 }, // 支付方式
-      { wch: 10 }, // 状态
-      { wch: 12 }, // 销售人员
-      { wch: 20 }, // 备注
-      { wch: 20 }, // 创建时间
-      { wch: 20 }  // 确认时间
+      { wch: 12 }, // 收入类型
+      { wch: 15 }, // 订单号
+      { wch: 10 }, // 销售人员
+      { wch: 30 }, // 特殊备注
+      { wch: 18 }, // 创建时间
+      { wch: 12 }  // 特殊项目数
     ]
 
     XLSX.utils.book_append_sheet(wb, ws, '收入明细')

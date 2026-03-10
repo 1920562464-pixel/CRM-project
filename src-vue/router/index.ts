@@ -3,6 +3,7 @@ import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 // 导入页面组件 - 使用相对路径
 import Dashboard from '../views/Dashboard.vue'
 import DashboardNew from '../components/RoleBasedDashboard.vue'
+import CoachDashboard from '../views/CoachDashboard.vue'
 import SalesMonitor from '../views/SalesMonitor.vue'
 import ClientList from '../views/ClientList.vue'
 import ClientProfile from '../views/ClientProfile.vue'
@@ -38,6 +39,10 @@ import KnowledgeBase from '../views/KnowledgeBase.vue'
 // 系统管理
 import SystemManagement from '../views/SystemManagement.vue'
 
+// 预警和风险预测
+import AlertCenter from '../views/AlertCenter.vue'
+import RiskPredictionCenter from '../views/RiskPredictionCenter.vue'
+
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
@@ -53,6 +58,11 @@ const routes: RouteRecordRaw[] = [
     path: '/dashboard-old',
     name: 'DashboardOld',
     component: Dashboard
+  },
+  {
+    path: '/coach-dashboard',
+    name: 'CoachDashboard',
+    component: CoachDashboard
   },
   // 批量化任务处理
   {
@@ -190,6 +200,17 @@ const routes: RouteRecordRaw[] = [
     path: '/salary-slip-management',
     name: 'SalarySlipManagement',
     component: () => import('../components/SalarySlipManager.vue')
+  },
+  // 预警和风险预测
+  {
+    path: '/alert-center',
+    name: 'AlertCenter',
+    component: AlertCenter
+  },
+  {
+    path: '/risk-prediction',
+    name: 'RiskPredictionCenter',
+    component: RiskPredictionCenter
   }
 ]
 

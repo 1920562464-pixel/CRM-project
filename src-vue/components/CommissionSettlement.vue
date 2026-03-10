@@ -48,13 +48,29 @@
 
       <!-- 当前规则提示 -->
       <div v-if="activeTab !== 'rules'" class="bg-blue-50 border border-blue-200 rounded-xl p-4">
-        <div class="flex items-center gap-2">
-          <AlertCircle :size="18" class="text-blue-600" />
-          <div>
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <AlertCircle :size="18" class="text-blue-600" />
             <span class="font-semibold text-blue-900">当前佣金规则：</span>
-            <span class="text-sm text-blue-800 ml-2">
-              佣金比例 {{ currentRule.minRate }}% - {{ currentRule.maxRate }}%，默认 {{ currentRule.defaultRate }}%
-            </span>
+          </div>
+          <div class="text-sm text-blue-800 space-y-2 ml-7">
+            <div v-for="product in PRODUCTS" :key="product.id" class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="font-medium">{{ product.name }}</span>
+                <span v-if="product.subsidy" class="text-xs text-orange-600">(含{{ formatPrice(product.subsidy) }}补贴)</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-slate-600">{{ formatPrice(product.price) }}</span>
+                <span v-if="product.hasCommission" :class="`font-semibold ${getProductTypeColor(product.commissionType)}`">
+                  {{ product.commissionRate }}%提成
+                </span>
+                <span v-else class="font-medium text-slate-500">无提成</span>
+              </div>
+            </div>
+            <div class="pt-2 border-t border-blue-200 mt-2 space-y-1">
+              <div>• 结算周期：<span class="font-medium">3个月无退费期</span></div>
+              <div>• 已停用产品：399/14天短期产品（原25%提成）</div>
+            </div>
           </div>
         </div>
       </div>
@@ -265,6 +281,59 @@
         </div>
       </div>
     </Teleport>
+
+    <!-- 佣金提报模态框 -->
+    <Teleport to="body">
+      <div v-if="showCommissionReportDialog" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg">
+          <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+            <h3 class="text-lg font-bold text-slate-900">新增佣金提报</h3>
+            <button @click="closeCommissionReportDialog" class="p-1 hover:bg-slate-100 rounded-lg transition-colors">
+              <X :size="20" class="text-slate-500" />
+            </button>
+          </div>
+          <div class="p-6 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">选择顾问 *</label>
+              <select v-model="commissionReportForm.consultantId" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="">请选择顾问</option>
+                <option v-for="consultant in consultants" :key="consultant.id" :value="consultant.id">
+                  {{ consultant.name }}
+                </option>
+              </select>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1.5">基础干预人数</label>
+                <input v-model.number="commissionReportForm.basicServiceUsers" type="number" min="0" placeholder="0" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                <div class="text-xs text-slate-500 mt-1">¥100/人</div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1.5">深度干预人数</label>
+                <input v-model.number="commissionReportForm.deepServiceUsers" type="number" min="0" placeholder="0" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                <div class="text-xs text-slate-500 mt-1">¥200/人</div>
+              </div>
+            </div>
+            <div v-if="commissionReportForm.basicServiceUsers > 0 || commissionReportForm.deepServiceUsers > 0" class="bg-purple-50 border border-purple-200 rounded-lg p-3">
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-purple-700">预计金额：</span>
+                <span class="text-lg font-bold text-purple-600">
+                  ¥{{ ((commissionReportForm.basicServiceUsers || 0) * 100 + (commissionReportForm.deepServiceUsers || 0) * 200).toLocaleString() }}
+                </span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">备注</label>
+              <textarea v-model="commissionReportForm.remark" placeholder="请输入备注信息" rows="2" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+            </div>
+          </div>
+          <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3">
+            <button @click="closeCommissionReportDialog" class="px-4 py-2 text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">取消</button>
+            <button @click="submitCommissionReport" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-colors">提交</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -278,7 +347,9 @@ import {
   Settings,
   Briefcase,
   AlertCircle,
-  X
+  X,
+  Plus,
+  CheckCircle
 } from 'lucide-vue-next'
 import * as XLSX from 'xlsx'
 import { useToast } from '@/composables/useToast'
@@ -291,6 +362,7 @@ import CommissionSettlementsTab from './settlement/CommissionSettlementsTab.vue'
 import CommissionPaymentsTab from './settlement/CommissionPaymentsTab.vue'
 import CommissionReportsTab from './settlement/CommissionReportsTab.vue'
 import CommissionRulesTab from './settlement/CommissionRulesTab.vue'
+import { PRODUCTS, formatPrice, formatCommission, getProductTypeDisplay, getProductTypeColor, isSubsidizedProduct } from '@/types/products'
 
 // Props
 interface Props {
@@ -408,12 +480,12 @@ const selectedPeriod = ref('2024-02')
 // 佣金规则
 const commissionRules = ref<CommissionRule[]>([{
   id: '1',
-  name: '标准佣金规则',
-  minRate: 8,
-  maxRate: 10,
-  defaultRate: 8,
-  description: '默认佣金比例为8%，优秀顾问可申请至10%',
-  effectiveDate: '2023-01-01'
+  name: '产品佣金标准规则',
+  minRate: 0,
+  maxRate: 5,
+  defaultRate: 2,
+  description: '999元无提成，3188元2%，25800元5%',
+  effectiveDate: '2026-03-09'
 }])
 
 const currentRule = computed(() => commissionRules.value[0])
@@ -1038,6 +1110,146 @@ const confirmDeleteRule = (id: string) => {
     }
   } else {
     toast.warning('无法删除', '至少需要保留一条佣金规则')
+  }
+}
+
+// 佣金提报相关状态
+interface CommissionReport {
+  id: string
+  consultantId: string
+  consultantName: string
+  basicServiceUsers: number
+  deepServiceUsers: number
+  totalAmount: number
+  status: 'submitted' | 'approved' | 'rejected'
+  submittedAt: string
+  remark?: string
+}
+
+const commissionReports = ref<CommissionReport[]>([
+  {
+    id: 'cr1',
+    consultantId: '1',
+    consultantName: '张经理',
+    basicServiceUsers: 8,
+    deepServiceUsers: 4,
+    totalAmount: 1600,
+    status: 'submitted',
+    submittedAt: '2024-03-05 10:30:00'
+  },
+  {
+    id: 'cr2',
+    consultantId: '2',
+    consultantName: '李主管',
+    basicServiceUsers: 12,
+    deepServiceUsers: 6,
+    totalAmount: 2400,
+    status: 'approved',
+    submittedAt: '2024-03-03 14:20:00'
+  },
+  {
+    id: 'cr3',
+    consultantId: '3',
+    consultantName: '王专员',
+    basicServiceUsers: 5,
+    deepServiceUsers: 2,
+    totalAmount: 900,
+    status: 'submitted',
+    submittedAt: '2024-03-06 09:15:00'
+  }
+])
+
+const showCommissionReportDialog = ref(false)
+const commissionReportForm = ref({
+  consultantId: '',
+  basicServiceUsers: 0,
+  deepServiceUsers: 0,
+  remark: ''
+})
+
+const openCommissionReportDialog = () => {
+  commissionReportForm.value = {
+    consultantId: '',
+    basicServiceUsers: 0,
+    deepServiceUsers: 0,
+    remark: ''
+  }
+  showCommissionReportDialog.value = true
+}
+
+const closeCommissionReportDialog = () => {
+  showCommissionReportDialog.value = false
+}
+
+const submitCommissionReport = () => {
+  if (!commissionReportForm.value.consultantId) {
+    toast.error('请选择顾问')
+    return
+  }
+
+  const consultant = consultants.value.find(c => c.id === commissionReportForm.value.consultantId)
+  if (!consultant) return
+
+  const totalAmount = commissionReportForm.value.basicServiceUsers * 100 + commissionReportForm.value.deepServiceUsers * 200
+
+  const newReport: CommissionReport = {
+    id: 'cr' + Date.now(),
+    consultantId: consultant.id,
+    consultantName: consultant.name,
+    basicServiceUsers: commissionReportForm.value.basicServiceUsers,
+    deepServiceUsers: commissionReportForm.value.deepServiceUsers,
+    totalAmount,
+    status: 'submitted',
+    submittedAt: new Date().toLocaleString('zh-CN', { hour12: false }),
+    remark: commissionReportForm.value.remark
+  }
+
+  commissionReports.value.unshift(newReport)
+  toast.success('提报成功', `已提交 ${consultant.name} 的佣金数据，等待审核`)
+  closeCommissionReportDialog()
+}
+
+const approveCommissionReport = (id: string) => {
+  const report = commissionReports.value.find(r => r.id === id)
+  if (!report) return
+
+  confirm.value = {
+    show: true,
+    title: '审批通过',
+    message: `确认通过 ${report.consultantName} 的佣金提报 ¥${report.totalAmount} 吗？`,
+    type: 'warning',
+    onConfirm: () => {
+      commissionReports.value = commissionReports.value.map(r =>
+        r.id === id ? { ...r, status: 'approved' as const } : r
+      )
+      toast.success('审批成功', `已通过 ${report.consultantName} 的佣金提报`)
+      confirm.value.show = false
+    },
+    onCancel: () => {
+      confirm.value.show = false
+    }
+  }
+}
+
+const rejectCommissionReport = (id: string) => {
+  const report = commissionReports.value.find(r => r.id === id)
+  if (!report) return
+
+  confirm.value = {
+    show: true,
+    title: '驳回提报',
+    message: `确认驳回 ${report.consultantName} 的佣金提报吗？`,
+    type: 'danger',
+    onConfirm: () => {
+      commissionReports.value = commissionReports.value.map(r =>
+        r.id === id ? { ...r, status: 'rejected' as const } : r
+      )
+      toast.success('驳回成功', `已驳回 ${report.consultantName} 的佣金提报`)
+      confirm.value.show = false
+    },
+    onCancel: () => {
+      confirm.value.show = false
+    }
   }
 }
 </script>
