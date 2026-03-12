@@ -99,8 +99,65 @@
 
         <!-- User List -->
         <div class="flex-1 overflow-y-auto">
+          <!-- 返回群列表按钮 -->
+          <div v-if="selectedGroup" class="p-2">
+            <button
+              @click="selectedGroup = null"
+              class="w-full p-2 rounded-lg text-left text-xs flex items-center gap-2 transition-colors"
+              :style="{
+                background: 'var(--fill-light)',
+                color: 'var(--text-regular)'
+              }"
+            >
+              <ArrowLeft :size="14" />
+              <span>返回群列表</span>
+            </button>
+          </div>
+
           <div class="p-2 space-y-0.5">
-            <!-- User Items -->
+            <!-- 群组列表视图 -->
+            <div v-if="!selectedGroup" class="space-y-0.5">
+              <div
+                v-for="group in groups"
+                :key="group.id"
+                @click="selectGroup(group)"
+                class="p-2.5 rounded-lg cursor-pointer transition-all"
+                :style="{
+                  border: '1px solid transparent'
+                }"
+                @mouseenter="$event.currentTarget.style.background = 'var(--fill-light)'"
+                @mouseleave="$event.currentTarget.style.background = 'transparent'"
+              >
+                <div class="flex items-center gap-2">
+                  <!-- 群组头像 -->
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" :style="{ background: group.color, color: 'white' }">
+                    {{ group.name.charAt(0) }}
+                  </div>
+                  <!-- 群组信息 -->
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-xs font-medium truncate">{{ group.name }}</span>
+                      <span class="text-[10px]" :style="{ color: 'var(--text-secondary)' }">{{ group.memberCount }}人</span>
+                    </div>
+                    <div class="flex items-center gap-1 mt-0.5">
+                      <span class="text-[10px]" :style="{ color: 'var(--text-secondary)' }">今日{{ group.todayCompleted }}人已打卡</span>
+                    </div>
+                  </div>
+                  <!-- 完成率 -->
+                  <div class="flex flex-col items-end flex-shrink-0 ml-2">
+                    <span class="text-xs font-bold" :style="{
+                      color: group.completionRate >= 80 ? '#10b981' : group.completionRate >= 60 ? '#f59e0b' : '#ef4444'
+                    }">
+                      {{ group.completionRate }}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 群成员视图 -->
+            <div v-else class="space-y-0.5">
+              <!-- User Items -->
             <div
               v-for="user in filteredUsers"
               :key="user.id"
@@ -192,6 +249,7 @@
                 <div v-if="selectedUser === user.id" class="w-2 h-2 rounded-full flex-shrink-0" :style="{ background: isBlackGold.value ? '#B8860B' : '#6366f1' }"></div>
               </div>
             </div>
+            </div>
 
             <!-- Empty State -->
             <div v-if="filteredUsers.length === 0" class="text-center py-4">
@@ -234,13 +292,59 @@
                   <div>
                     <div class="flex items-center gap-3 mb-1">
                       <h2 class="text-lg font-bold" :style="{ color: 'var(--text-primary)' }">{{ currentUser?.name }}</h2>
-                      <span class="px-2 py-0.5 text-xs font-bold rounded border" :style="{
-                        background: isBlackGold.value ? 'rgba(184, 134, 11, 0.15)' : '#eef2ff',
-                        color: isBlackGold.value ? '#D4A84A' : '#4f46e5',
-                        borderColor: isBlackGold.value ? '#B8860B' : '#c7d2fe'
-                      }">
-                        {{ currentUser?.level }} 等级
-                      </span>
+                      <div class="relative">
+                        <!-- 编辑模式 -->
+                        <select
+                          v-if="editingCompliance"
+                          v-model="tempCompliance"
+                          @blur="saveCompliance"
+                          @keydown.enter="saveCompliance"
+                          @keydown.esc="cancelEditCompliance"
+                          class="px-2 py-0.5 text-xs font-bold rounded border focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer appearance-none pr-6"
+                          :style="{
+                            background: getComplianceColor(tempCompliance).bg,
+                            color: getComplianceColor(tempCompliance).text,
+                            borderColor: getComplianceColor(tempCompliance).border
+                          }"
+                          ref="complianceSelect"
+                        >
+                          <option value="优秀">优秀</option>
+                          <option value="良好">良好</option>
+                          <option value="一般">一般</option>
+                          <option value="较差">较差</option>
+                          <option value="未知">未知</option>
+                        </select>
+
+                        <!-- 显示模式 -->
+                        <span
+                          v-else
+                          @click="startEditCompliance"
+                          class="px-2 py-0.5 text-xs font-bold rounded border cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1"
+                          :style="{
+                            background: getComplianceColor(userComplianceLevel).bg,
+                            color: getComplianceColor(userComplianceLevel).text,
+                            borderColor: getComplianceColor(userComplianceLevel).border
+                          }"
+                          title="点击调整依从度"
+                        >
+                          依从度 {{ userComplianceLevel }}
+                        </span>
+
+                        <!-- 编辑模式下的下拉箭头 -->
+                        <svg
+                          v-if="editingCompliance"
+                          class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"
+                          width="10"
+                          height="10"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          :style="{ color: getComplianceColor(tempCompliance).text }"
+                        >
+                          <path d="m6 9 6 6 6-6"></path>
+                        </svg>
+                      </div>
                       <span
                         :class="`px-2 py-0.5 text-xs font-bold rounded-full border flex items-center gap-1 ${
                           currentUser?.status === 'active'
@@ -255,7 +359,62 @@
                     <div class="flex items-center gap-3 text-sm text-slate-500">
                       <span>ID: {{ selectedUser }}</span>
                       <span>·</span>
-                      <span>{{ currentUser?.tags?.join(' · ') || '' }}</span>
+                      <div class="flex items-center gap-1.5 flex-wrap">
+                        <!-- 标签列表 - 支持编辑和删除 -->
+                        <template v-for="(tag, i) in userTags" :key="i">
+                          <!-- 编辑模式 -->
+                          <input
+                            v-if="editingTagIndex === i"
+                            v-model="editingTagValue"
+                            @blur="saveEditingTag"
+                            @keydown.enter="saveEditingTag"
+                            @keydown.esc="cancelEditingTag"
+                            class="w-20 px-2 py-0.5 text-xs border border-indigo-300 rounded focus:outline-none"
+                            ref="editTagInput"
+                          />
+                          <!-- 显示模式 -->
+                          <div v-else class="group relative">
+                            <span
+                              @click="startEditingTag(i, tag)"
+                              class="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded-full text-xs text-slate-600 font-medium hover:bg-white hover:border-indigo-300 hover:text-indigo-600 transition-colors cursor-pointer"
+                            >
+                              #{{ tag }}
+                            </span>
+                            <button
+                              @click.stop="deleteTag(i)"
+                              class="absolute -top-1.5 -right-1.5 bg-slate-400 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
+                            >
+                              <X :size="8" />
+                            </button>
+                          </div>
+                        </template>
+
+                        <!-- 添加新标签 -->
+                        <div v-if="showAddTag" class="flex items-center gap-1">
+                          <input
+                            v-model="newTag"
+                            @keydown.enter="handleAddTag"
+                            type="text"
+                            class="w-20 px-2 py-0.5 text-xs border border-indigo-300 rounded focus:outline-none"
+                            placeholder="输入标签..."
+                            ref="addTagInput"
+                          />
+                          <button @click="handleAddTag" class="text-indigo-600 hover:text-indigo-700">
+                            <CheckCircle :size="14" />
+                          </button>
+                          <button @click="showAddTag = false" class="text-slate-400 hover:text-slate-600">
+                            <X :size="14" />
+                          </button>
+                        </div>
+
+                        <button
+                          v-if="!showAddTag"
+                          @click="openAddTag"
+                          class="px-2 py-0.5 border border-dashed border-slate-300 text-slate-400 rounded-full text-xs hover:text-indigo-600 hover:border-indigo-300 transition-colors flex items-center gap-1"
+                        >
+                          <Plus :size="12" /> 添加
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -453,60 +612,146 @@
                 <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
                   <div class="flex items-center justify-between mb-3">
                     <h3 class="font-bold text-slate-800 flex items-center gap-2">
-                      <ListTodo :size="18" class="text-indigo-600" />
-                      今日任务
+                      <Activity :size="18" class="text-indigo-600" />
+                      {{ isToday ? '今日打卡数据' : isRetroactiveMode ? '历史打卡数据（补卡）' : `${selectedCalendarMonth}月${selectedCalendarDay}日打卡数据` }}
                     </h3>
-                    <button
-                      @click="showAddTaskModal = true"
-                      class="text-indigo-600 text-xs font-medium hover:bg-indigo-50 px-2 py-1 rounded flex items-center gap-1 transition-colors"
-                    >
-                      <Plus :size="14" /> 添加任务
-                    </button>
+                    <div v-if="!isToday && isRetroactiveMode" class="flex items-center gap-1 px-2 py-1 bg-amber-50 text-amber-700 text-xs rounded border border-amber-200">
+                      <Zap :size="12" />
+                      补打卡模式
+                    </div>
                   </div>
 
-                  <div class="space-y-2">
-                    <!-- Blockers Section -->
-                    <div v-if="blockers.length > 0">
-                      <div class="flex items-center justify-between mb-3">
+                  <div class="space-y-3">
+                    <!-- 4 Core Data Cards Grid -->
+                    <div class="grid grid-cols-2 gap-2">
+                      <!-- 饮食拍照 -->
+                      <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-3 rounded-lg border border-blue-100">
+                        <div class="flex items-center gap-2 mb-2">
+                          <div class="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
+                            <Camera :size="16" class="text-white" />
+                          </div>
+                          <div>
+                            <h4 class="text-xs font-bold text-blue-900">饮食拍照</h4>
+                            <p class="text-[10px] text-blue-600">今日已上传 {{ mealUploadCount }}/{{ mealUploadTarget }}</p>
+                          </div>
+                        </div>
                         <div class="flex items-center gap-2">
-                          <ShieldAlert :size="16" class="text-orange-600" />
-                          <h4 class="font-bold text-slate-700 text-sm">当前阻塞点</h4>
-                          <span class="text-xs bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full">
+                          <div class="flex-1 bg-blue-200 rounded-full h-1.5">
+                            <div
+                              class="bg-blue-500 h-1.5 rounded-full transition-all"
+                              :style="{ width: `${(mealUploadCount / mealUploadTarget) * 100}%` }"
+                            ></div>
+                          </div>
+                          <span class="text-xs font-bold text-blue-700">{{ Math.round((mealUploadCount / mealUploadTarget) * 100) }}%</span>
+                        </div>
+                      </div>
+
+                      <!-- 打卡 -->
+                      <div class="bg-gradient-to-br from-purple-50 to-violet-50 p-3 rounded-lg border border-purple-100">
+                        <div class="flex items-center gap-2 mb-2">
+                          <div class="w-8 h-8 rounded-lg bg-purple-500 flex items-center justify-center">
+                            <CheckCircle2 :size="16" class="text-white" />
+                          </div>
+                          <div>
+                            <h4 class="text-xs font-bold text-purple-900">打卡</h4>
+                            <p class="text-[10px] text-purple-600">今日完成 {{ habitCompletedCount }}/{{ habitTotalCount }}</p>
+                          </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                          <div class="flex-1 bg-purple-200 rounded-full h-1.5">
+                            <div
+                              class="bg-purple-500 h-1.5 rounded-full transition-all"
+                              :style="{ width: `${habitTotalCount > 0 ? (habitCompletedCount / habitTotalCount) * 100 : 0}%` }"
+                            ></div>
+                          </div>
+                          <span class="text-xs font-bold text-purple-700">{{ habitTotalCount > 0 ? Math.round((habitCompletedCount / habitTotalCount) * 100) : 0 }}%</span>
+                        </div>
+                      </div>
+
+                      <!-- 课程学习 -->
+                      <div class="bg-gradient-to-br from-teal-50 to-cyan-50 p-3 rounded-lg border border-teal-100">
+                        <div class="flex items-center gap-2 mb-2">
+                          <div class="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center">
+                            <BookOpen :size="16" class="text-white" />
+                          </div>
+                          <div>
+                            <h4 class="text-xs font-bold text-teal-900">课程学习</h4>
+                            <p class="text-[10px] text-teal-600">已完成 {{ coursesCompleted }}/{{ coursesTotal }} 课时</p>
+                          </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                          <div class="flex-1 bg-teal-200 rounded-full h-1.5">
+                            <div
+                              class="bg-teal-500 h-1.5 rounded-full transition-all"
+                              :style="{ width: `${(coursesCompleted / coursesTotal) * 100}%` }"
+                            ></div>
+                          </div>
+                          <span class="text-xs font-bold text-teal-700">{{ Math.round((coursesCompleted / coursesTotal) * 100) }}%</span>
+                        </div>
+                      </div>
+
+                      <!-- 阻碍反馈 -->
+                      <div class="bg-gradient-to-br from-rose-50 to-pink-50 p-3 rounded-lg border border-rose-100">
+                        <div class="flex items-center gap-2 mb-2">
+                          <div class="w-8 h-8 rounded-lg bg-rose-500 flex items-center justify-center">
+                            <MessageSquare :size="16" class="text-white" />
+                          </div>
+                          <div>
+                            <h4 class="text-xs font-bold text-rose-900">阻碍反馈</h4>
+                            <p class="text-[10px] text-rose-600">今日提报 {{ obstacleCount }} 条</p>
+                          </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                          <div class="flex-1">
+                            <div class="text-[10px] text-rose-600">{{ obstacleCount > 0 ? '有待处理' : '无阻碍' }}</div>
+                          </div>
+                          <span class="text-xs font-bold text-rose-700">{{ obstacleCount }}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Blockers Section -->
+                    <div v-if="blockers.length > 0" class="pt-3 border-t border-slate-100">
+                      <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                          <ShieldAlert :size="14" class="text-orange-600" />
+                          <h4 class="font-bold text-slate-700 text-xs">饮食打卡阻碍</h4>
+                          <span class="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full">
                             {{ blockers.length }}
                           </span>
                         </div>
                       </div>
-                      <div class="space-y-2">
+                      <div class="space-y-1.5">
                         <div
                           v-for="blocker in blockers"
                           :key="blocker.id"
-                          class="p-3 rounded-lg border"
+                          class="p-2 rounded-lg border"
                           :class="blocker.resolved ? 'bg-green-50 border-green-100 opacity-60' : 'bg-orange-50 border-orange-100'"
                         >
-                          <div class="flex items-start gap-3">
+                          <div class="flex items-start gap-2">
                             <component
                               :is="blocker.source === 'AI' ? Bot : UserCheck"
-                              :size="18"
+                              :size="14"
                               :class="blocker.resolved ? 'text-green-600' : 'text-orange-600'"
                             />
-                            <div class="flex-1">
-                              <div class="flex items-center gap-2 mb-1">
-                                <span class="text-[10px] px-1.5 py-0.5 rounded font-bold uppercase"
+                            <div class="flex-1 min-w-0">
+                              <div class="flex items-center gap-1.5 mb-0.5">
+                                <span class="text-[9px] px-1 py-0.5 rounded font-bold uppercase"
                                   :class="blocker.source === 'AI' ? 'bg-orange-100 text-orange-700' : 'bg-slate-100 text-slate-600'">
                                   {{ blocker.source === 'AI' ? 'AI识别' : '教练添加' }}
                                 </span>
-                                <h4 class="font-bold text-sm" :class="blocker.resolved ? 'text-green-800 line-through' : 'text-orange-800'">
+                                <h4 class="text-[11px] font-bold truncate" :class="blocker.resolved ? 'text-green-800 line-through' : 'text-orange-800'">
                                   {{ blocker.title }}
                                 </h4>
                               </div>
-                              <p class="text-xs leading-relaxed" :class="blocker.resolved ? 'text-green-700/60' : 'text-orange-700/80'">
+                              <p class="text-[10px] leading-snug" :class="blocker.resolved ? 'text-green-700/60' : 'text-orange-700/80'">
                                 {{ blocker.description }}
                               </p>
                             </div>
                             <button
                               v-if="!blocker.resolved"
                               @click="resolveBlocker(blocker.id)"
-                              class="px-3 py-1.5 text-xs font-bold rounded shadow-sm border transition-colors bg-white text-orange-600 border-orange-100 hover:bg-orange-50"
+                              class="px-2 py-1 text-[10px] font-bold rounded shadow-sm border transition-colors bg-white text-orange-600 border-orange-100 hover:bg-orange-50 flex-shrink-0"
                             >
                               处理
                             </button>
@@ -515,207 +760,116 @@
                       </div>
                     </div>
 
-                    <!-- Coach Tasks Section -->
-                    <div>
-                      <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-2">
-                          <UserCheck :size="16" class="text-slate-700" />
-                          <h4 class="font-bold text-slate-700 text-sm">教练待办</h4>
-                          <span class="text-xs bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full">
-                            {{ coachTasks.filter(t => !t.completed).length }}/{{ coachTasks.length }}
-                          </span>
-                        </div>
-                      </div>
-                      <div class="space-y-2">
-                        <div
-                          v-for="task in coachTasks"
-                          :key="task.id"
-                          @click="toggleCoachTask(task.id)"
-                          class="p-3 rounded-lg border transition-all cursor-pointer"
-                          :class="task.completed ? 'bg-green-50 border-green-100 opacity-60' : 'bg-white border-slate-200 hover:border-indigo-300 hover:shadow-sm'"
-                        >
-                          <div class="flex items-start justify-between">
-                            <div class="flex items-start gap-3">
-                              <div class="mt-0.5">
-                                <div
-                                  :class="`w-4 h-4 rounded border flex items-center justify-center transition-all ${
-                                    task.completed ? 'bg-green-500 border-green-500' : 'border-slate-300'
-                                  }`"
-                                >
-                                  <Check v-if="task.completed" :size="10" class="text-white" />
-                                </div>
-                              </div>
-                              <div>
-                                <h4 class="text-sm font-bold" :class="task.completed ? 'text-green-700 line-through' : 'text-slate-800'">
-                                  {{ task.title }}
-                                </h4>
-                                <p class="text-xs mt-1" :class="task.completed ? 'text-green-600/60' : 'text-slate-500'">
-                                  {{ task.description }}
-                                </p>
-                                <div class="flex items-center gap-2 mt-2">
-                                  <span
-                                    :class="`text-[10px] font-medium px-1.5 py-0.5 rounded ${
-                                      task.priority === 'high'
-                                        ? 'bg-red-50 text-red-600'
-                                        : task.priority === 'medium'
-                                        ? 'bg-orange-50 text-orange-600'
-                                        : 'bg-slate-100 text-slate-600'
-                                    }`"
-                                  >
-                                    {{ task.priority === 'high' ? '高优先级' : task.priority === 'medium' ? '中优先级' : '低优先级' }}
-                                  </span>
-                                  <span class="text-[10px] text-slate-400 flex items-center gap-1">
-                                    <Clock :size="10" />
-                                    {{ task.deadline }}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div v-if="coachTasks.length === 0" class="text-center py-4 text-slate-400 text-sm">
-                          暂无教练待办任务
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- User Tasks Section -->
-                    <div class="pt-4 border-t border-slate-100">
-                      <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-2">
-                          <Calendar :size="16" class="text-indigo-600" />
-                          <h4 class="font-bold text-slate-700 text-sm">
-                            {{ isRetroactiveMode ? '历史任务' : '用户今日任务' }}
-                          </h4>
-                          <span class="text-xs bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full">
-                            {{ userTasks.filter(t => !t.completed).length }}/{{ userTasks.length }}
-                          </span>
-                        </div>
-                      </div>
-                      <div class="space-y-2">
-                        <div
-                          v-for="task in userTasks"
-                          :key="task.id"
-                          @click="toggleUserTask(task.id)"
-                          class="flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer"
-                          :class="{
-                            'bg-amber-50 border-amber-200': task.completed && task.isRetroactive,
-                            'bg-slate-50 border-slate-100': task.completed && !task.isRetroactive,
-                            'bg-white border-slate-200 hover:border-indigo-300': !task.completed
-                          }"
-                        >
-                          <div class="w-4 h-4 rounded border flex items-center justify-center transition-all"
-                            :class="{
-                              'bg-amber-500 border-amber-500 text-white': task.completed && task.isRetroactive,
-                              'bg-indigo-500 border-indigo-500 text-white': task.completed && !task.isRetroactive,
-                              'border-slate-300 hover:border-indigo-500': !task.completed
-                            }">
-                            <Check v-if="task.completed" :size="10" />
-                          </div>
-                          <div class="flex-1">
-                            <div class="flex items-center gap-2">
-                              <div class="text-xs font-medium" :class="task.completed ? 'text-slate-500 line-through' : 'text-slate-800'">
-                                {{ task.title }}
-                              </div>
-                              <span v-if="task.isRetroactive" class="px-1.5 py-0.5 bg-amber-100 text-amber-600 text-[10px] font-medium rounded border border-amber-200">
-                                补卡
-                              </span>
-                            </div>
-                            <div v-if="task.completed && task.completedAt" class="text-[10px] text-slate-400">
-                              完成于 {{ task.completedAt }}
-                            </div>
-                          </div>
-                          <span class="text-[10px] text-slate-400 font-mono">{{ task.time }}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Habits Section -->
-                    <div class="pt-4 border-t border-slate-100">
-                      <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-2">
-                          <Zap :size="16" class="text-amber-500" />
-                          <h4 class="font-bold text-slate-700 text-sm">习惯养成</h4>
-                        </div>
-                      </div>
-                      <div class="grid grid-cols-2 gap-2">
-                        <div
-                          v-for="habit in habits"
-                          :key="habit.id"
-                          @click="toggleHabit(habit.id)"
-                          class="p-3 rounded-lg border transition-all cursor-pointer"
-                          :class="habit.checkedToday ? 'bg-amber-50/50 border-amber-100' : 'bg-white border-slate-200 hover:border-amber-300'"
-                        >
-                          <div class="flex items-center gap-2 mb-1">
-                            <div class="w-4 h-4 rounded-full border flex items-center justify-center transition-all"
-                              :class="habit.checkedToday ? 'bg-amber-500 border-amber-500 text-white' : 'border-slate-300'">
-                              <Check v-if="habit.checkedToday" :size="10" />
-                            </div>
-                            <span class="text-xs font-medium" :class="habit.checkedToday ? 'text-amber-900' : 'text-slate-800'">
-                              {{ habit.title }}
-                            </span>
-                          </div>
-                          <div class="flex items-center gap-1 text-[10px] text-amber-600 font-bold">
-                            <Zap :size="8" class="fill-amber-600" />
-                            {{ habit.streak }}天
-                          </div>
-                        </div>
+                    <!-- Empty state when no blockers -->
+                    <div v-else class="pt-3 border-t border-slate-100">
+                      <div class="text-center py-3">
+                        <CheckCircle :size="32" class="text-green-500 mx-auto mb-2" />
+                        <p class="text-xs text-slate-500">暂无打卡阻碍</p>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <!-- Right Column: Intervention Map (3 cols) -->
-              <div class="col-span-12 md:col-span-3">
+              <!-- Right Column: Calendar and Actions (3 cols) -->
+              <div class="col-span-12 md:col-span-3 space-y-3">
+                <!-- Check-in Calendar -->
                 <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
                   <div class="flex items-center justify-between mb-2">
                     <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
-                      <Flag :size="16" class="text-indigo-600" />
-                      干预地图
+                      <Calendar :size="16" class="text-indigo-600" />
+                      打卡日历
                     </h3>
-                    <span class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded font-bold border border-indigo-100">
-                      {{ currentStage }}
-                    </span>
+                    <button
+                      @click="handleMonthClick"
+                      class="flex items-center gap-1 text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded font-bold border border-indigo-100 hover:bg-indigo-100 transition-colors cursor-pointer group"
+                      title="点击左侧上个月，点击右侧下个月"
+                    >
+                      <ChevronLeft
+                        :size="12"
+                        class="group-hover:-translate-x-0.5 transition-transform"
+                        @click.stop="prevMonth"
+                      />
+                      <span class="min-w-[60px] text-center">{{ viewingMonthLabel }}</span>
+                      <ChevronRight
+                        :size="12"
+                        class="group-hover:translate-x-0.5 transition-transform"
+                        @click.stop="nextMonth"
+                      />
+                    </button>
                   </div>
 
-                  <!-- Stage Timeline -->
-                  <div class="relative py-2 pl-4 border-l-2 border-slate-100 ml-1 space-y-3">
-                    <div
-                      v-for="(stage, index) in interventionStages"
-                      :key="stage.id"
-                      class="relative"
-                      :class="stage.completed ? 'opacity-50 grayscale' : stage.active ? '' : 'opacity-40'"
-                    >
-                      <div class="absolute"
-                        :class="stage.completed ? '-left-[21px] top-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white' :
-                          stage.active ? '-left-[23px] top-0 w-4 h-4 bg-indigo-600 rounded-full border-2 border-white shadow-sm ring-2 ring-indigo-100' :
-                          '-left-[21px] top-0 w-3 h-3 bg-slate-200 rounded-full border-2 border-white'">
+                  <!-- Calendar Grid -->
+                  <div class="space-y-2">
+                    <!-- Weekday Headers -->
+                    <div class="grid grid-cols-7 gap-1 text-center">
+                      <div v-for="day in ['日', '一', '二', '三', '四', '五', '六']" :key="day" class="text-[10px] text-slate-500 font-medium">
+                        {{ day }}
                       </div>
-                      <div class="text-xs font-bold mb-1" :class="stage.active ? 'text-indigo-700' : 'text-slate-500'">
-                        {{ stage.name }}
-                      </div>
+                    </div>
 
-                      <div v-if="stage.active" class="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100 mb-2">
-                        <div class="text-[10px] text-indigo-900 font-bold mb-1">{{ stage.goal }}</div>
-                        <p class="text-[10px] text-slate-500 leading-tight">{{ stage.description }}</p>
-                        <div class="mt-2 flex items-center gap-2">
-                          <div class="flex-1 bg-slate-100 rounded-full h-1.5">
-                            <div class="bg-indigo-500 h-1.5 rounded-full" :style="{ width: `${stage.progress}%` }"></div>
-                          </div>
-                          <span class="text-[10px] text-indigo-600 font-bold">{{ stage.progress }}%</span>
+                    <!-- Calendar Days -->
+                    <div class="grid grid-cols-7 gap-1">
+                      <div
+                        v-for="date in monthCalendarDays"
+                        :key="formatDateKey(date.date)"
+                        @click="date.inMonth && selectMonthDate(date.day)"
+                        class="aspect-square rounded-lg flex flex-col items-center justify-center text-[10px] cursor-pointer transition-all hover:scale-105"
+                        :style="{
+                          background: !date.inMonth ? 'transparent' :
+                                   date.isSelected ? 'rgba(79, 70, 229, 0.2)' :
+                                   date.isToday ? 'rgba(79, 70, 229, 0.1)' :
+                                   date.hasData ? 'rgba(16, 185, 129, 0.1)' :
+                                   date.canRetroactive ? 'rgba(251, 191, 36, 0.1)' :
+                                   'bg-slate-50',
+                          color: !date.inMonth ? 'var(--text-disabled)' :
+                                 date.isSelected ? '#4f46e5' :
+                                 date.isToday ? '#4f46e5' :
+                                 date.hasData ? '#10b981' :
+                                 date.canRetroactive ? '#d97706' :
+                                 'var(--text-regular)',
+                          border: !date.inMonth ? 'none' :
+                                  date.isSelected ? '2px solid #4f46e5' :
+                                  date.isToday ? '1px solid #4f46e5' :
+                                  date.hasData ? '1px solid #10b981' :
+                                  date.canRetroactive ? '1px solid #fbbf24' : 'none',
+                          opacity: date.inMonth ? 1 : 0.3
+                        }"
+                      >
+                        <span class="font-medium">{{ date.day }}</span>
+                        <span v-if="date.hasData && date.inMonth" class="text-[8px] mt-0.5">✓</span>
+                        <span v-else-if="!date.hasData && date.inMonth" class="text-[8px] mt-0.5" style="color: var(--text-disabled);">○</span>
+                      </div>
+                    </div>
+
+                    <!-- Legend and Quick Actions -->
+                    <div class="flex items-center justify-between pt-2 text-[9px]">
+                      <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-1">
+                          <div class="w-3 h-3 rounded" style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981;"></div>
+                          <span class="text-slate-500">已完成</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                          <div class="w-3 h-3 rounded" style="background: rgba(251, 191, 36, 0.1); border: 1px solid #fbbf24;"></div>
+                          <span class="text-slate-500">可补卡</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                          <div class="w-3 h-3 rounded" style="background: rgba(79, 70, 229, 0.1); border: 1px solid #4f46e5;"></div>
+                          <span class="text-slate-500">今天</span>
                         </div>
                       </div>
-
-                      <div class="text-[10px]" :class="stage.active ? 'text-slate-500' : 'text-slate-400'">
-                        {{ stage.completed ? '已完成' : stage.active ? `第 ${stage.currentWeek} 周` : '待解锁' }}
-                      </div>
+                      <button
+                        @click="goToToday"
+                        class="text-[10px] font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
+                      >
+                        回到今天
+                      </button>
                     </div>
                   </div>
                 </div>
 
                 <!-- Quick Actions -->
-                <div class="mt-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
                   <h3 class="font-bold text-slate-800 text-sm mb-3">快捷操作</h3>
                   <div class="space-y-2">
                     <button
@@ -917,6 +1071,9 @@
 import { ref, computed, onMounted, inject, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useTheme } from '../composables/useTheme'
+import { useUserTags } from '../composables/useUserTags'
+import { useUserCompliance } from '../composables/useUserCompliance'
+import type { ComplianceLevel } from '../composables/useUserCompliance'
 
 // 主题相关
 const { currentTheme } = useTheme()
@@ -942,7 +1099,14 @@ import {
   AlertTriangle,
   Bot,
   HelpCircle,
-  Info
+  Info,
+  ArrowLeft,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle2,
+  Camera,
+  BookOpen
 } from 'lucide-vue-next'
 import DatePickerButton from '../components/shared/DatePickerButton.vue'
 import Toast from '../components/shared/Toast.vue'
@@ -951,6 +1115,125 @@ import HealthDataPreview from '../components/HealthDataPreview.vue'
 const router = useRouter()
 const route = useRoute()
 const toastRef = ref<InstanceType<typeof Toast>>()
+
+// User tags management
+const {
+  getUserTags,
+  addUserTag,
+  removeUserTag,
+  updateUserTag,
+  initUserTags
+} = useUserTags()
+
+// User compliance management
+const {
+  getUserCompliance,
+  setUserCompliance,
+  getComplianceColor,
+  initUserCompliance
+} = useUserCompliance()
+
+// 标签编辑状态
+const editingTagIndex = ref<number | null>(null)
+const editingTagValue = ref('')
+const showAddTag = ref(false)
+const newTag = ref('')
+const editTagInput = ref<HTMLInputElement>()
+const addTagInput = ref<HTMLInputElement>()
+
+// 依从度编辑状态
+const editingCompliance = ref(false)
+const tempCompliance = ref<ComplianceLevel>('未知')
+const complianceSelect = ref<HTMLSelectElement>()
+
+// 获取当前用户的标签
+const userTags = computed(() => {
+  if (!selectedUser.value) return []
+  const tags = getUserTags(selectedUser.value)
+  // 如果没有标签，初始化为用户的tags
+  if (tags.length === 0) {
+    const user = users.value.find(u => u.id === selectedUser.value)
+    if (user && user.tags && user.tags.length > 0) {
+      initUserTags(selectedUser.value, user.tags)
+      return user.tags
+    }
+  }
+  return tags
+})
+
+// 获取当前用户的依从度等级
+const userComplianceLevel = computed(() => {
+  if (!selectedUser.value) return '未知'
+  return getUserCompliance(selectedUser.value)
+})
+
+// 标签编辑方法
+const startEditingTag = (index: number, value: string) => {
+  editingTagIndex.value = index
+  editingTagValue.value = value
+  nextTick(() => {
+    editTagInput.value?.focus()
+  })
+}
+
+const saveEditingTag = () => {
+  if (editingTagIndex.value !== null && editingTagValue.value.trim() && selectedUser.value) {
+    updateUserTag(selectedUser.value, editingTagIndex.value, editingTagValue.value.trim())
+    editingTagIndex.value = null
+    toastRef.value?.success('标签已更新')
+  }
+}
+
+const cancelEditingTag = () => {
+  editingTagIndex.value = null
+  editingTagValue.value = ''
+}
+
+const deleteTag = (index: number) => {
+  if (selectedUser.value) {
+    removeUserTag(selectedUser.value, index)
+    toastRef.value?.success('标签已删除')
+  }
+}
+
+const openAddTag = () => {
+  showAddTag.value = true
+  nextTick(() => {
+    addTagInput.value?.focus()
+  })
+}
+
+const handleAddTag = () => {
+  if (newTag.value.trim() && selectedUser.value) {
+    addUserTag(selectedUser.value, newTag.value.trim())
+    newTag.value = ''
+    showAddTag.value = false
+    toastRef.value?.success('标签已添加')
+  }
+}
+
+// 依从度编辑方法
+const startEditCompliance = () => {
+  if (!selectedUser.value) return
+  tempCompliance.value = userComplianceLevel.value
+  editingCompliance.value = true
+  nextTick(() => {
+    complianceSelect.value?.focus()
+  })
+}
+
+const saveCompliance = () => {
+  if (selectedUser.value && tempCompliance.value !== userComplianceLevel.value) {
+    setUserCompliance(selectedUser.value, tempCompliance.value)
+    toastRef.value?.success(`依从度已更新为：${tempCompliance.value}`)
+  }
+  editingCompliance.value = false
+}
+
+const cancelEditCompliance = () => {
+  tempCompliance.value = userComplianceLevel.value
+  editingCompliance.value = false
+}
 
 // Inject calendar state from App.vue
 const calendarState = inject<{
@@ -1004,6 +1287,13 @@ interface UserData {
   lastWeight: number
   lastBP: string
   lastDeviceSync: Date
+  mealUploadCount?: number
+  calorieIntake?: number
+  nutrientProtein?: number
+  nutrientCarbs?: number
+  nutrientFat?: number
+  coursesCompleted?: number
+  coursesTotal?: number
 }
 
 interface Blocker {
@@ -1057,12 +1347,82 @@ const activeFilter = ref<'all' | 'pending' | 'in-progress' | 'completed'>('all')
 const sortBy = ref<'完成率' | '衰老指数' | '任务数' | null>(null)
 const sortOrder = ref<'asc' | 'desc'>('desc')
 const showAddTaskModal = ref(false)
+
+// Initialize user tags when selected user changes
+watch(selectedUser, (newUserId) => {
+  if (newUserId) {
+    const user = users.value.find(u => u.id === newUserId)
+
+    // 初始化标签
+    if (user && user.tags && user.tags.length > 0) {
+      // 只在首次加载时初始化，避免覆盖用户编辑的标签
+      if (getUserTags(newUserId).length === 0) {
+        initUserTags(newUserId, user.tags)
+      }
+    }
+
+    // 初始化依从度
+    const userData = userDataMap.value[newUserId]
+    if (userData && userData.compliance) {
+      initUserCompliance(newUserId, userData.compliance)
+    }
+  }
+}, { immediate: true })
 const newTask = ref({ title: '', description: '', priority: 'medium' as const, deadline: '09:00' })
 const showAgingIndexInfo = ref(false)
+
+// 群组相关state
+const selectedGroup = ref<Group | null>(null)
+
+// 群组类型定义
+interface Group {
+  id: string
+  name: string
+  color: string
+  memberCount: number
+  completionRate: number
+  todayCompleted: number
+  memberIds: string[]
+}
+
+// 群组数据
+const groups = ref<Group[]>([
+  {
+    id: '1',
+    name: '糖尿病管理A组',
+    color: '#4f46e5',
+    memberCount: 3,
+    completionRate: 75,
+    todayCompleted: 2,
+    memberIds: ['1', '2', '3']
+  },
+  {
+    id: '2',
+    name: '减脂塑形B组',
+    color: '#10b981',
+    memberCount: 3,
+    completionRate: 82,
+    todayCompleted: 3,
+    memberIds: ['4', '6', '8']
+  },
+  {
+    id: '3',
+    name: '慢病康复C组',
+    color: '#f97316',
+    memberCount: 2,
+    completionRate: 68,
+    todayCompleted: 1,
+    memberIds: ['5', '7']
+  }
+])
 
 // Calendar state
 const selectedCalendarDate = ref(new Date())
 const isRetroactiveMode = ref(false)
+
+// Month calendar view state
+const viewingMonth = ref(new Date().getMonth())
+const viewingYear = ref(new Date().getFullYear())
 
 // Date data for calendar (show which days have data)
 interface DateData {
@@ -1093,14 +1453,14 @@ const filterTabs = computed(() => [
 
 // Mock User Data Map
 const userDataMap = ref<{ [key: string]: UserData }>({
-  '1': { todayTasks: 8, todayCompleted: 5, pendingTasks: 3, compliance: 85, metabolicRisk: 75, weeklyRate: 82, streak: 12, lastGlucose: 7.2, lastWeight: 84.5, lastBP: '125/82', lastDeviceSync: new Date() },
-  '2': { todayTasks: 6, todayCompleted: 7, pendingTasks: 0, compliance: 92, metabolicRisk: 45, weeklyRate: 90, streak: 18, lastGlucose: 6.8, lastWeight: 68.2, lastBP: '118/75', lastDeviceSync: new Date(Date.now() - 86400000) },
-  '3': { todayTasks: 10, todayCompleted: 2, pendingTasks: 8, compliance: 65, metabolicRisk: 85, weeklyRate: 55, streak: 3, lastGlucose: 9.5, lastWeight: 92.1, lastBP: '145/92', lastDeviceSync: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000) },
-  '4': { todayTasks: 7, todayCompleted: 4, pendingTasks: 3, compliance: 88, metabolicRisk: 55, weeklyRate: 85, streak: 15, lastGlucose: 6.5, lastWeight: 58.3, lastBP: '112/70', lastDeviceSync: new Date() },
-  '5': { todayTasks: 5, todayCompleted: 0, pendingTasks: 5, compliance: 45, metabolicRisk: 60, weeklyRate: 40, streak: 0, lastGlucose: 0, lastWeight: 0, lastBP: '', lastDeviceSync: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000) },
-  '6': { todayTasks: 8, todayCompleted: 6, pendingTasks: 2, compliance: 95, metabolicRisk: 35, weeklyRate: 92, streak: 22, lastGlucose: 5.8, lastWeight: 62.5, lastBP: '108/68', lastDeviceSync: new Date() },
-  '7': { todayTasks: 9, todayCompleted: 1, pendingTasks: 8, compliance: 58, metabolicRisk: 70, weeklyRate: 50, streak: 5, lastGlucose: 8.1, lastWeight: 88.7, lastBP: '135/88', lastDeviceSync: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000) },
-  '8': { todayTasks: 6, todayCompleted: 8, pendingTasks: 0, compliance: 90, metabolicRisk: 40, weeklyRate: 88, streak: 20, lastGlucose: 6.2, lastWeight: 55.8, lastBP: '115/72', lastDeviceSync: new Date() }
+  '1': { todayTasks: 8, todayCompleted: 5, pendingTasks: 3, compliance: 85, metabolicRisk: 75, weeklyRate: 82, streak: 12, lastGlucose: 7.2, lastWeight: 84.5, lastBP: '125/82', lastDeviceSync: new Date(), mealUploadCount: 3, calorieIntake: 1450, nutrientProtein: 65, nutrientCarbs: 180, nutrientFat: 45, coursesCompleted: 5, coursesTotal: 12 },
+  '2': { todayTasks: 6, todayCompleted: 7, pendingTasks: 0, compliance: 92, metabolicRisk: 45, weeklyRate: 90, streak: 18, lastGlucose: 6.8, lastWeight: 68.2, lastBP: '118/75', lastDeviceSync: new Date(Date.now() - 86400000), mealUploadCount: 4, calorieIntake: 1650, nutrientProtein: 72, nutrientCarbs: 195, nutrientFat: 50, coursesCompleted: 8, coursesTotal: 12 },
+  '3': { todayTasks: 10, todayCompleted: 2, pendingTasks: 8, compliance: 65, metabolicRisk: 85, weeklyRate: 55, streak: 3, lastGlucose: 9.5, lastWeight: 92.1, lastBP: '145/92', lastDeviceSync: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000), mealUploadCount: 1, calorieIntake: 2100, nutrientProtein: 55, nutrientCarbs: 280, nutrientFat: 70, coursesCompleted: 2, coursesTotal: 12 },
+  '4': { todayTasks: 7, todayCompleted: 4, pendingTasks: 3, compliance: 88, metabolicRisk: 55, weeklyRate: 85, streak: 15, lastGlucose: 6.5, lastWeight: 58.3, lastBP: '112/70', lastDeviceSync: new Date(), mealUploadCount: 3, calorieIntake: 1380, nutrientProtein: 58, nutrientCarbs: 170, nutrientFat: 42, coursesCompleted: 6, coursesTotal: 12 },
+  '5': { todayTasks: 5, todayCompleted: 0, pendingTasks: 5, compliance: 45, metabolicRisk: 60, weeklyRate: 40, streak: 0, lastGlucose: 0, lastWeight: 0, lastBP: '', lastDeviceSync: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000), mealUploadCount: 0, calorieIntake: 0, nutrientProtein: 0, nutrientCarbs: 0, nutrientFat: 0, coursesCompleted: 1, coursesTotal: 12 },
+  '6': { todayTasks: 8, todayCompleted: 6, pendingTasks: 2, compliance: 95, metabolicRisk: 35, weeklyRate: 92, streak: 22, lastGlucose: 5.8, lastWeight: 62.5, lastBP: '108/68', lastDeviceSync: new Date(), mealUploadCount: 4, calorieIntake: 1720, nutrientProtein: 78, nutrientCarbs: 205, nutrientFat: 52, coursesCompleted: 10, coursesTotal: 12 },
+  '7': { todayTasks: 9, todayCompleted: 1, pendingTasks: 8, compliance: 58, metabolicRisk: 70, weeklyRate: 50, streak: 5, lastGlucose: 8.1, lastWeight: 88.7, lastBP: '135/88', lastDeviceSync: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000), mealUploadCount: 2, calorieIntake: 1250, nutrientProtein: 45, nutrientCarbs: 150, nutrientFat: 38, coursesCompleted: 3, coursesTotal: 12 },
+  '8': { todayTasks: 6, todayCompleted: 8, pendingTasks: 0, compliance: 90, metabolicRisk: 40, weeklyRate: 88, streak: 20, lastGlucose: 6.2, lastWeight: 55.8, lastBP: '115/72', lastDeviceSync: new Date(), mealUploadCount: 4, calorieIntake: 1550, nutrientProtein: 68, nutrientCarbs: 188, nutrientFat: 48, coursesCompleted: 9, coursesTotal: 12 }
 })
 
 // Blockers Data
@@ -1164,6 +1524,11 @@ const alertsMap = ref<{ [key: string]: Array<{title: string, description: string
 // Computed
 const filteredUsers = computed(() => {
   let filtered = users.value
+
+  // 如果选择了群组，只显示该群组的成员
+  if (selectedGroup.value) {
+    filtered = filtered.filter(u => selectedGroup.value?.memberIds.includes(u.id))
+  }
 
   // 根据任务状态筛选
   if (activeFilter.value === 'pending') {
@@ -1229,6 +1594,75 @@ const habits = computed(() => selectedUser.value ? habitsMap.value[selectedUser.
 const interventionStages = computed(() => selectedUser.value ? interventionStagesMap.value[selectedUser.value] || [] : [])
 const alerts = computed(() => selectedUser.value ? alertsMap.value[selectedUser.value] || [] : [])
 
+// 4核心数据卡片计算属性
+const mealUploadCount = computed(() => {
+  if (!selectedUser.value) return 0
+  const userData = userDataMap.value[selectedUser.value]
+  return userData?.mealUploadCount || 3
+})
+
+const mealUploadTarget = computed(() => {
+  if (!selectedUser.value) return 4
+  return 4 // 早中晚+加餐
+})
+
+const calorieIntake = computed(() => {
+  if (!selectedUser.value) return 0
+  const userData = userDataMap.value[selectedUser.value]
+  return userData?.calorieIntake || 1450
+})
+
+const calorieTarget = computed(() => {
+  if (!selectedUser.value) return 1800
+  return 1800
+})
+
+const nutrientProtein = computed(() => {
+  if (!selectedUser.value) return 0
+  const userData = userDataMap.value[selectedUser.value]
+  return userData?.nutrientProtein || 65
+})
+
+const nutrientCarbs = computed(() => {
+  if (!selectedUser.value) return 0
+  const userData = userDataMap.value[selectedUser.value]
+  return userData?.nutrientCarbs || 180
+})
+
+const nutrientFat = computed(() => {
+  if (!selectedUser.value) return 0
+  const userData = userDataMap.value[selectedUser.value]
+  return userData?.nutrientFat || 45
+})
+
+const habitCompletedCount = computed(() => {
+  if (!selectedUser.value) return 0
+  const userHabits = habits.value
+  return userHabits.filter(h => h.checkedToday).length
+})
+
+const habitTotalCount = computed(() => {
+  if (!selectedUser.value) return 0
+  return habits.value.length
+})
+
+// 课程学习数据
+const coursesCompleted = computed(() => {
+  if (!selectedUser.value) return 0
+  const userData = userDataMap.value[selectedUser.value]
+  return userData?.coursesCompleted || 5
+})
+
+const coursesTotal = computed(() => {
+  if (!selectedUser.value) return 12
+  return 12
+})
+
+// 阻碍反馈数据
+const obstacleCount = computed(() => {
+  return blockers.value.length
+})
+
 const hasAlerts = computed(() => alerts.value.length > 0)
 const currentStage = computed(() => interventionStages.value.find(s => s.active)?.name || '未开始')
 
@@ -1242,6 +1676,190 @@ const currentWeekday = computed(() => {
   return days[new Date().getDay()]
 })
 
+// 日历相关计算属性
+const currentMonth = computed(() => {
+  const now = new Date()
+  return `${now.getFullYear()}年${now.getMonth() + 1}月`
+})
+
+// 月历视图相关计算属性
+const viewingMonthLabel = computed(() => {
+  return `${viewingYear.value}年${viewingMonth.value + 1}月`
+})
+
+const monthCalendarDays = computed(() => {
+  const firstDay = new Date(viewingYear.value, viewingMonth.value, 1)
+  const lastDay = new Date(viewingYear.value, viewingMonth.value + 1, 0)
+  const firstDayOfWeek = firstDay.getDay()
+  const daysInMonth = lastDay.getDate()
+
+  const days: Array<{
+    day: number
+    inMonth: boolean
+    isToday: boolean
+    isSelected: boolean
+    hasData: boolean
+    canRetroactive: boolean
+    date: Date
+  }> = []
+
+  // 填充上个月的日期
+  const prevMonthLastDay = new Date(viewingYear.value, viewingMonth.value, 0).getDate()
+  for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+    const day = prevMonthLastDay - i
+    const date = new Date(viewingYear.value, viewingMonth.value - 1, day)
+    days.push({
+      day,
+      inMonth: false,
+      isToday: false,
+      isSelected: false,
+      hasData: false,
+      canRetroactive: false,
+      date
+    })
+  }
+
+  // 填充当月的日期
+  const today = new Date()
+  const threeDaysAgo = new Date(today)
+  threeDaysAgo.setDate(today.getDate() - 3)
+  threeDaysAgo.setHours(0, 0, 0, 0)
+
+  for (let i = 1; i <= daysInMonth; i++) {
+    const date = new Date(viewingYear.value, viewingMonth.value, i)
+    const dateKey = formatDateKey(date)
+
+    // 获取该日期的数据完成状态
+    const userData = userDataMap.value[selectedUser.value]
+    const baseCompletionRate = userData ? userData.compliance : 50
+    const isToday = isSameDay(date, today)
+    const isSelected = isSameDay(date, selectedCalendarDate.value)
+
+    // 判断是否完成（模拟数据）
+    const completed = isToday
+      ? (userData ? userData.todayCompleted === userData.todayTasks : false)
+      : Math.random() * 100 < baseCompletionRate
+
+    // 判断是否可补卡（3天内的历史日期）
+    const canRetroactive = date >= threeDaysAgo && date < today && !isToday
+
+    days.push({
+      day: i,
+      inMonth: true,
+      isToday,
+      isSelected,
+      hasData: completed,
+      canRetroactive,
+      date
+    })
+  }
+
+  return days
+})
+
+// 月历导航方法
+const prevMonth = () => {
+  if (viewingMonth.value === 0) {
+    viewingMonth.value = 11
+    viewingYear.value--
+  } else {
+    viewingMonth.value--
+  }
+}
+
+const nextMonth = () => {
+  if (viewingMonth.value === 11) {
+    viewingMonth.value = 0
+    viewingYear.value++
+  } else {
+    viewingMonth.value++
+  }
+}
+
+const handleMonthClick = (event: MouseEvent) => {
+  const button = event.currentTarget as HTMLElement
+  const rect = button.getBoundingClientRect()
+  const clickX = event.clientX - rect.left
+  const centerX = rect.width / 2
+
+  // 点击左半边上个月，右半边下个月
+  if (clickX < centerX) {
+    prevMonth()
+  } else {
+    nextMonth()
+  }
+}
+
+const goToToday = () => {
+  const today = new Date()
+  viewingMonth.value = today.getMonth()
+  viewingYear.value = today.getFullYear()
+  selectedCalendarDate.value = today
+
+  // 检查是否是补打卡日期
+  today.setHours(0, 0, 0, 0)
+  const threeDaysAgo = new Date(today)
+  threeDaysAgo.setDate(today.getDate() - 3)
+  isRetroactiveMode.value = false
+
+  // 同步到calendarState
+  if (calendarState) {
+    calendarState.selectedCalendarDate.value = today
+  }
+
+  // 加载今天的任务
+  loadTasksForDate(today)
+}
+
+const selectMonthDate = (day: number) => {
+  const date = new Date(viewingYear.value, viewingMonth.value, day)
+
+  // 更新选中的日期
+  selectedCalendarDate.value = date
+
+  // 检查是否是补打卡日期
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const threeDaysAgo = new Date(today)
+  threeDaysAgo.setDate(today.getDate() - 3)
+  const isRetroactive = date >= threeDaysAgo && date < today
+  isRetroactiveMode.value = isRetroactive
+
+  // 同步到calendarState
+  if (calendarState) {
+    calendarState.selectedCalendarDate.value = date
+  }
+
+  // 加载选中日期的任务
+  loadTasksForDate(date)
+}
+
+interface CalendarDay {
+  day: number
+  isToday: boolean
+  inMonth: boolean
+  completed: boolean
+  date: Date
+  fullDate: string
+}
+
+// 辅助函数：格式化日期为key
+const formatDateKey = (date: Date): string => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+// 辅助函数：比较两个日期是否是同一天
+const isSameDay = (date1: Date, date2: Date): boolean => {
+  return (
+    date1.getDate() === date2.getDate() &&
+    date1.getMonth() === date2.getMonth() &&
+    date1.getFullYear() === date2.getFullYear()
+  )
+}
+
 // Calendar related computed
 const formattedSelectedDate = computed(() => {
   const date = selectedCalendarDate.value
@@ -1251,6 +1869,9 @@ const formattedSelectedDate = computed(() => {
   const weekday = currentWeekday.value
   return `${year}年${month}月${day}日 ${weekday}`
 })
+
+const selectedCalendarMonth = computed(() => selectedCalendarDate.value.getMonth() + 1)
+const selectedCalendarDay = computed(() => selectedCalendarDate.value.getDate())
 
 const isToday = computed(() => {
   const today = new Date()
@@ -1263,8 +1884,37 @@ const isToday = computed(() => {
 })
 
 // Methods
+const selectGroup = (group: Group) => {
+  selectedGroup.value = group
+  selectedUser.value = null // 清除选中的用户
+}
+
 const selectUser = (userId: string) => {
   selectedUser.value = userId
+}
+
+// 选择日历日期
+const selectCalendarDate = (calendarDay: CalendarDay) => {
+  if (!calendarDay.inMonth) return // 只允许选择当月日期
+
+  const newDate = calendarDay.date
+  selectedCalendarDate.value = newDate
+
+  // 检查是否是补打卡日期
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const threeDaysAgo = new Date(today)
+  threeDaysAgo.setDate(today.getDate() - 3)
+  const isRetroactive = newDate >= threeDaysAgo && newDate < today
+  isRetroactiveMode.value = isRetroactive
+
+  // 同步到calendarState
+  if (calendarState) {
+    calendarState.selectedCalendarDate.value = newDate
+  }
+
+  // 加载选中日期的任务
+  loadTasksForDate(newDate)
 }
 
 // 切换排序
@@ -1385,7 +2035,7 @@ const quickMarkAllComplete = () => {
       userData.pendingTasks = 0
     }
 
-    toastRef.value?.show(`已将${currentUser.value?.name}的所有任务标记为完成`, 'success')
+    toastRef.value?.success(`已将${currentUser.value?.name}的所有任务标记为完成`)
   }
 }
 
@@ -1396,7 +2046,7 @@ const sendReminder = () => {
   const user = users.value.find(u => u.id === selectedUser.value)
   if (user) {
     // 模拟发送提醒
-    toastRef.value?.show(`已向${user.name}发送打卡提醒`, 'success')
+    toastRef.value?.success(`已向${user.name}发送打卡提醒`)
 
     // 可以在这里添加实际的提醒发送逻辑
     // 例如调用API发送短信、推送通知等
@@ -1404,7 +2054,18 @@ const sendReminder = () => {
 }
 
 const handleAlert = () => {
-  toastRef.value?.show('已创建跟进任务', 'success')
+  // 跳转到血糖详情页面
+  if (selectedUser.value) {
+    router.push({
+      path: '/blood-glucose-detail',
+      query: {
+        clientId: selectedUser.value,
+        from: 'batch-processor'
+      }
+    })
+  } else {
+    toastRef.value?.warning('请先选择一个用户')
+  }
 }
 
 const getRiskColorClass = (value: number) => {
@@ -1438,7 +2099,7 @@ const resolveBlocker = (id: string) => {
   const blocker = blockerList?.find(b => b.id === id)
   if (blocker) {
     blocker.resolved = true
-    toastRef.value?.show('阻塞点已标记为已处理', 'success')
+    toastRef.value?.success('阻塞点已标记为已处理')
   }
 }
 
@@ -1462,7 +2123,7 @@ const toggleUserTask = (id: string) => {
     if (task.completed && isRetroactiveMode.value) {
       task.isRetroactive = true
       task.completedAt = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-      toastRef.value?.show('已补打卡', 'success')
+      toastRef.value?.success('已补打卡')
     }
 
     // Update today completed count and task status
@@ -1522,7 +2183,7 @@ const addCoachTask = () => {
     completed: false
   })
 
-  toastRef.value?.show('教练待办已添加', 'success')
+  toastRef.value?.success('教练待办已添加')
   newTask.value = { title: '', description: '', priority: 'medium', deadline: '09:00' }
   showAddTaskModal.value = false
 }
@@ -1533,7 +2194,7 @@ const quickAction = (action: string) => {
     message: '发送消息',
     report: '生成报告'
   }
-  toastRef.value?.show(`${actions[action as keyof typeof actions]}功能开发中`, 'info')
+  toastRef.value?.info(`${actions[action as keyof typeof actions]}功能开发中`)
 }
 
 // Calendar methods
@@ -1553,13 +2214,6 @@ const loadTasksForDate = (date: Date) => {
     // Load current/empty state for this date
     loadCurrentTasks()
   }
-}
-
-const formatDateKey = (date: Date): string => {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
 }
 
 // Historical data storage

@@ -2,7 +2,7 @@ import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 
 // 导入页面组件 - 使用相对路径
 import Dashboard from '../views/Dashboard.vue'
-import DashboardNew from '../components/RoleBasedDashboard.vue'
+import DashboardNew from '../views/DashboardNew.vue'
 import CoachDashboard from '../views/CoachDashboard.vue'
 import SalesMonitor from '../views/SalesMonitor.vue'
 import ClientList from '../views/ClientList.vue'
@@ -211,6 +211,12 @@ const routes: RouteRecordRaw[] = [
     path: '/risk-prediction',
     name: 'RiskPredictionCenter',
     component: RiskPredictionCenter
+  },
+  // 血糖详情页
+  {
+    path: '/blood-glucose-detail',
+    name: 'BloodGlucoseDetail',
+    component: () => import('../views/BloodGlucoseDetail.vue')
   }
 ]
 

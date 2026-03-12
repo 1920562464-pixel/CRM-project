@@ -64,9 +64,11 @@
     <!-- Auto Mode: Dashboard -->
     <div v-if="dataSource === 'auto'" class="space-y-6">
       <!-- Quick Stats Cards -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div v-for="stat in quickStats" :key="stat.id"
-          class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+          class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow"
+          :class="stat.id === 'glucose' ? 'cursor-pointer hover:border-indigo-300 hover:shadow-lg' : ''"
+          @click="stat.id === 'glucose' ? $router.push({ path: '/blood-glucose-detail', query: { from: 'health', clientId: props.clientId } }) : null">
           <div class="flex items-center justify-between mb-2">
             <div class="p-2 rounded-lg" :class="stat.bgColor">
               <component :is="stat.icon" :size="20" :class="stat.iconColor" />
@@ -79,6 +81,10 @@
           <p class="text-xs text-slate-500 mb-1">{{ stat.label }}</p>
           <p class="text-xl font-bold text-slate-900">{{ stat.value }} <span class="text-xs font-normal text-slate-500">{{ stat.unit }}</span></p>
           <p v-if="stat.target" class="text-[10px] text-slate-400 mt-1">目标: {{ stat.target }}{{ stat.unit }}</p>
+          <div v-if="stat.id === 'glucose'" class="flex items-center gap-1 mt-2 text-[10px] text-indigo-600">
+            <span>查看详情</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </div>
         </div>
       </div>
 
@@ -153,14 +159,16 @@
       </div>
 
       <!-- Blood Glucose Trend -->
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:border-indigo-300 hover:shadow-md transition-all"
+        @click="$router.push({ path: '/blood-glucose-detail', query: { from: 'health', clientId: props.clientId } })">
         <div class="flex items-center justify-between mb-6">
           <div>
             <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
               <Heart :size="20" class="text-red-500" />
               血糖趋势
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
             </h3>
-            <p class="text-xs text-slate-500 mt-1">空腹 & 餐后2小时监测</p>
+            <p class="text-xs text-slate-500 mt-1">空腹 & 餐后2小时监测 · 点击查看详情</p>
           </div>
         </div>
 
@@ -208,6 +216,17 @@
             <p class="text-xs text-slate-500">达标率</p>
             <p class="text-lg font-bold text-green-600">{{ glucoseStats.inRange }}%</p>
           </div>
+        </div>
+
+        <!-- View Details Button -->
+        <div class="mt-4 flex justify-center">
+          <button
+            @click.stop="$router.push({ path: '/blood-glucose-detail', query: { from: 'health', clientId: props.clientId } })"
+            class="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors"
+          >
+            <FileText :size="14" />
+            查看详细报告
+          </button>
         </div>
       </div>
 
@@ -483,6 +502,15 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, markRaw } from 'vue'
+
+// Props
+interface Props {
+  clientId?: string
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  clientId: ''
+})
 import {
   Activity,
   Scale,
@@ -499,7 +527,8 @@ import {
   X,
   TrendingDown,
   TrendingUp,
-  Minus
+  Minus,
+  Droplets
 } from 'lucide-vue-next'
 import Toast from './shared/Toast.vue'
 
@@ -619,6 +648,18 @@ const quickStats = computed(() => [
     bgColor: 'bg-amber-100',
     iconColor: 'text-amber-600',
     icon: markRaw(Activity)
+  },
+  {
+    id: 'glucose',
+    label: '血糖',
+    value: glucoseStats.value.fasting,
+    unit: 'mmol/L',
+    target: '6.1',
+    trend: parseFloat(glucoseStats.value.fasting) > 6.1 ? 'up' : 'stable',
+    trendText: parseFloat(glucoseStats.value.fasting) > 6.1 ? '稍高' : '正常',
+    bgColor: 'bg-red-100',
+    iconColor: 'text-red-600',
+    icon: markRaw(Droplets)
   },
   {
     id: 'bmi',

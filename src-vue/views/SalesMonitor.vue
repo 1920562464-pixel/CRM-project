@@ -49,10 +49,10 @@
     </div>
 
     <!-- Dashboard Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
       <!-- Card 1: Reservations -->
       <div
-        @click="activeView = 'reservation'"
+        @click="switchView('reservation')"
         class="cursor-pointer transition-all duration-300 p-4 rounded-xl border shadow-sm relative overflow-hidden group hover:shadow-xl hover:scale-[1.03] hover:-translate-y-1"
         :style="activeView === 'reservation' ? {
           background: isBlackGold ? 'linear-gradient(135deg, #B8860B 0%, #9A6F09 100%)' : 'linear-gradient(to bottom right, #4f46e5, #3730a3)',
@@ -97,7 +97,7 @@
 
       <!-- Card 2: Allocation -->
       <div
-        @click="activeView = 'allocation'"
+        @click="switchView('allocation')"
         class="cursor-pointer transition-all duration-300 p-4 rounded-xl border shadow-sm relative overflow-hidden group hover:shadow-xl hover:scale-[1.03] hover:-translate-y-1"
         :style="activeView === 'allocation' ? {
           background: 'linear-gradient(to bottom right, #f97316, #ef4444)',
@@ -156,7 +156,7 @@
 
       <!-- Card 3: Alert Center (Combined) -->
       <div
-        @click="activeView = 'alerts'; alertSubTab = 'current'"
+        @click="() => { switchView('alerts'); alertSubTab = 'current' }"
         class="cursor-pointer transition-all duration-300 p-4 rounded-xl border shadow-sm relative overflow-hidden group hover:shadow-xl hover:scale-[1.03] hover:-translate-y-1"
         :style="activeView === 'alerts' ? {
           background: isBlackGold ? 'linear-gradient(135deg, #B8860B 0%, #9A6F09 100%)' : 'linear-gradient(to bottom right, #6366f1, #4f46e5)',
@@ -255,6 +255,51 @@
           </div>
         </div>
       </div>
+
+      <!-- Card 4: Points Ranking -->
+      <div
+        @click="switchView('points')"
+        class="cursor-pointer transition-all duration-300 p-4 rounded-xl border shadow-sm relative overflow-hidden group hover:shadow-xl hover:scale-[1.03] hover:-translate-y-1"
+        :style="activeView === 'points' ? {
+          background: 'linear-gradient(to bottom right, #f59e0b, #d97706)',
+          border: 'transparent',
+          boxShadow: '0 0 0 2px #f59e0b, 0 0 0 4px white, 0 10px 25px rgba(245, 158, 11, 0.25)'
+        } : {
+          background: 'var(--card)',
+          border: '1px solid var(--border)'
+        }"
+      >
+        <!-- 背景装饰 -->
+        <div v-if="activeView === 'points'" class="absolute inset-0 opacity-10">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-1/2 translate-x-1/2"></div>
+          <div class="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-1/2 -translate-x-1/2"></div>
+        </div>
+
+        <div class="relative flex items-center justify-between mb-2">
+          <span class="text-xs font-medium" :style="{ color: activeView === 'points' ? 'rgba(255,255,255,0.9)' : 'var(--text-secondary)' }">积分排行榜</span>
+          <div class="p-1.5 rounded-lg" :style="activeView === 'points' ? {
+            background: 'rgba(255,255,255,0.2)',
+            color: 'white'
+          } : {
+            background: 'rgba(245, 158, 11, 0.15)',
+            color: '#f59e0b'
+          }">
+            <Award :size="16" />
+          </div>
+        </div>
+        <div class="relative text-2xl font-bold mb-1" :style="{ color: activeView === 'points' ? 'white' : 'var(--text-primary)' }">
+          TOP 50<span class="text-xs font-normal" :style="{ color: activeView === 'points' ? 'rgba(255,255,255,0.7)' : 'var(--text-disabled)' }">名</span>
+        </div>
+        <div class="relative text-xs px-2 py-0.5 rounded backdrop-blur-sm inline-block" :style="activeView === 'points' ? {
+          background: 'rgba(255,255,255,0.2)',
+          color: 'white'
+        } : {
+          background: '#fef3c7',
+          color: '#d97706'
+        }">
+          每周一结算
+        </div>
+      </div>
     </div>
 
     <!-- Main Content Area -->
@@ -270,10 +315,12 @@
             <UserPlus v-if="activeView === 'allocation'" :size="18" style="color: #f97316;" />
             <Users v-if="activeView === 'coaches'" :size="18" style="color: #10b981;" />
             <AlertTriangle v-if="activeView === 'alerts'" :size="18" style="color: #ef4444;" />
+            <Award v-if="activeView === 'points'" :size="18" style="color: #f59e0b;" />
             <span v-if="activeView === 'reservation'">首通电话预约列表</span>
             <span v-if="activeView === 'allocation'">待分配用户列表</span>
             <span v-if="activeView === 'coaches'">教练在线状态详情</span>
             <span v-if="activeView === 'alerts'">预警中心</span>
+            <span v-if="activeView === 'points'">积分排行榜</span>
           </h3>
           <div class="flex items-center gap-3">
             <!-- 待分配用户视图的教练人工分配按钮 -->
@@ -336,23 +383,6 @@
               手动添加
             </button>
             -->
-            <div v-if="activeView !== 'alerts'" class="flex p-1 rounded-lg" :style="{ background: 'var(--fill-light)' }">
-              <button
-                v-for="tab in ['全部', '待处理', '已逾期']"
-                :key="tab"
-                @click="activeTab = tab"
-                class="px-3 py-1 text-xs font-medium rounded transition-all"
-                :style="activeTab === tab ? {
-                  background: 'var(--card)',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                  color: isBlackGold ? '#D4A84A' : '#4f46e5'
-                } : {
-                  color: 'var(--text-secondary)'
-                }"
-              >
-                {{ tab }}
-              </button>
-            </div>
           </div>
         </div>
 
@@ -928,6 +958,11 @@
               </div>
             </div>
 
+          <!-- 积分排行榜内容 -->
+          <div v-else-if="activeView === 'points'" class="p-4">
+            <PointsRankingBoard />
+          </div>
+
           <!-- 其他视图的表格内容 -->
           <div v-else class="p-4">
             <!-- 统计信息栏 -->
@@ -1260,7 +1295,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import PointsRankingBoard from '../components/PointsRankingBoard.vue'
 import {
   Users,
   PhoneCall,
@@ -1278,12 +1315,13 @@ import {
   ShieldAlert,
   FileText,
   Calendar,
-  Clock
+  Clock,
+  Award
 } from 'lucide-vue-next'
 import Modal from '../components/shared/Modal.vue'
 import { useTheme } from '../composables/useTheme'
 import { useRiskPrediction } from '../composables/useRiskPrediction'
-import { onMounted } from 'vue'
+import { usePointsSystem } from '../composables/usePointsSystem'
 import Toast from '../components/shared/Toast.vue'
 import RiskPredictionPanel from '../components/RiskPredictionPanel.vue'
 import { useToast } from '../composables/useToast'
@@ -1297,6 +1335,9 @@ const isBlackGold = computed(() => currentTheme.value === 'black-gold')
 // 风险预测
 const { getRiskStats, refreshPredictions, riskPredictions } = useRiskPrediction()
 const riskStats = computed(() => getRiskStats.value)
+
+// 积分系统
+const { initUserPoints, pointsData, getTotalPoints } = usePointsSystem()
 
 // 计算平均风险分数
 const averageRiskScore = computed(() => {
@@ -1318,7 +1359,47 @@ const riskPercentage = computed(() => {
 // 初始化
 onMounted(async () => {
   await refreshPredictions()
+
+  // 初始化积分系统mock数据
+  initMockPointsData()
 })
+
+// 初始化积分系统mock数据
+const initMockPointsData = () => {
+  // 为mock用户创建积分数据
+  const mockUsers = [
+    { id: '1', name: '王磊', avatarColor: 'bg-indigo-500', department: '市场部', community: '糖尿病管理A组' },
+    { id: '2', name: '李淑芬', avatarColor: 'bg-pink-500', department: '客服部', community: '减脂塑形B组' },
+    { id: '3', name: '张建国', avatarColor: 'bg-blue-500', department: '市场部', community: '慢病康复C组' },
+    { id: '4', name: '陈静', avatarColor: 'bg-purple-500', department: '教练部', community: '糖尿病管理A组' },
+    { id: '5', name: '刘伟', avatarColor: 'bg-green-500', department: '客服部', community: '减脂塑形B组' },
+    { id: '6', name: '赵敏', avatarColor: 'bg-orange-500', department: '运营部', community: '减脂塑形B组' },
+    { id: '7', name: '孙强', avatarColor: 'bg-teal-500', department: '教练部', community: '慢病康复C组' },
+    { id: '8', name: '周梅', avatarColor: 'bg-red-500', department: '市场部', community: '糖尿病管理A组' },
+  ]
+
+  mockUsers.forEach(user => {
+    initUserPoints(user.id, user.name, user.avatarColor)
+
+    // 设置一些初始积分
+    const userPoints = pointsData.value[user.id]
+    if (userPoints) {
+      // 模拟一些积分数据
+      userPoints.pointDetails.courseReading = Math.floor(Math.random() * 5) * 10
+      userPoints.pointDetails.mealUpload = Math.floor(Math.random() * 20) * 5
+      userPoints.pointDetails.healthCheckin = Math.floor(Math.random() * 30) * 3
+      userPoints.pointDetails.obstacleReport = Math.floor(Math.random() * 3) * 8
+      userPoints.pointDetails.liveWatching = Math.floor(Math.random() * 3) * 15
+      userPoints.pointDetails.weightLossResult = Math.floor(Math.random() * 3) * 30
+      userPoints.totalPoints = getTotalPoints(userPoints.pointDetails)
+      userPoints.weeklyPoints = Math.floor(userPoints.totalPoints * 0.3)
+
+      // 设置部门和社群
+      userPoints.department = user.department
+      userPoints.community = user.community
+    }
+  })
+}
 
 // 风险预测相关函数
 const refreshRiskData = async () => {
@@ -1453,8 +1534,34 @@ const emit = defineEmits<{
 
 // State
 const activeTab = ref('全部')
-const activeView = ref<'reservation' | 'allocation' | 'coaches' | 'alerts'>('reservation')
+const activeView = ref<'reservation' | 'allocation' | 'coaches' | 'alerts' | 'points'>('reservation')
 const alertSubTab = ref<'current' | 'predictive'>('current') // 预警中心子标签
+
+// 路由
+const route = useRoute()
+const router = useRouter()
+
+// 监听路由 query 参数来切换 tab
+watch(() => route.query.tab, (newTab) => {
+  if (newTab === 'alerts') {
+    activeView.value = 'alerts'
+  } else if (newTab === 'points') {
+    activeView.value = 'points'
+  } else if (newTab === 'reservation') {
+    activeView.value = 'reservation'
+  } else if (newTab === 'allocation') {
+    activeView.value = 'allocation'
+  } else if (newTab === 'coaches') {
+    activeView.value = 'coaches'
+  }
+}, { immediate: true })
+
+// 切换 tab 的方法
+const switchView = (view: 'reservation' | 'allocation' | 'coaches' | 'alerts' | 'points') => {
+  activeView.value = view
+  // 更新路由 query 参数
+  router.push({ path: '/sales-monitor', query: { tab: view } })
+}
 const showAssignModal = ref(false)
 const showAddReservationModal = ref(false)
 const selectedUserForAssign = ref<string | null>(null)

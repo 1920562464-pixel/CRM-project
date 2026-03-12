@@ -550,10 +550,14 @@
 import { ref, computed, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTheme } from '../composables/useTheme'
+import { useUserCompliance } from '../composables/useUserCompliance'
 
 // 主题相关
 const { currentTheme } = useTheme()
 const isBlackGold = computed(() => currentTheme.value === 'black-gold')
+
+// 依从度管理
+const { getUserCompliance, setUserCompliance, initUserCompliance } = useUserCompliance()
 import {
   Search,
   Plus,
@@ -793,9 +797,27 @@ const navigateToProfile = (clientId: string) => {
 
 const updateCompliance = (clientId: string, event: Event) => {
   const target = event.target as HTMLSelectElement
-  console.log('更新依从度:', clientId, target.value)
-  toastRef.value?.show(`已更新依从度为: ${target.value}`, 'success')
+  const newValue = target.value as '优秀' | '良好' | '一般' | '较差' | '未知'
+  setUserCompliance(clientId, newValue)
+
+  // 更新MOCK_CLIENTS中的数据
+  const client = MOCK_CLIENTS.find(c => c.id === clientId)
+  if (client) {
+    client.compliance = newValue
+  }
+
+  toastRef.value?.show(`已更新依从度为: ${newValue}`, 'success')
 }
+
+// 初始化依从度数据
+MOCK_CLIENTS.forEach(client => {
+  initUserCompliance(client.id)
+  // 如果localStorage中有值，使用localStorage的值更新MOCK_CLIENTS
+  const storedCompliance = getUserCompliance(client.id)
+  if (storedCompliance !== '未知') {
+    client.compliance = storedCompliance
+  }
+})
 
 // 添加客户相关方法
 const openAddClientModal = () => {

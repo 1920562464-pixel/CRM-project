@@ -300,6 +300,12 @@
             </Transition>
           </div>
 
+          <!-- 日期选择器 -->
+          <DatePickerButton
+            v-model="selectedCalendarDate"
+            :date-data="dateDataMap"
+          />
+
           <!-- 皮肤切换按钮 -->
           <div class="relative">
             <button
@@ -352,15 +358,6 @@
               </div>
             </Transition>
           </div>
-
-          <!-- BatchTaskProcessor 专用组件 -->
-          <template v-if="isBatchTaskProcessor">
-            <!-- 日历选择器 -->
-            <DatePickerButton
-              v-model="selectedCalendarDate"
-              :date-data="dateDataMap"
-            />
-          </template>
 
           <!-- 通知中心 -->
           <div class="relative">
@@ -649,9 +646,6 @@ provide('calendarState', {
   dateDataMap
 })
 
-// 判断是否是 BatchTaskProcessor 页面
-const isBatchTaskProcessor = computed(() => route.name === 'BatchTaskProcessor')
-
 // 模拟通知数据
 interface Notification {
   id: string
@@ -720,8 +714,8 @@ const handleAlertClick = (alert: AlertItem) => {
 }
 
 const goToAlertList = () => {
-  // 可以跳转到完整的预警列表页面
-  router.push('/alert-center')
+  // 跳转到销售监控页面的预警中心tab
+  router.push({ path: '/sales-monitor', query: { tab: 'alerts' } })
   showAlertCenter.value = false
 }
 

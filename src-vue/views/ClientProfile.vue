@@ -94,11 +94,11 @@
         <div class="flex flex-col items-end gap-2">
           <div class="flex items-center gap-2">
             <button
-              @click="handleShare"
+              @click="showNotesSidebar = true"
               class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors border border-transparent hover:border-indigo-100"
-              title="分享客户档案"
+              title="查看备注"
             >
-              <Share2 :size="18" />
+              <FileText :size="18" />
             </button>
           </div>
           <div class="text-[10px] text-slate-400 font-mono">
@@ -130,24 +130,33 @@
         <!-- 概览 Tab -->
         <div v-if="activeTab === 'overview'" class="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
           <!-- AI Prescription Trigger Section -->
-          <div class="bg-gradient-to-r from-indigo-500 to-violet-600 rounded-xl p-6 text-white shadow-lg flex items-center justify-between relative overflow-hidden">
+          <div class="bg-gradient-to-r from-indigo-500 to-violet-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
             <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
             <div class="relative z-10">
               <h3 class="text-xl font-bold flex items-center gap-2 mb-1">
                 <BrainCircuit :size="24" class="text-indigo-100" />
-                AI 生活方式处方
+                AI 生成处方
               </h3>
               <p class="text-indigo-100 text-sm opacity-90 max-w-lg">
                 基于用户的 128 项健康数据（体检、设备、问卷）实时生成个性化干预方案。
               </p>
+              <div class="flex items-center gap-3 mt-4">
+                <button
+                  @click="openAIModal('lifestyle')"
+                  class="relative z-10 px-5 py-2.5 bg-white text-indigo-600 font-bold rounded-lg shadow-sm hover:bg-indigo-50 transition-colors flex items-center gap-2"
+                >
+                  <Heart :size="16" />
+                  生活方式医学处方
+                </button>
+                <button
+                  @click="openAIModal('nutrition')"
+                  class="relative z-10 px-5 py-2.5 bg-white/10 backdrop-blur-sm text-white font-bold rounded-lg shadow-sm hover:bg-white/20 transition-colors flex items-center gap-2 border border-white/30"
+                >
+                  <Apple :size="16" />
+                  营养素处方
+                </button>
+              </div>
             </div>
-            <button
-              @click="openAIModal"
-              class="relative z-10 px-6 py-2.5 bg-white text-indigo-600 font-bold rounded-lg shadow-sm hover:bg-indigo-50 transition-colors flex items-center gap-2"
-            >
-              <BrainCircuit :size="18" />
-              立即生成报告
-            </button>
           </div>
 
           <!-- Static Health Info -->
@@ -577,7 +586,7 @@
         </div>
 
         <div v-else-if="activeTab === 'health'">
-          <HealthData />
+          <HealthData :clientId="route.params.id as string" />
         </div>
 
         <div v-else-if="activeTab === 'datacenter'">
@@ -612,14 +621,14 @@
           <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
             <div class="flex items-center gap-3">
               <div class="bg-gradient-to-br from-indigo-500 to-violet-600 text-white p-2 rounded-lg shadow-sm">
-                <BrainCircuit :size="24" />
+                <component :is="prescriptionType === 'lifestyle' ? Heart : BrainCircuit" :size="24" />
               </div>
               <div>
                 <h3 class="text-xl font-bold text-slate-800">
-                  AI 生活方式处方
+                  {{ prescriptionType === 'lifestyle' ? '生活方式医学处方' : '营养素处方' }}
                 </h3>
                 <p class="text-xs text-slate-500">
-                  基于 128 项健康数据由 Agent 实时生成
+                  基于 128 项健康数据由 AI Agent 实时生成
                 </p>
               </div>
             </div>
@@ -826,19 +835,141 @@
       </div>
     </Teleport>
 
+    <!-- 备注侧边栏 -->
+    <Teleport to="body">
+      <div v-if="showNotesSidebar" class="fixed inset-0 z-50 flex">
+        <!-- 背景遮罩 -->
+        <div
+          class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+          @click="showNotesSidebar = false"
+        ></div>
+
+        <!-- 侧边栏 -->
+        <div class="relative ml-auto h-full w-full max-w-md bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+          <!-- 侧边栏头部 -->
+          <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+            <div class="flex items-center justify-between">
+              <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                <FileText :size="20" class="text-indigo-600" />
+                客户备注
+              </h2>
+              <button
+                @click="showNotesSidebar = false"
+                class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <X :size="20" />
+              </button>
+            </div>
+
+            <!-- 搜索框 -->
+            <div class="mt-4 relative">
+              <input
+                v-model="searchNotes"
+                type="text"
+                placeholder="搜索备注..."
+                class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+              />
+              <Search :size="16" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            </div>
+          </div>
+
+          <!-- 备注列表 -->
+          <div class="flex-1 overflow-y-auto p-4 space-y-3">
+            <div
+              v-for="note in filteredNotes"
+              :key="note.id"
+              class="bg-slate-50 border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow group"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex-1">
+                  <p class="text-sm text-slate-700 whitespace-pre-wrap">{{ note.content }}</p>
+                  <p class="text-xs text-slate-400 mt-2">
+                    {{ new Date(note.updatedAt).toLocaleString('zh-CN') }}
+                  </p>
+                </div>
+                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    @click="editNote(note)"
+                    class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                    title="编辑"
+                  >
+                    <Edit3 :size="14" />
+                  </button>
+                  <button
+                    @click="deleteNote(note.id)"
+                    class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                    title="删除"
+                  >
+                    <Trash2 :size="14" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 空状态 -->
+            <div v-if="filteredNotes.length === 0" class="flex flex-col items-center justify-center h-48 text-slate-400">
+              <FileText :size="48" class="mb-2 opacity-50" />
+              <p class="text-sm">暂无备注</p>
+            </div>
+          </div>
+
+          <!-- 添加/编辑备注 -->
+          <div class="p-4 border-t border-slate-200 bg-slate-50">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-sm font-medium text-slate-700">
+                {{ editingNoteId ? '编辑备注' : '添加备注' }}
+              </h3>
+              <button
+                v-if="editingNoteId"
+                @click="cancelEdit"
+                class="text-xs text-slate-500 hover:text-slate-700"
+              >
+                取消编辑
+              </button>
+            </div>
+            <div class="flex gap-2">
+              <textarea
+                v-model="newNoteContent"
+                placeholder="输入备注内容..."
+                class="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm resize-none"
+                rows="3"
+              ></textarea>
+              <button
+                @click="editingNoteId ? updateNote() : addNote()"
+                :disabled="!newNoteContent.trim()"
+                class="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors self-end"
+              >
+                {{ editingNoteId ? '更新' : '添加' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
     <!-- Toast -->
     <Toast ref="toastRef" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useTheme } from '../composables/useTheme'
+import { useUserTags } from '../composables/useUserTags'
 
 // 主题相关
 const { currentTheme } = useTheme()
 const isBlackGold = computed(() => currentTheme.value === 'black-gold')
+
+// User tags management
+const {
+  getUserTags,
+  addUserTag,
+  removeUserTag,
+  updateUserTag,
+  initUserTags
+} = useUserTags()
 import {
   ArrowLeft,
   User,
@@ -852,7 +983,11 @@ import {
   X,
   Loader2,
   CheckCircle2,
-  FileText
+  FileText,
+  Heart,
+  Apple,
+  Search,
+  Trash2
 } from 'lucide-vue-next'
 import InterventionManager from '../components/InterventionManager.vue'
 import HealthData from '../components/HealthData.vue'
@@ -883,7 +1018,7 @@ const clientId = computed(() => route.params.id as string)
 const activeTab = ref('overview')
 const showAIModal = ref(false)
 const aiStep = ref<'loading' | 'result'>('loading')
-const tags = ref(['高风险', '老年', '减重', '脂肪肝', '企业高管', '经常出差'])
+const prescriptionType = ref<'lifestyle' | 'nutrition'>('lifestyle')
 const showAddTag = ref(false)
 const newTag = ref('')
 const editingTagIndex = ref<number | null>(null)
@@ -891,6 +1026,36 @@ const editingTagValue = ref('')
 const copied = ref(false)
 const showEditModal = ref(false)
 const isEditMode = ref(false)
+
+// 备注相关状态
+const showNotesSidebar = ref(false)
+const notes = ref<ClientNote[]>([])
+const newNoteContent = ref('')
+const editingNoteId = ref<number | null>(null)
+const searchNotes = ref('')
+
+interface ClientNote {
+  id: number
+  content: string
+  createdAt: string
+  updatedAt: string
+  clientId: string
+}
+
+// Get current user ID from route
+const currentUserId = computed(() => route.params.id as string)
+
+// 使用共享的用户标签
+const tags = computed(() => {
+  const userTags = getUserTags(currentUserId.value)
+  // 如果没有标签，使用默认标签
+  if (userTags.length === 0) {
+    const defaultTags = ['高风险', '老年', '减重', '脂肪肝', '企业高管', '经常出差']
+    initUserTags(currentUserId.value, defaultTags)
+    return defaultTags
+  }
+  return userTags
+})
 
 // Mock client data
 const client = ref({
@@ -962,7 +1127,7 @@ const openAddTag = () => {
 
 const handleAddTag = () => {
   if (newTag.value.trim()) {
-    tags.value.push(newTag.value.trim())
+    addUserTag(currentUserId.value, newTag.value.trim())
     newTag.value = ''
     showAddTag.value = false
     toastRef.value?.success('标签添加成功')
@@ -970,7 +1135,7 @@ const handleAddTag = () => {
 }
 
 const deleteTag = (index: number) => {
-  tags.value.splice(index, 1)
+  removeUserTag(currentUserId.value, index)
   toastRef.value?.info('标签已删除')
 }
 
@@ -984,7 +1149,7 @@ const startEditingTag = (index: number, value: string) => {
 
 const saveEditingTag = () => {
   if (editingTagIndex.value !== null && editingTagValue.value.trim()) {
-    tags.value[editingTagIndex.value] = editingTagValue.value.trim()
+    updateUserTag(currentUserId.value, editingTagIndex.value, editingTagValue.value.trim())
     editingTagIndex.value = null
     toastRef.value?.success('标签已更新')
   }
@@ -1010,6 +1175,87 @@ const handleShare = () => {
   navigator.clipboard.writeText(url)
   toastRef.value?.success('分享链接已复制到剪贴板')
 }
+
+// 备注相关函数
+const loadNotes = () => {
+  const saved = localStorage.getItem(`client_notes_${currentUserId.value}`)
+  if (saved) {
+    try {
+      notes.value = JSON.parse(saved)
+    } catch (e) {
+      console.error('Failed to load notes:', e)
+      notes.value = []
+    }
+  }
+}
+
+const saveNotes = () => {
+  localStorage.setItem(`client_notes_${currentUserId.value}`, JSON.stringify(notes.value))
+}
+
+// 监听客户ID变化，加载备注数据
+watch(currentUserId, (newClientId) => {
+  if (newClientId) {
+    loadNotes()
+  }
+}, { immediate: true })
+
+const addNote = () => {
+  if (!newNoteContent.value.trim()) return
+
+  const newNote: ClientNote = {
+    id: Date.now(),
+    content: newNoteContent.value.trim(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    clientId: currentUserId.value
+  }
+
+  notes.value.unshift(newNote)
+  newNoteContent.value = ''
+  saveNotes()
+  toastRef.value?.success('备注已添加')
+}
+
+const updateNote = () => {
+  if (editingNoteId.value === null || !newNoteContent.value.trim()) return
+
+  const noteIndex = notes.value.findIndex(n => n.id === editingNoteId.value)
+  if (noteIndex !== -1) {
+    notes.value[noteIndex].content = newNoteContent.value.trim()
+    notes.value[noteIndex].updatedAt = new Date().toISOString()
+    saveNotes()
+    toastRef.value?.success('备注已更新')
+  }
+
+  editingNoteId.value = null
+  newNoteContent.value = ''
+}
+
+const deleteNote = (noteId: number) => {
+  if (confirm('确定要删除这条备注吗？')) {
+    notes.value = notes.value.filter(n => n.id !== noteId)
+    saveNotes()
+    toastRef.value?.success('备注已删除')
+  }
+}
+
+const editNote = (note: ClientNote) => {
+  editingNoteId.value = note.id
+  newNoteContent.value = note.content
+}
+
+const cancelEdit = () => {
+  editingNoteId.value = null
+  newNoteContent.value = ''
+}
+
+const filteredNotes = computed(() => {
+  if (!searchNotes.value) return notes.value
+  return notes.value.filter(n =>
+    n.content.toLowerCase().includes(searchNotes.value.toLowerCase())
+  )
+})
 
 const openEditModal = () => {
   editForm.value = {
@@ -1076,7 +1322,8 @@ const handleExportData = () => {
   toastRef.value?.success('档案数据已导出')
 }
 
-const openAIModal = () => {
+const openAIModal = (type: 'lifestyle' | 'nutrition' = 'lifestyle') => {
+  prescriptionType.value = type
   showAIModal.value = true
   aiStep.value = 'loading'
   setTimeout(() => {

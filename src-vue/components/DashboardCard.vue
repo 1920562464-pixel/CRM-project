@@ -1,6 +1,6 @@
 <template>
   <div
-    @click="$emit('click')"
+    @click="handleClick"
     class="bg-white rounded-xl border-2 border-slate-200 p-5 shadow-sm hover:shadow-lg transition-all duration-200 cursor-pointer group"
     :class="hoverBorderClass"
   >
@@ -9,22 +9,23 @@
         class="p-3 rounded-xl"
         :class="bgColor"
       >
-        <component :is="icon" :size="24" :class="color" />
+        <component :is="icon" :size="24" :class="textColor" />
       </div>
       <div
-        v-if="change"
+        v-if="trend && trend !== 'stable'"
         class="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full"
-        :class="changeType === 'up' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+        :class="trend === 'up' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
       >
-        <TrendingUp v-if="changeType === 'up'" :size="14" />
-        <TrendingDown v-else :size="14" />
-        {{ change }}
+        <TrendingUp v-if="trend === 'up'" :size="14" />
+        <TrendingDown v-else-if="trend === 'down'" :size="14" />
+        <Minus v-else :size="14" />
+        {{ trendValue }}
       </div>
     </div>
     <div class="mb-1">
       <p class="text-sm text-slate-600 mb-1">{{ title }}</p>
       <p class="text-2xl font-bold text-slate-900 group-hover:scale-105 transition-transform origin-left">
-        {{ value }}
+        {{ value }}<span v-if="unit" class="text-sm font-normal text-slate-500 ml-1">{{ unit }}</span>
       </p>
     </div>
     <p v-if="subtitle" class="text-xs text-slate-500">
@@ -35,23 +36,32 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { TrendingUp, TrendingDown } from 'lucide-vue-next'
+import { TrendingUp, TrendingDown, Minus } from 'lucide-vue-next'
 
 interface Props {
   title: string
   value: string | number
-  change?: string
-  changeType?: 'up' | 'down'
+  unit?: string
+  trend?: 'up' | 'down' | 'stable'
+  trendValue?: string
   subtitle?: string
   icon: any
-  color: string
+  textColor?: string
   bgColor: string
+  clickAction?: string | null
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  unit: '',
+  trend: 'stable',
+  trendValue: '',
+  subtitle: '',
+  textColor: 'text-slate-600',
+  clickAction: null
+})
 
 defineEmits<{
-  click: []
+  click: [action: string]
 }>()
 
 const hoverBorderClass = computed(() => {
@@ -69,6 +79,12 @@ const hoverBorderClass = computed(() => {
     'text-teal-600': 'hover:border-teal-500',
     'text-slate-600': 'hover:border-slate-500'
   }
-  return colorMap[props.color] || 'hover:border-slate-300'
+  return colorMap[props.textColor] || 'hover:border-slate-300'
 })
+
+const handleClick = () => {
+  if (props.clickAction) {
+    emit('click', props.clickAction)
+  }
+}
 </script>

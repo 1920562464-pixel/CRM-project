@@ -72,7 +72,11 @@
       </div>
 
       <!-- Blood Sugar -->
-      <div class="p-2 rounded-lg" style="background-color: 'var(--fill-light)';">
+      <div
+        class="p-2 rounded-lg cursor-pointer hover:shadow-md transition-shadow"
+        style="background-color: 'var(--fill-light)';"
+        @click="router.push({ path: '/blood-glucose-detail', query: { from: 'health-preview', clientId: props.userId } })"
+      >
         <div class="flex items-center justify-between mb-1">
           <div class="flex items-center gap-1">
             <Droplets :size="12" class="text-amber-500" />
@@ -166,6 +170,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   Activity,
   Heart,
@@ -189,6 +194,8 @@ interface HealthData {
 const props = defineProps<{
   userId?: string
 }>()
+
+const router = useRouter()
 
 // Mock health data (in real app, fetch from API based on userId)
 const healthData = ref<HealthData>({

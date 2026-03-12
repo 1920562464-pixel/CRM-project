@@ -520,6 +520,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, markRaw } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   AlertTriangle,
   CheckCircle2,
@@ -544,6 +545,8 @@ import {
 import DatePickerButton from './shared/DatePickerButton.vue'
 import NutrientIntervention from './NutrientIntervention.vue'
 import Toast from './shared/Toast.vue'
+
+const router = useRouter()
 
 // Types
 interface Blocker {
@@ -749,7 +752,14 @@ const getBlockerIcon = (source: string) => {
 }
 
 const handleWarning = () => {
-  toastRef.value?.show('已创建人工干预任务', 'success')
+  // 跳转到血糖详情页面进行干预处理
+  router.push({
+    path: '/blood-glucose-detail',
+    query: {
+      from: 'intervention',
+      action: 'warning'
+    }
+  })
 }
 
 const resolveBlocker = (id: string) => {
@@ -757,14 +767,14 @@ const resolveBlocker = (id: string) => {
   if (blocker) {
     blocker.resolved = true
     blocker.solution = '已与用户沟通，制定针对性解决方案'
-    toastRef.value?.show('阻塞点已标记为已处理', 'success')
+    toastRef.value?.success('阻塞点已标记为已处理')
     saveData()
   }
 }
 
 const deleteBlocker = (id: string) => {
   blockers.value = blockers.value.filter(b => b.id !== id)
-  toastRef.value?.show('阻塞点已删除', 'success')
+  toastRef.value?.success('阻塞点已删除')
   saveData()
 }
 
@@ -776,7 +786,7 @@ const selectBlocker = (option: { title: string; desc: string }) => {
     source: 'Coach',
     resolved: false
   })
-  toastRef.value?.show(`已添加阻塞点: ${option.title}`, 'success')
+  toastRef.value?.success(`已添加阻塞点: ${option.title}`)
   showBlockerModal.value = false
   saveData()
 }
@@ -790,7 +800,7 @@ const createCustomBlocker = () => {
     source: 'Coach',
     resolved: false
   })
-  toastRef.value?.show('自定义阻塞点已创建', 'success')
+  toastRef.value?.success('自定义阻塞点已创建')
   customBlockerTitle.value = ''
   customBlockerDesc.value = ''
   showBlockerModal.value = false
@@ -812,7 +822,7 @@ const addCoachTask = () => {
     ...newCoachTask.value,
     completed: false
   })
-  toastRef.value?.show('教练待办已添加', 'success')
+  toastRef.value?.success('教练待办已添加')
   newCoachTask.value = { title: '', description: '', priority: 'normal', deadline: '09:00' }
   showCoachTaskModal.value = false
   saveData()
@@ -833,7 +843,7 @@ const addUserTask = () => {
     ...newUserTask.value,
     completed: false
   })
-  toastRef.value?.show('用户任务已添加', 'success')
+  toastRef.value?.success('用户任务已添加')
   newUserTask.value = { title: '', time: '09:00' }
   showUserTaskModal.value = false
   saveData()
@@ -861,14 +871,14 @@ const addHabit = () => {
     targetStreak: newHabit.value.targetStreak || 21,
     checkedToday: false
   })
-  toastRef.value?.show('习惯已添加', 'success')
+  toastRef.value?.success('习惯已添加')
   newHabit.value = { title: '', targetStreak: 21 }
   showHabitModal.value = false
   saveData()
 }
 
 const viewFullMap = () => {
-  toastRef.value?.show('查看完整干预路径', 'info')
+  toastRef.value?.info('查看完整干预路径')
 }
 
 // Local Storage
@@ -908,7 +918,7 @@ const handleDateSelect = (date: Date, isRetroactive: boolean) => {
   isRetroactiveMode.value = isRetroactive
   // Load data for selected date
   loadInterventionsForDate(date)
-  toastRef.value?.show(isRetroactive ? '已进入补打卡模式' : '已切换到选中日期', 'info')
+  toastRef.value?.info(isRetroactive ? '已进入补打卡模式' : '已切换到选中日期')
 }
 
 const loadInterventionsForDate = (date: Date) => {

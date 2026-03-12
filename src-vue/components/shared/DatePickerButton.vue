@@ -32,7 +32,7 @@
     >
       <div
         v-if="isOpen"
-        class="absolute top-full left-0 mt-2 w-72 bg-white rounded-xl border border-slate-200 shadow-xl"
+        class="absolute top-full right-0 mt-2 w-72 bg-white rounded-xl border border-slate-200 shadow-xl"
         style="z-index: 9999;"
       >
         <!-- Calendar Header -->
