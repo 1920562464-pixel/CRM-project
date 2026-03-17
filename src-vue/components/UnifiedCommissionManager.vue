@@ -34,27 +34,6 @@
       </div>
     </div>
 
-    <!-- 佣金提报横幅 -->
-    <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200 p-4">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-4">
-          <div class="flex items-center gap-2">
-            <AlertCircle :size="20" class="text-purple-600" />
-            <span class="font-semibold text-purple-900">顾问佣金数据提报</span>
-          </div>
-          <span class="text-sm text-purple-700">
-            当前状态：<span class="text-green-600 font-semibold">开放中</span>
-          </span>
-        </div>
-        <button
-          @click="openCommissionReportDialog"
-          class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2 text-sm font-medium"
-        >
-          <Plus :size="16" /> 新增佣金提报
-        </button>
-      </div>
-    </div>
-
     <!-- 产品佣金规则说明 -->
     <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
       <div class="space-y-3">
@@ -331,71 +310,6 @@
       </div>
     </div>
 
-    <!-- 佣金提报弹窗 -->
-    <Modal v-model:show="showCommissionReportDialog" title="新增佣金提报" size="lg">
-      <form @submit.prevent="submitCommissionReport" class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-2">选择顾问 *</label>
-          <select v-model="commissionReportForm.consultantId" required class="w-full px-3 py-2 border border-slate-300 rounded-lg">
-            <option value="">请选择顾问</option>
-            <option v-for="emp in employees.filter(e => e.role === 'consultant')" :key="emp.id" :value="emp.id">
-              {{ emp.name }}
-            </option>
-          </select>
-        </div>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">基础干预人数</label>
-            <input
-              v-model.number="commissionReportForm.basicServiceUsers"
-              type="number"
-              min="0"
-              placeholder="0"
-              class="w-full px-3 py-2 border border-slate-300 rounded-lg"
-            />
-            <div class="text-xs text-slate-500 mt-1">¥100/人</div>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">深度干预人数</label>
-            <input
-              v-model.number="commissionReportForm.deepServiceUsers"
-              type="number"
-              min="0"
-              placeholder="0"
-              class="w-full px-3 py-2 border border-slate-300 rounded-lg"
-            />
-            <div class="text-xs text-slate-500 mt-1">¥200/人</div>
-          </div>
-        </div>
-        <div v-if="commissionReportForm.basicServiceUsers > 0 || commissionReportForm.deepServiceUsers > 0" class="bg-purple-50 border border-purple-200 rounded-lg p-3">
-          <div class="flex justify-between items-center">
-            <span class="text-sm text-purple-700">预计金额：</span>
-            <span class="text-lg font-bold text-purple-600">
-              ¥{{ ((commissionReportForm.basicServiceUsers || 0) * 100 + (commissionReportForm.deepServiceUsers || 0) * 200).toLocaleString() }}
-            </span>
-          </div>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-2">备注</label>
-          <textarea
-            v-model="commissionReportForm.remark"
-            placeholder="请输入备注信息"
-            rows="2"
-            class="w-full px-3 py-2 border border-slate-300 rounded-lg resize-none"
-          ></textarea>
-        </div>
-      </form>
-
-      <template #footer>
-        <button @click="closeCommissionReportDialog" class="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50">
-          取消
-        </button>
-        <button @click="submitCommissionReport" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-          提交
-        </button>
-      </template>
-    </Modal>
-
     <!-- 添加/编辑佣金弹窗 -->
     <Modal v-model:show="showAddDialog" :title="editingItem ? '编辑佣金' : '添加佣金'" size="lg">
       <form @submit.prevent="handleSave" class="space-y-4">
@@ -516,18 +430,9 @@ const selectedMonth = ref('2025-02')
 const selectedEmployeeId = ref('')
 const selectedType = ref('')
 const showAddDialog = ref(false)
-const showCommissionReportDialog = ref(false)
 const editingItem = ref<Commission | null>(null)
 const selectedItems = ref<string[]>([])
 const selectAll = ref(false)
-
-// 佣金提报表单
-const commissionReportForm = ref({
-  consultantId: '',
-  basicServiceUsers: 0,
-  deepServiceUsers: 0,
-  remark: ''
-})
 
 // 员工列表（模拟）
 const employees = ref([
@@ -807,52 +712,6 @@ const closeDialog = () => {
 // 导出报表
 const exportReport = () => {
   toast.success('导出成功', '佣金报表已导出')
-}
-
-// 佣金提报相关方法
-const openCommissionReportDialog = () => {
-  commissionReportForm.value = {
-    consultantId: '',
-    basicServiceUsers: 0,
-    deepServiceUsers: 0,
-    remark: ''
-  }
-  showCommissionReportDialog.value = true
-}
-
-const closeCommissionReportDialog = () => {
-  showCommissionReportDialog.value = false
-}
-
-const submitCommissionReport = () => {
-  if (!commissionReportForm.value.consultantId) {
-    toast.error('请选择顾问')
-    return
-  }
-
-  const employee = employees.value.find(e => e.id === commissionReportForm.value.consultantId)
-  if (!employee) return
-
-  const totalAmount = commissionReportForm.value.basicServiceUsers * 100 + commissionReportForm.value.deepServiceUsers * 200
-
-  // 创建佣金记录
-  createCommission({
-    employeeId: employee.id,
-    employeeName: employee.name,
-    employeeRole: employee.role as any,
-    type: 'bonus',
-    category: '佣金提报',
-    relatedUserName: `${commissionReportForm.value.basicServiceUsers}人基础 + ${commissionReportForm.value.deepServiceUsers}人深度`,
-    amount: totalAmount,
-    status: 'pending',
-    occurredAt: new Date(),
-    month: selectedMonth.value,
-    note: commissionReportForm.value.remark
-  })
-
-  toast.success('提报成功', `已提交 ${employee.name} 的佣金数据，等待审核`)
-  closeCommissionReportDialog()
-  updateData()
 }
 
 onMounted(() => {

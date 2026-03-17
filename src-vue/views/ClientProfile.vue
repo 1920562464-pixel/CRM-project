@@ -87,22 +87,118 @@
                   <Plus :size="12" /> 添加
                 </button>
               </div>
+
+              <!-- 教练/医生分配信息 -->
+              <div class="mt-3 flex flex-col gap-2">
+                <!-- 教练分配区域 -->
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-base">👨‍⚕️</span>
+                  <span class="text-xs text-slate-600 font-medium">教练团队:</span>
+
+                  <!-- 教练列表 -->
+                  <template v-if="clientAssignment?.coaches && clientAssignment.coaches.length > 0">
+                    <div
+                      v-for="(coachAssignment, index) in clientAssignment.coaches"
+                      :key="coachAssignment.coachId"
+                      class="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-lg group"
+                    >
+                      <span class="text-sm font-medium text-slate-900">{{ coachAssignment.coachName }}</span>
+                      <span class="text-xs text-slate-500">(负载: {{ getCoachLoad(coachAssignment.coachId) }}/{{ getCoachMaxLoad(coachAssignment.coachId) }})</span>
+                      <span
+                        :class="[
+                          'text-xs px-1.5 py-0.5 rounded',
+                          coachAssignment.isNewClient ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'
+                        ]"
+                      >
+                        {{ coachAssignment.isNewClient ? '新用户' : '老用户' }}
+                      </span>
+                      <span
+                        :class="[
+                          'text-xs px-1.5 py-0.5 rounded',
+                          coachAssignment.serviceType === 'deep' ? 'bg-indigo-100 text-indigo-700' : 'bg-cyan-100 text-cyan-700'
+                        ]"
+                      >
+                        {{ coachAssignment.serviceType === 'deep' ? '深度' : '基础' }}
+                      </span>
+                      <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          @click="openChangeCoachModal(coachAssignment.coachId)"
+                          class="p-1 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
+                          title="更换教练"
+                        >
+                          更换
+                        </button>
+                        <button
+                          @click="confirmRemoveCoach(coachAssignment.coachId)"
+                          class="p-1 text-xs text-red-600 hover:text-red-800 hover:bg-red-100 rounded transition-colors"
+                          title="移除教练"
+                        >
+                          移除
+                        </button>
+                      </div>
+                    </div>
+                  </template>
+
+                  <!-- 添加教练按钮 -->
+                  <button
+                    @click="openAssignCoachModal"
+                    class="flex items-center gap-1 px-3 py-1.5 border border-dashed border-emerald-300 text-emerald-600 rounded-lg text-xs hover:bg-emerald-50 transition-colors font-medium"
+                  >
+                    <Plus :size="12" />
+                    添加教练
+                  </button>
+                </div>
+
+                <!-- 医生分配区域 -->
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-base">🩺</span>
+                  <span class="text-xs text-slate-600 font-medium">医生:</span>
+                  <div class="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+                    <template v-if="clientAssignment?.doctorId">
+                      <span class="text-sm font-medium text-slate-900">{{ clientAssignment?.doctorName }}</span>
+                      <span class="text-xs text-green-600">(在线)</span>
+                      <button
+                        @click="openChangeDoctorModal"
+                        class="p-1 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
+                        title="更换医生"
+                      >
+                        更换
+                      </button>
+                      <button
+                        @click="confirmRemoveDoctor"
+                        class="p-1 text-xs text-red-600 hover:text-red-800 hover:bg-red-100 rounded transition-colors"
+                        title="移除医生"
+                      >
+                        移除
+                      </button>
+                  </template>
+                  <template v-else>
+                    <button
+                      @click="openAssignDoctorModal"
+                      class="text-xs text-indigo-600 hover:text-indigo-800 hover:bg-indigo-100 px-2 py-1 rounded transition-colors font-medium"
+                    >
+                      + 分配医生
+                    </button>
+                  </template>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-
-        <div class="flex flex-col items-end gap-2">
-          <div class="flex items-center gap-2">
-            <button
-              @click="showNotesSidebar = true"
-              class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors border border-transparent hover:border-indigo-100"
-              title="查看备注"
-            >
-              <FileText :size="18" />
-            </button>
           </div>
-          <div class="text-[10px] text-slate-400 font-mono">
-            ID: {{ clientId }} | Last Active: 10m ago
+
+          <div class="flex flex-col items-end gap-2">
+            <div class="flex items-center gap-2">
+              <button
+                @click="showNotesSidebar = true"
+                class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors border border-transparent hover:border-indigo-100"
+                title="查看备注"
+              >
+                <FileText :size="18" />
+              </button>
+            </div>
+            <div class="text-[10px] text-slate-400 font-mono">
+              ID: {{ clientId }} | Last Active: 10m ago
+            </div>
           </div>
         </div>
       </div>
@@ -949,14 +1045,38 @@
 
     <!-- Toast -->
     <Toast ref="toastRef" />
+
+    <!-- 教练分配/更换模态框 -->
+    <EmployeeAssignModal
+      v-model:show="showCoachModal"
+      position="coach"
+      :client-id="clientId"
+      :client-name="client.name"
+      :current-employee-id="isChangeCoachMode ? (currentChangingCoachId || '') : ''"
+      @confirm="handleCoachAssignment"
+    />
+
+    <!-- 医生分配/更换模态框 -->
+    <EmployeeAssignModal
+      v-model:show="showDoctorModal"
+      position="doctor"
+      :client-id="clientId"
+      :client-name="client.name"
+      :current-employee-id="isChangeDoctorMode ? clientAssignment?.doctorId : ''"
+      @confirm="handleDoctorAssignment"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, watch } from 'vue'
+import { ref, computed, nextTick, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useTheme } from '../composables/useTheme'
 import { useUserTags } from '../composables/useUserTags'
+import { useEmployeeData } from '../composables/useEmployeeData'
+import { useSystemLog } from '../composables/useSystemLog'
+import { useManagementFee } from '../composables/useManagementFee'
+import EmployeeAssignModal from '../components/EmployeeAssignModal.vue'
 
 // 主题相关
 const { currentTheme } = useTheme()
@@ -987,7 +1107,9 @@ import {
   Heart,
   Apple,
   Search,
-  Trash2
+  Trash2,
+  Users,
+  Stethoscope
 } from 'lucide-vue-next'
 import InterventionManager from '../components/InterventionManager.vue'
 import HealthData from '../components/HealthData.vue'
@@ -1013,6 +1135,227 @@ const goBack = () => {
 }
 
 const clientId = computed(() => route.params.id as string)
+
+// Employee & System Log composables
+const {
+  getClientAssignment,
+  getEmployeeById,
+  assignCoach,
+  changeCoach,
+  removeCoach,
+  assignDoctor,
+  changeDoctor,
+  removeDoctor
+} = useEmployeeData()
+
+const {
+  logAssignCoach,
+  logChangeCoach,
+  logRemoveCoach,
+  logAssignDoctor,
+  logChangeDoctor,
+  logRemoveDoctor
+} = useSystemLog()
+
+const { handleAssignmentChange } = useManagementFee()
+
+// Employee assignment state
+const clientAssignment = ref(getClientAssignment(clientId.value))
+const showCoachModal = ref(false)
+const showDoctorModal = ref(false)
+const isChangeCoachMode = ref(false)
+const isChangeDoctorMode = ref(false)
+
+// Get coach load info
+const getCoachLoad = (coachId?: string) => {
+  if (!coachId) return 0
+  const coach = getEmployeeById(coachId)
+  return coach?.load || 0
+}
+
+const getCoachMaxLoad = (coachId?: string) => {
+  if (!coachId) return 0
+  const coach = getEmployeeById(coachId)
+  return coach?.maxLoad || 0
+}
+
+// 当前正在更换的教练ID
+const currentChangingCoachId = ref<string | null>(null)
+
+// Open assign coach modal
+const openAssignCoachModal = () => {
+  isChangeCoachMode.value = false
+  currentChangingCoachId.value = null
+  showCoachModal.value = true
+}
+
+// Open change coach modal
+const openChangeCoachModal = (coachId: string) => {
+  isChangeCoachMode.value = true
+  currentChangingCoachId.value = coachId
+  showCoachModal.value = true
+}
+
+// Handle coach assignment
+const handleCoachAssignment = (employeeId: string, data: { serviceType?: 'basic' | 'deep'; firstServiceDate?: string }) => {
+  if (isChangeCoachMode.value && currentChangingCoachId.value) {
+    // Change coach - 移除指定的教练，添加新教练
+    const result = changeCoach(clientId.value, currentChangingCoachId.value, employeeId)
+
+    if (result.success) {
+      const newCoach = getEmployeeById(employeeId)
+      logChangeCoach(
+        clientId.value,
+        client.value.name,
+        oldCoachId,
+        clientAssignment.value?.coachName || '',
+        employeeId,
+        newCoach?.name || '',
+        clientAssignment.value?.isNewClient || false
+      )
+      clientAssignment.value = getClientAssignment(clientId.value)
+      toastRef.value?.success('教练更换成功')
+    } else {
+      toastRef.value?.error(result.message || '更换失败')
+    }
+  } else {
+    // Assign new coach
+    const result = assignCoach(
+      clientId.value,
+      client.value.name,
+      employeeId,
+      data.serviceType || 'basic',
+      data.firstServiceDate || new Date().toISOString().split('T')[0]
+    )
+
+    if (result.success) {
+      const coach = getEmployeeById(employeeId)
+      logAssignCoach(
+        clientId.value,
+        client.value.name,
+        employeeId,
+        coach?.name || '',
+        result.isNewClient || false
+      )
+
+      // Handle management fee
+      handleAssignmentChange(
+        clientId.value,
+        client.value.name,
+        employeeId,
+        coach?.name || '',
+        result.isNewClient || false,
+        'assign'
+      )
+
+      clientAssignment.value = getClientAssignment(clientId.value)
+      toastRef.value?.success('教练分配成功')
+    } else {
+      toastRef.value?.error(result.message || '分配失败')
+    }
+  }
+}
+
+// Confirm remove coach
+const confirmRemoveCoach = (coachId: string) => {
+  if (!clientAssignment.value?.coaches) return
+
+  const coachDetail = clientAssignment.value.coaches.find(c => c.coachId === coachId)
+  if (!coachDetail) return
+
+  if (confirm(`确定要移除 ${coachDetail.coachName} 教练吗？`)) {
+    const result = removeCoach(clientId.value, coachId)
+
+    if (result.success) {
+      logRemoveCoach(
+        clientId.value,
+        client.value.name,
+        coachId,
+        result.coachName || ''
+      )
+      clientAssignment.value = getClientAssignment(clientId.value)
+      toastRef.value?.success('教练已移除')
+    } else {
+      toastRef.value?.error(result.message || '移除失败')
+    }
+  }
+}
+
+// Open assign doctor modal
+const openAssignDoctorModal = () => {
+  isChangeDoctorMode.value = false
+  showDoctorModal.value = true
+}
+
+// Open change doctor modal
+const openChangeDoctorModal = () => {
+  isChangeDoctorMode.value = true
+  showDoctorModal.value = true
+}
+
+// Handle doctor assignment
+const handleDoctorAssignment = (employeeId: string) => {
+  if (isChangeDoctorMode.value) {
+    // Change doctor
+    const oldDoctorId = clientAssignment.value?.doctorId || ''
+    const result = changeDoctor(clientId.value, oldDoctorId, employeeId)
+
+    if (result.success) {
+      const newDoctor = getEmployeeById(employeeId)
+      logChangeDoctor(
+        clientId.value,
+        client.value.name,
+        oldDoctorId,
+        clientAssignment.value?.doctorName || '',
+        employeeId,
+        newDoctor?.name || ''
+      )
+      clientAssignment.value = getClientAssignment(clientId.value)
+      toastRef.value?.success('医生更换成功')
+    } else {
+      toastRef.value?.error(result.message || '更换失败')
+    }
+  } else {
+    // Assign new doctor
+    const result = assignDoctor(clientId.value, client.value.name, employeeId)
+
+    if (result.success) {
+      const doctor = getEmployeeById(employeeId)
+      logAssignDoctor(
+        clientId.value,
+        client.value.name,
+        employeeId,
+        doctor?.name || ''
+      )
+      clientAssignment.value = getClientAssignment(clientId.value)
+      toastRef.value?.success('医生分配成功')
+    } else {
+      toastRef.value?.error(result.message || '分配失败')
+    }
+  }
+}
+
+// Confirm remove doctor
+const confirmRemoveDoctor = () => {
+  if (!clientAssignment.value?.doctorId) return
+
+  if (confirm(`确定要移除 ${clientAssignment.value.doctorName} 医生吗？`)) {
+    const result = removeDoctor(clientId.value)
+
+    if (result.success) {
+      logRemoveDoctor(
+        clientId.value,
+        client.value.name,
+        clientAssignment.value.doctorId,
+        result.doctorName || ''
+      )
+      clientAssignment.value = getClientAssignment(clientId.value)
+      toastRef.value?.success('医生已移除')
+    } else {
+      toastRef.value?.error(result.message || '移除失败')
+    }
+  }
+}
 
 // State
 const activeTab = ref('overview')

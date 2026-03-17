@@ -160,6 +160,11 @@
         </div>
       </div>
 
+      <!-- 员工管理 -->
+      <div v-else-if="activeTab === 'hr'" class="space-y-4">
+        <EmployeeManagement />
+      </div>
+
       <!-- 角色权限 -->
       <div v-else-if="activeTab === 'roles'" class="space-y-4">
         <div class="flex items-center justify-between">
@@ -606,6 +611,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useTheme } from '../composables/useTheme'
+import { useSystemLog } from '../composables/useSystemLog'
 
 // 主题相关
 const { currentTheme } = useTheme()
@@ -631,8 +637,9 @@ import {
   Unlock
 } from 'lucide-vue-next'
 import { useToast } from '../composables/useToast'
+import EmployeeManagement from '../components/EmployeeManagement.vue'
 
-type TabType = 'users' | 'roles' | 'logs' | 'config' | 'dictionary' | 'notifications'
+type TabType = 'users' | 'hr' | 'roles' | 'logs' | 'config' | 'dictionary' | 'notifications'
 
 interface User {
   id: string
@@ -713,6 +720,7 @@ const toast = useToast()
 // Tabs
 const tabs = [
   { id: 'users' as TabType, label: '用户管理', icon: Users, description: '管理系统用户及权限' },
+  { id: 'hr' as TabType, label: '员工管理', icon: Users, description: '员工全生命周期管理' },
   { id: 'roles' as TabType, label: '角色权限', icon: Shield, description: '配置角色与权限矩阵' },
   { id: 'logs' as TabType, label: '操作日志', icon: ScrollText, description: '查看系统操作审计记录' },
   { id: 'config' as TabType, label: '系统配置', icon: Settings, description: '全局参数与业务规则设置' },
@@ -821,6 +829,29 @@ const logs = ref<Log[]>([
   { id: '4', operator: '赵六', action: '导出数据', module: '数据管理', ip: '192.168.1.103', time: '2024-01-15 14:15:05', status: 'success' }
 ])
 
+// 使用系统日志 composable
+const { logs: systemLogs, getLogs, exportLogs: exportSystemLogs } = useSystemLog()
+
+// 将系统日志转换为 UI 日志格式
+const formattedLogs = computed(() => {
+  return systemLogs.value.map(log => ({
+    id: log.id,
+    operator: log.operator,
+    action: log.details.description || log.action,
+    module: log.module,
+    ip: log.ip,
+    time: new Date(log.timestamp).toLocaleString('zh-CN'),
+    status: log.status
+  }))
+})
+
+// 合并历史日志和新日志
+const allLogs = computed(() => {
+  return [...formattedLogs.value, ...logs.value].sort((a, b) =>
+    new Date(b.time).getTime() - new Date(a.time).getTime()
+  )
+})
+
 const configs = ref<SystemConfig[]>([
   { id: '1', key: 'system.title', value: '惯能健康CRM', description: '系统标题', category: '基础设置', updateTime: '2024-01-01' },
   { id: '2', key: 'session.timeout', value: '30', description: '会话超时时间（分钟）', category: '安全设置', updateTime: '2024-01-01' },
@@ -850,7 +881,7 @@ const filteredUsers = computed(() => {
 })
 
 const filteredLogs = computed(() => {
-  return logs.value.filter(log => {
+  return allLogs.value.filter(log => {
     const matchesModule = logModuleFilter.value === 'all' || log.module === logModuleFilter.value
     const matchesStatus = logStatusFilter.value === 'all' || log.status === logStatusFilter.value
     return matchesModule && matchesStatus
@@ -1031,8 +1062,19 @@ const saveGeneric = () => {
 
 const exportLogs = () => {
   toast.info('导出中', '正在导出操作日志...')
-  setTimeout(() => {
+  try {
+    const logsJson = exportSystemLogs('json')
+    // 创建下载链接
+    const blob = new Blob([logsJson], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `system_logs_${new Date().toISOString().split('T')[0]}.json`
+    a.click()
+    URL.revokeObjectURL(url)
     toast.success('导出成功', '操作日志已导出')
-  }, 1500)
+  } catch (error) {
+    toast.error('导出失败', '导出操作日志失败')
+  }
 }
 </script>

@@ -13,18 +13,39 @@
           </div>
         </div>
 
-        <!-- Tabs -->
-        <div class="tabs-wrapper">
-          <button
-            v-for="tab in rankingTabs"
-            :key="tab.key"
-            @click="switchTab(tab.key)"
-            class="tab-btn"
-            :class="{ 'tab-active': activeTab === tab.key }"
-          >
-            <component :is="tab.icon" :size="16" />
-            {{ tab.label }}
-          </button>
+        <!-- Tabs and Search Container -->
+        <div class="tabs-search-container">
+          <!-- Tabs -->
+          <div class="tabs-wrapper">
+            <button
+              v-for="tab in rankingTabs"
+              :key="tab.key"
+              @click="switchTab(tab.key)"
+              class="tab-btn"
+              :class="{ 'tab-active': activeTab === tab.key }"
+            >
+              <component :is="tab.icon" :size="16" />
+              {{ tab.label }}
+            </button>
+          </div>
+
+          <!-- Search -->
+          <div class="search-wrapper">
+            <Search :size="16" class="search-icon" />
+            <input
+              v-model="searchQuery"
+              type="text"
+              :placeholder="activeTab === 'personal' ? '搜索用户名...' : '搜索社群名...'"
+              class="search-input"
+            />
+            <button
+              v-if="searchQuery"
+              @click="clearSearch"
+              class="search-clear"
+            >
+              <X :size="14" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -431,7 +452,8 @@ import {
   AlertTriangle,
   Radio,
   Award,
-  X
+  X,
+  Search
 } from 'lucide-vue-next'
 import { usePointsSystem, type UserPoints } from '../composables/usePointsSystem'
 import { usePagination } from '../composables/usePagination'
@@ -469,6 +491,7 @@ const isInitializing = ref(false)
 const selectedUser = ref<UserPoints | any>(null)
 const expandedCommunity = ref<string | null>(null) // Track expanded community
 const showTimelineModal = ref(false) // Track if timeline modal is shown
+const searchQuery = ref('') // Search query state
 
 const rankingTabs: RankingTab[] = [
   { key: 'personal', label: '个人榜', icon: User },
@@ -497,7 +520,26 @@ const currentPagination = computed(() => {
 
 const currentRankingList = computed(() => {
   const data = currentPagination.value.currentData.value
-  return data.map((item, index) => {
+
+  // Apply search filter
+  let filteredData = data
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim()
+    filteredData = data.filter((item: any) => {
+      if (activeTab.value === 'personal') {
+        // Search by userName or community
+        return (
+          item.userName?.toLowerCase().includes(query) ||
+          item.community?.toLowerCase().includes(query)
+        )
+      } else {
+        // Search by community name
+        return item.name?.toLowerCase().includes(query)
+      }
+    })
+  }
+
+  return filteredData.map((item, index) => {
     const rank = item.rank && item.rank > 0 ? item.rank : currentPagination.value.startIndex.value + index + 1
     return { ...item, rank }
   })
@@ -509,6 +551,11 @@ const switchTab = (tab: RankingTabKey) => {
   currentPagination.value.reset()
   selectedUser.value = null
   expandedCommunity.value = null // Reset expanded community when switching tabs
+  searchQuery.value = '' // Clear search when switching tabs
+}
+
+const clearSearch = () => {
+  searchQuery.value = ''
 }
 
 const isSelected = (item: any) => {
@@ -853,7 +900,11 @@ onMounted(async () => {
 }
 
 .header-left {
-  @apply flex flex-col lg:flex-row lg:items-center gap-6;
+  @apply flex flex-col lg:flex-row lg:items-start gap-4 lg:gap-6;
+}
+
+.tabs-search-container {
+  @apply flex flex-col sm:flex-row items-start sm:items-center gap-3;
 }
 
 .title-section {
@@ -879,6 +930,33 @@ onMounted(async () => {
 /* Tabs */
 .tabs-wrapper {
   @apply flex bg-slate-100 rounded-xl p-1 gap-1;
+}
+
+.search-wrapper {
+  @apply relative flex items-center bg-white rounded-xl px-3 py-2 gap-2;
+  @apply border border-slate-200 shadow-sm;
+  @apply transition-all duration-200;
+  min-width: 200px;
+}
+
+.search-wrapper:focus-within {
+  @apply border-indigo-300 ring-2 ring-indigo-100;
+}
+
+.search-icon {
+  @apply text-slate-400 flex-shrink-0;
+}
+
+.search-input {
+  @apply flex-1 text-sm outline-none;
+  @apply placeholder:text-slate-400;
+}
+
+.search-clear {
+  @apply flex items-center justify-center;
+  @apply text-slate-400 hover:text-slate-600;
+  @apply transition-colors duration-150;
+  @apply flex-shrink-0;
 }
 
 .tab-btn {

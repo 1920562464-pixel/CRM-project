@@ -2,7 +2,16 @@
   "permissions": {
     "allow": [
       "Bash(git add:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(npm run:*)",
+      "Read(//Users/fg/Desktop/CRM-project/**)",
+      "Bash(chmod +x /tmp/check_divs.sh)",
+      "Bash(/tmp/check_divs.sh)",
+      "Bash(python3 << 'PYTHON'\nimport re\n\nwith open\\('/Users/fg/Desktop/CRM-project/src-vue/views/ClientProfile.vue', 'r'\\) as f:\n    content = f.read\\(\\)\n\n# Extract template content\ntemplate_match = re.search\\(r'<template>\\(.*?\\)</template>', content, re.DOTALL\\)\nif not template_match:\n    print\\(\"No template found\"\\)\n    exit\\(1\\)\n\ntemplate_content = template_match.group\\(1\\)\n\n# Count all div opening tags \\(excluding self-closing\\)\nopening_divs = re.findall\\(r'<div[^/>]*>', template_content\\)\n# Count all closing div tags\nclosing_divs = re.findall\\(r'</div>', template_content\\)\n\nprint\\(f\"Opening div tags: {len\\(opening_divs\\)}\"\\)\nprint\\(f\"Closing div tags: {len\\(closing_divs\\)}\"\\)\nprint\\(f\"Difference: {len\\(opening_divs\\) - len\\(closing_divs\\)}\"\\)\n\n# Find lines with unbalanced divs\nlines = template_content.split\\('\\\\n'\\)\ndepth = 0\nfor i, line in enumerate\\(lines, 1\\):\n    open_count = len\\(re.findall\\(r'<div[^/>]*>', line\\)\\)\n    close_count = len\\(re.findall\\(r'</div>', line\\)\\)\n    \n    if open_count > 0 or close_count > 0:\n        new_depth = depth + open_count - close_count\n        if new_depth < 0:\n            print\\(f\"Line {i}: ERROR - Negative depth! {depth} + {open_count} - {close_count} = {new_depth}\"\\)\n            print\\(f\"  {line.strip\\(\\)}\"\\)\n        depth = new_depth\n\nprint\\(f\"Final depth: {depth}\"\\)\nPYTHON)",
+      "Bash(npm list:*)",
+      "Bash(cat << 'EOF'\n# 在浏览器控制台执行以下命令清除旧HR数据：\nlocalStorage.removeItem\\('crm_hr_employees'\\)\nlocalStorage.removeItem\\('crm_hr_coaching_relationships'\\)\nlocalStorage.removeItem\\('crm_hr_onboarding'\\)\nlocalStorage.removeItem\\('crm_hr_offboarding'\\)\nlocalStorage.removeItem\\('crm_hr_regularizations'\\)\nlocalStorage.removeItem\\('crm_hr_salary_adjustments'\\)\n# 然后刷新页面\nEOF)",
+      "Bash(cat << 'EOF'\n# 在浏览器控制台执行以下命令清除旧HR数据：\nlocalStorage.clear\\(\\)\n# 然后刷新页面\nEOF)",
+      "Bash(grep -n \"^</template>$\" /Users/fg/Desktop/CRM-project/src-vue/components/EmployeeManagement.vue)"
     ]
   }
 }
