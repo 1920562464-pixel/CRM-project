@@ -43,6 +43,12 @@ import SystemManagement from '../views/SystemManagement.vue'
 import AlertCenter from '../views/AlertCenter.vue'
 import RiskPredictionCenter from '../views/RiskPredictionCenter.vue'
 
+// 采购管理
+import ProcurementHome from '../views/procurement/ProcurementHome.vue'
+import SupplierManagement from '../views/procurement/SupplierManagement.vue'
+import PurchaseRequest from '../views/procurement/PurchaseRequest.vue'
+import PurchaseOrders from '../views/procurement/PurchaseOrders.vue'
+
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
@@ -217,6 +223,27 @@ const routes: RouteRecordRaw[] = [
     path: '/blood-glucose-detail',
     name: 'BloodGlucoseDetail',
     component: () => import('../views/BloodGlucoseDetail.vue')
+  },
+  // 采购管理
+  {
+    path: '/procurement',
+    name: 'ProcurementHome',
+    component: ProcurementHome
+  },
+  {
+    path: '/procurement/suppliers',
+    name: 'SupplierManagement',
+    component: SupplierManagement
+  },
+  {
+    path: '/procurement/purchase-request',
+    name: 'PurchaseRequest',
+    component: PurchaseRequest
+  },
+  {
+    path: '/procurement/purchase-orders',
+    name: 'PurchaseOrders',
+    component: PurchaseOrders
   }
 ]
 

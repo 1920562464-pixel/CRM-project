@@ -544,7 +544,7 @@
 import { ref, computed, provide } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { CheckCircle, XCircle, AlertCircle, Info, X, ChevronDown, Check, Clock, AlertTriangle, Inbox, ChevronUp, ChevronLeft, ArrowLeft, ShieldAlert } from 'lucide-vue-next'
-import { Activity, User, LayoutDashboard, Users, Monitor, Wallet, Box, Briefcase, ShoppingCart, Lock, Bell, BrainCircuit, BookOpen, ShoppingBag, Database, FileText, DollarSign, Receipt, Award, Link2, ListTodo } from 'lucide-vue-next'
+import { Activity, User, LayoutDashboard, Users, Monitor, Wallet, Box, Briefcase, ShoppingCart, Lock, Bell, BrainCircuit, BookOpen, ShoppingBag, Database, FileText, DollarSign, Receipt, Award, Link2, ListTodo, Building2, Package } from 'lucide-vue-next'
 import { useToast } from './composables/useToast'
 import { useRole } from './composables/useRole'
 import { useTheme } from './composables/useTheme'
@@ -809,6 +809,7 @@ const currentPageTitle = computed(() => {
     'lead-management': '客情概览',
     'ai-chat': 'AI 对话',
     'knowledge-base': '知识库',
+    'procurement': '采购管理',
     'inventory-management': '商品与库存',
     'asset-management': '资产管理',
     'settlement-management': '人力结算',
@@ -826,7 +827,17 @@ const currentPageTitle = computed(() => {
     'account-payable': '应付账款管理',
     'system-management': '系统管理'
   }
-  const path = route.path.split('/')[1] || 'dashboard'
+
+  // 处理嵌套路径
+  const pathSegments = route.path.split('/').filter(Boolean)
+  if (pathSegments[0] === 'procurement') {
+    if (pathSegments[1] === 'suppliers') return '供应商管理'
+    if (pathSegments[1] === 'purchase-request') return '采购申请'
+    if (pathSegments[1] === 'purchase-orders') return '采购订单'
+    return '采购管理'
+  }
+
+  const path = pathSegments[0] || 'dashboard'
   return titles[path] || '惯能健康 CRM'
 })
 
@@ -856,6 +867,7 @@ const menuItems = computed(() => {
     {
       title: 'ERP中心',
       items: [
+        { id: 'procurement', label: '采购管理', icon: ShoppingCart, path: '/procurement' },
         { id: 'inventory-management', label: '商品与库存', icon: Box, path: '/inventory-management' },
         { id: 'asset-management', label: '资产管理', icon: Database, path: '/asset-management' }
       ]
