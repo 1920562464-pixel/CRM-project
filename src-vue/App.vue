@@ -470,7 +470,7 @@
       </header>
 
       <!-- 主内容 -->
-      <main class="flex-1 overflow-y-auto p-3 md:p-4 relative" style="background-color: var(--background-page);">
+      <main class="flex-1 overflow-y-auto p-2 md:p-2" style="background-color: var(--background-page);">
         <router-view />
       </main>
     </div>
@@ -541,7 +541,7 @@
 </style>
 
 <script setup lang="ts">
-import { ref, computed, provide } from 'vue'
+import { ref, computed, provide, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { CheckCircle, XCircle, AlertCircle, Info, X, ChevronDown, Check, Clock, AlertTriangle, Inbox, ChevronUp, ChevronLeft, ArrowLeft, ShieldAlert } from 'lucide-vue-next'
 import { Activity, User, LayoutDashboard, Users, Monitor, Wallet, Box, Briefcase, ShoppingCart, Lock, Bell, BrainCircuit, BookOpen, ShoppingBag, Database, FileText, DollarSign, Receipt, Award, Link2, ListTodo, Building2, Package } from 'lucide-vue-next'
@@ -739,6 +739,21 @@ const toggleSidebar = () => {
   isSidebarCollapsed.value = !isSidebarCollapsed.value
   sidebarWidth.value = isSidebarCollapsed.value ? collapsedWidth : expandedWidth
 }
+
+// 监听路由变化，自动收起/展开侧边栏
+watch(() => route.path, (newPath) => {
+  const isBatchTaskProcessor = newPath.includes('batch-task-processor')
+
+  if (isBatchTaskProcessor && !isSidebarCollapsed.value) {
+    // 进入工作台内容页面，自动收起侧边栏
+    isSidebarCollapsed.value = true
+    sidebarWidth.value = collapsedWidth
+  } else if (!isBatchTaskProcessor && isSidebarCollapsed.value) {
+    // 离开工作台内容页面，自动展开侧边栏
+    isSidebarCollapsed.value = false
+    sidebarWidth.value = expandedWidth
+  }
+}, { immediate: true })
 
 // 主题相关的计算属性
 const sidebarGradient = computed(() => {

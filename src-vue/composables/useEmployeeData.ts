@@ -19,8 +19,8 @@ export interface Employee {
 
 // 员工列表数据（从现有 coachList 结构扩展）
 const employees = ref<Employee[]>([
-  { id: 'coach_1', name: '李教练 (金牌)', position: 'coach', department: '运动康复部', type: '减重/塑形', load: 12, maxLoad: 15, status: 'active', phone: '13800138001', email: 'li@company.com', color: 'bg-red-100 text-red-600', activeUsers: 8, reportUsers: 4 },
-  { id: 'coach_2', name: '张教练 (资深)', position: 'coach', department: '运动康复部', type: '产后/瑜伽', load: 8, maxLoad: 15, status: 'active', phone: '13800138002', email: 'zhang@company.com', color: 'bg-emerald-100 text-emerald-600', activeUsers: 5, reportUsers: 3 },
+  { id: 'coach_1', name: '李教练', position: 'coach', department: '运动康复部', type: '减重/塑形', load: 12, maxLoad: 15, status: 'active', phone: '13800138001', email: 'li@company.com', color: 'bg-red-100 text-red-600', activeUsers: 8, reportUsers: 4 },
+  { id: 'coach_2', name: '张教练', position: 'coach', department: '运动康复部', type: '产后/瑜伽', load: 8, maxLoad: 15, status: 'active', phone: '13800138002', email: 'zhang@company.com', color: 'bg-emerald-100 text-emerald-600', activeUsers: 5, reportUsers: 3 },
   { id: 'coach_3', name: '王教练', position: 'coach', department: '运动康复部', type: '康复训练', load: 5, maxLoad: 15, status: 'active', phone: '13800138003', email: 'wang@company.com', color: 'bg-emerald-100 text-emerald-600', activeUsers: 2, reportUsers: 3 },
   { id: 'doctor_1', name: '陈医生', position: 'doctor', department: '医疗服务部', type: '内科', load: 20, maxLoad: 25, status: 'active', phone: '13800138004', email: 'chen@company.com', color: 'bg-blue-100 text-blue-600' },
   { id: 'doctor_2', name: '刘医生', position: 'doctor', department: '医疗服务部', type: '骨科', load: 15, maxLoad: 25, status: 'active', phone: '13800138005', email: 'liu@company.com', color: 'bg-blue-100 text-blue-600' },
@@ -55,7 +55,7 @@ const clientAssignments = ref<ClientAssignment[]>([
     coaches: [
       {
         coachId: 'coach_1',
-        coachName: '李教练 (金牌)',
+        coachName: '李教练',
         serviceType: 'deep',
         firstServiceDate: '2025-11-01',
         isNewClient: true,
@@ -73,7 +73,7 @@ const clientAssignments = ref<ClientAssignment[]>([
     coaches: [
       {
         coachId: 'coach_2',
-        coachName: '张教练 (资深)',
+        coachName: '张教练',
         serviceType: 'basic',
         firstServiceDate: '2024-06-15',
         isNewClient: false,

@@ -5,43 +5,56 @@
 
     <!-- Top Controls -->
     <div class="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-      <div class="flex-1 w-full md:w-auto grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="bg-white p-1 rounded-lg border border-slate-200 flex items-center shadow-sm w-fit">
-          <button
-            @click="dataSource = 'auto'"
-            :class="`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-              dataSource === 'auto' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-            }`"
-          >
-            <Watch :size="16" />
-            自动同步
-          </button>
-          <button
-            @click="dataSource = 'manual'"
-            :class="`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-              dataSource === 'manual' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-            }`"
-          >
-            <Edit3 :size="16" />
-            手动录入
-          </button>
+      <!-- Device Status & Actions -->
+      <div class="flex items-center gap-3">
+        <!-- Device Status Badge -->
+        <div class="bg-white px-4 py-2 rounded-lg border border-slate-200 flex items-center gap-2 shadow-sm">
+          <div
+            class="w-2 h-2 rounded-full"
+            :class="hasDevice ? 'bg-green-500 animate-pulse' : 'bg-slate-300'"
+          ></div>
+          <span class="text-sm font-medium text-slate-700">
+            {{ hasDevice ? '设备已连接' : '未绑定设备' }}
+          </span>
+          <span v-if="hasDevice" class="text-xs text-slate-500">{{ deviceName }}</span>
         </div>
 
-        <!-- Time Range Selector -->
-        <div v-if="dataSource === 'auto'" class="bg-white p-1 rounded-lg border border-slate-200 flex items-center shadow-sm w-fit">
-          <button
-            v-for="range in timeRanges"
-            :key="range.value"
-            @click="selectedTimeRange = range.value"
-            :class="`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-              selectedTimeRange === range.value ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:text-slate-700'
-            }`"
-          >
-            {{ range.label }}
-          </button>
-        </div>
+        <!-- Sync Button -->
+        <button
+          v-if="hasDevice"
+          @click="syncFromDevice"
+          :disabled="isSyncing"
+          class="flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 text-green-700 rounded-lg hover:bg-green-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <Watch :size="16" :class="{ 'animate-spin': isSyncing }" />
+          <span>{{ isSyncing ? '同步中...' : '立即同步' }}</span>
+        </button>
+
+        <!-- Manual Entry Button -->
+        <button
+          @click="showManualEntryModal = true"
+          class="flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors"
+        >
+          <Edit3 :size="16" />
+          <span>手动录入</span>
+        </button>
       </div>
 
+      <!-- Time Range Selector -->
+      <div class="bg-white p-1 rounded-lg border border-slate-200 flex items-center shadow-sm">
+        <button
+          v-for="range in timeRanges"
+          :key="range.value"
+          @click="selectedTimeRange = range.value"
+          :class="`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+            selectedTimeRange === range.value ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:text-slate-700'
+          }`"
+        >
+          {{ range.label }}
+        </button>
+      </div>
+
+      <!-- Export & Report -->
       <div class="flex items-center gap-2">
         <button
           @click="exportData"
@@ -51,7 +64,6 @@
           导出数据
         </button>
         <button
-          v-if="dataSource === 'auto'"
           @click="generateReport"
           class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 shadow-sm transition-colors"
         >
@@ -61,8 +73,8 @@
       </div>
     </div>
 
-    <!-- Auto Mode: Dashboard -->
-    <div v-if="dataSource === 'auto'" class="space-y-6">
+    <!-- Unified Dashboard -->
+    <div class="space-y-6">
       <!-- Quick Stats Cards -->
       <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div v-for="stat in quickStats" :key="stat.id"
@@ -320,116 +332,174 @@
       </div>
     </div>
 
-    <!-- Manual Mode: Entry Form -->
-    <div v-else class="space-y-6">
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-        <h3 class="text-lg font-bold text-slate-800 mb-4">手动录入健康数据</h3>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">数据类型</label>
-            <select v-model="entryType" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-              <option value="weight">体重</option>
-              <option value="fat">体脂率</option>
-              <option value="glucose">血糖</option>
-              <option value="bp">血压</option>
-              <option value="hr">心率</option>
-              <option value="waist">腰围</option>
-              <option value="hip">臀围</option>
-            </select>
-          </div>
-
-          <div v-if="entryType === 'bp'" class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-2">收缩压</label>
-              <input v-model="entryValue" type="number" placeholder="120" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-2">舒张压</label>
-              <input v-model="entryValue2" type="number" placeholder="80" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-          </div>
-
-          <div v-else>
-            <label class="block text-sm font-medium text-slate-700 mb-2">数值</label>
-            <input v-model="entryValue" type="number" step="0.1" placeholder="请输入数值" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <p v-if="getValidationHint()" class="text-xs mt-1" :class="getValidationClass()">{{ getValidationHint() }}</p>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">记录时间</label>
-            <input v-model="entryDate" type="datetime-local" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+    <!-- Combined Data Records (Manual + Device Sync) -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <h3 class="font-bold text-slate-800">健康数据记录</h3>
+          <!-- Data Source Stats -->
+          <div class="flex items-center gap-2 text-xs">
+            <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full">
+              📱 设备: {{ dataSourceStats.deviceCount }}
+            </span>
+            <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
+              ✏️ 手动: {{ dataSourceStats.manualCount }}
+            </span>
+            <span class="px-2 py-1 bg-slate-100 text-slate-600 rounded-full">
+              自动化率: {{ dataSourceStats.automationRate }}%
+            </span>
           </div>
         </div>
-
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-slate-700 mb-2">备注</label>
-          <input v-model="entryNotes" type="text" placeholder="选填，如：餐后、运动后等" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        </div>
-
-        <div class="flex gap-2">
-          <button
-            @click="handleAddEntry"
-            :disabled="!entryValue || (entryType === 'bp' && !entryValue2)"
-            class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
-          >
-            <PlusCircle :size="16" /> 添加记录
-          </button>
-          <button
-            @click="clearEntryForm"
-            class="px-4 py-2 border border-slate-300 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 flex items-center gap-2 transition-colors"
-          >
-            清空
-          </button>
+        <span class="text-xs text-slate-500">{{ filteredEntries.length }} 条记录</span>
+      </div>
+      <div class="divide-y divide-slate-100 max-h-96 overflow-y-auto">
+        <div v-for="entry in filteredEntries" :key="entry.id" class="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+          <div class="flex items-center gap-4">
+            <!-- Source Icon -->
+            <div class="w-10 h-10 rounded-full flex items-center justify-center"
+              :class="entry.source === '设备' ? 'bg-green-100' : 'bg-blue-100'">
+              <Watch v-if="entry.source === '设备'" :size="18" class="text-green-600" />
+              <Edit3 v-else :size="18" class="text-blue-600" />
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <p class="font-medium text-slate-800">{{ getLabel(entry.type) }}</p>
+                <span
+                  class="text-[10px] px-2 py-0.5 rounded-full"
+                  :class="entry.source === '设备' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'"
+                >
+                  {{ entry.source }}
+                </span>
+              </div>
+              <p class="text-xs text-slate-500">{{ entry.date }} {{ entry.notes ? '· ' + entry.notes : '' }}</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <p class="font-bold text-slate-900">{{ entry.value }} <span class="text-xs font-normal text-slate-500">{{ entry.unit }}</span></p>
+            <p v-if="entry.deviceName" class="text-xs text-slate-400">{{ entry.deviceName }}</p>
+          </div>
+          <div class="flex items-center gap-1">
+            <button
+              @click="editEntry(entry)"
+              class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+              title="编辑"
+            >
+              <Edit3 :size="14" />
+            </button>
+            <button
+              @click="deleteEntry(entry.id)"
+              class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              title="删除"
+            >
+              <Trash2 :size="16" />
+            </button>
+          </div>
         </div>
       </div>
-
-      <!-- Recent Entries -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="p-4 border-b border-slate-200 flex items-center justify-between">
-          <h3 class="font-bold text-slate-800">最近录入</h3>
-          <span class="text-xs text-slate-500">{{ recentEntries.length }} 条记录</span>
-        </div>
-        <div class="divide-y divide-slate-100">
-          <div v-for="entry in recentEntries" :key="entry.id" class="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
-            <div class="flex items-center gap-4">
-              <div class="w-10 h-10 rounded-full flex items-center justify-center"
-                :class="getEntryIconBg(entry.type)">
-                <component :is="getEntryIcon(entry.type)" :size="18" :class="getEntryIconColor(entry.type)" />
-              </div>
-              <div>
-                <p class="font-medium text-slate-800">{{ getLabel(entry.type) }}</p>
-                <p class="text-xs text-slate-500">{{ entry.date }} {{ entry.notes ? '· ' + entry.notes : '' }}</p>
-              </div>
-            </div>
-            <div class="text-right">
-              <p class="font-bold text-slate-900">{{ entry.value }} <span class="text-xs font-normal text-slate-500">{{ entry.unit }}</span></p>
-              <p class="text-xs text-slate-400">{{ entry.source }}</p>
-            </div>
-            <div class="flex items-center gap-1">
-              <button
-                @click="editEntry(entry)"
-                class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                title="编辑"
-              >
-                <Edit3 :size="14" />
-              </button>
-              <button
-                @click="deleteEntry(entry.id)"
-                class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                title="删除"
-              >
-                <Trash2 :size="16" />
-              </button>
-            </div>
-          </div>
-        </div>
-        <div v-if="recentEntries.length === 0" class="p-8 text-center text-slate-400">
-          <FileText :size="32" class="mx-auto mb-2 opacity-50" />
-          <p>暂无记录，请添加健康数据</p>
-        </div>
+      <div v-if="filteredEntries.length === 0" class="p-8 text-center text-slate-400">
+        <FileText :size="32" class="mx-auto mb-2 opacity-50" />
+        <p>暂无记录，请手动录入或连接设备同步数据</p>
       </div>
     </div>
+
+    <!-- Manual Entry Modal -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition ease-out duration-200"
+        enter-from-class="opacity-0 scale-95"
+        enter-to-class="opacity-100 scale-100"
+        leave-active-class="transition ease-in duration-150"
+        leave-from-class="opacity-100 scale-100"
+        leave-to-class="opacity-0 scale-95"
+      >
+        <div
+          v-if="showManualEntryModal"
+          class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
+          @click.self="showManualEntryModal = false"
+        >
+          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+            <!-- Header -->
+            <div class="flex justify-between items-center p-5 border-b border-slate-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Edit3 :size="20" class="text-blue-600" />
+                </div>
+                <div>
+                  <h3 class="font-bold text-lg text-slate-800">手动录入健康数据</h3>
+                  <p class="text-xs text-slate-500">输入测量值和时间</p>
+                </div>
+              </div>
+              <button
+                @click="showManualEntryModal = false"
+                class="text-slate-400 hover:text-slate-600 hover:bg-white p-1.5 rounded-lg transition-all"
+              >
+                <X :size="20" />
+              </button>
+            </div>
+
+            <!-- Form -->
+            <div class="p-5 space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">数据类型</label>
+                <select v-model="entryType" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  <option value="weight">体重</option>
+                  <option value="fat">体脂率</option>
+                  <option value="glucose">血糖</option>
+                  <option value="bp">血压</option>
+                  <option value="hr">心率</option>
+                  <option value="waist">腰围</option>
+                  <option value="hip">臀围</option>
+                </select>
+              </div>
+
+              <div v-if="entryType === 'bp'" class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-2">收缩压</label>
+                  <input v-model="entryValue" type="number" placeholder="120" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-2">舒张压</label>
+                  <input v-model="entryValue2" type="number" placeholder="80" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+              </div>
+
+              <div v-else>
+                <label class="block text-sm font-medium text-slate-700 mb-2">数值</label>
+                <input v-model="entryValue" type="number" step="0.1" placeholder="请输入数值" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <p v-if="getValidationHint()" class="text-xs mt-1" :class="getValidationClass()">{{ getValidationHint() }}</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">记录时间</label>
+                <input v-model="entryDate" type="datetime-local" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">备注</label>
+                <input v-model="entryNotes" type="text" placeholder="选填，如：餐后、运动后等" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="flex gap-3 p-5 border-t border-slate-100 bg-slate-50">
+              <button
+                @click="showManualEntryModal = false"
+                class="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 text-slate-600 font-medium hover:bg-white transition-all text-sm"
+              >
+                取消
+              </button>
+              <button
+                @click="handleAddEntry"
+                :disabled="!entryValue || (entryType === 'bp' && !entryValue2)"
+                class="flex-1 px-4 py-2.5 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-medium hover:from-blue-600 hover:to-indigo-600 transition-all text-sm shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                提交
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
     <!-- Health Report Modal -->
     <Teleport to="body">
@@ -540,12 +610,18 @@ interface Entry {
   date: string
   source: string
   notes?: string
+  deviceName?: string
 }
 
 const toastRef = ref<InstanceType<typeof Toast>>()
-const dataSource = ref<'auto' | 'manual'>('auto')
 const selectedTimeRange = ref('7d')
 const showReportModal = ref(false)
+const showManualEntryModal = ref(false)
+const isSyncing = ref(false)
+
+// Device binding status
+const hasDevice = ref(true) // 默认有设备
+const deviceName = ref('Apple Watch')
 
 const entryType = ref('weight')
 const entryValue = ref('')
@@ -591,12 +667,42 @@ const glucoseData = ref([
   { date: '11-07', value: 6.1 }
 ])
 
-// Recent entries
+// Recent entries - merge device and manual data
 const recentEntries = ref<Entry[]>([
   { id: 1, type: 'weight', value: '84.0', unit: 'kg', date: '2023-11-07 08:30', source: '手动录入', notes: '晨起空腹' },
   { id: 2, type: 'glucose', value: '6.1', unit: 'mmol/L', date: '2023-11-07 07:15', source: '手动录入', notes: '空腹' },
-  { id: 3, type: 'bp', value: '125/82', unit: 'mmHg', date: '2023-11-07 08:00', source: '手动录入', notes: '' }
+  { id: 3, type: 'bp', value: '125/82', unit: 'mmHg', date: '2023-11-07 08:00', source: '手动录入', notes: '' },
+  { id: 4, type: 'weight', value: '83.8', unit: 'kg', date: '2023-11-06 08:00', source: '设备', deviceName: 'Apple Watch' },
+  { id: 5, type: 'hr', value: '72', unit: 'bpm', date: '2023-11-06 10:30', source: '设备', deviceName: 'Apple Watch' }
 ])
+
+// Filter entries by time range
+const filteredEntries = computed(() => {
+  const now = new Date()
+  const daysMap = { '7d': 7, '30d': 30, '90d': 90 }
+  const days = daysMap[selectedTimeRange.value as keyof typeof daysMap] || 7
+
+  return recentEntries.value.filter(entry => {
+    const entryDate = new Date(entry.date.replace(/-/g, '/'))
+    const diffDays = Math.floor((now.getTime() - entryDate.getTime()) / (1000 * 60 * 60 * 24))
+    return diffDays <= days
+  })
+})
+
+// Data source statistics
+const dataSourceStats = computed(() => {
+  const total = filteredEntries.value.length
+  const deviceCount = filteredEntries.value.filter(e => e.source === '设备').length
+  const manualCount = filteredEntries.value.filter(e => e.source === '手动录入').length
+  const automationRate = total > 0 ? Math.round((deviceCount / total) * 100) : 0
+
+  return {
+    total,
+    deviceCount,
+    manualCount,
+    automationRate
+  }
+})
 
 // Computed chart points
 const weightChartPoints = computed(() => {
@@ -881,9 +987,53 @@ const handleAddEntry = () => {
   recentEntries.value.unshift(newEntry)
   toastRef.value?.show('记录已添加', 'success')
 
-  // Clear form
+  // Clear form and close modal
   clearEntryForm()
+  showManualEntryModal.value = false
   saveData()
+}
+
+// Sync from device
+const syncFromDevice = async () => {
+  if (!hasDevice.value) {
+    toastRef.value?.show('未绑定设备，请先在设备设置中绑定', 'warning')
+    return
+  }
+
+  isSyncing.value = true
+
+  // Simulate device sync
+  setTimeout(() => {
+    // Generate mock synced data
+    const metrics = [
+      { type: 'weight', value: (83 + Math.random() * 2).toFixed(1), unit: 'kg' },
+      { type: 'hr', value: String(Math.floor(60 + Math.random() * 30)), unit: 'bpm' },
+      { type: 'glucose', value: (5 + Math.random() * 2).toFixed(1), unit: 'mmol/L' }
+    ]
+
+    const randomMetric = metrics[Math.floor(Math.random() * metrics.length)]
+
+    const newEntry: Entry = {
+      id: Date.now(),
+      type: randomMetric.type,
+      value: randomMetric.value,
+      unit: randomMetric.unit,
+      date: new Date().toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+      source: '设备',
+      deviceName: deviceName.value
+    }
+
+    recentEntries.value.unshift(newEntry)
+    isSyncing.value = false
+    toastRef.value?.show(`已从${deviceName.value}同步数据`, 'success')
+    saveData()
+  }, 2000)
 }
 
 const clearEntryForm = () => {

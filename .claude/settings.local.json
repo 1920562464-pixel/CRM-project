@@ -11,7 +11,14 @@
       "Bash(npm list:*)",
       "Bash(cat << 'EOF'\n# 在浏览器控制台执行以下命令清除旧HR数据：\nlocalStorage.removeItem\\('crm_hr_employees'\\)\nlocalStorage.removeItem\\('crm_hr_coaching_relationships'\\)\nlocalStorage.removeItem\\('crm_hr_onboarding'\\)\nlocalStorage.removeItem\\('crm_hr_offboarding'\\)\nlocalStorage.removeItem\\('crm_hr_regularizations'\\)\nlocalStorage.removeItem\\('crm_hr_salary_adjustments'\\)\n# 然后刷新页面\nEOF)",
       "Bash(cat << 'EOF'\n# 在浏览器控制台执行以下命令清除旧HR数据：\nlocalStorage.clear\\(\\)\n# 然后刷新页面\nEOF)",
-      "Bash(grep -n \"^</template>$\" /Users/fg/Desktop/CRM-project/src-vue/components/EmployeeManagement.vue)"
+      "Bash(grep -n \"^</template>$\" /Users/fg/Desktop/CRM-project/src-vue/components/EmployeeManagement.vue)",
+      "Bash(grep -n \"</main>\\\\|</div>$\" /Users/fg/Desktop/CRM-project/src-vue/views/BatchTaskProcessor.vue)",
+      "Bash(cd:*)",
+      "Bash(kill 72043)",
+      "Bash(kill 73402)",
+      "Bash(kill 74080)",
+      "Bash(kill 75067)",
+      "Bash(grep:*)"
     ]
   }
 }

@@ -61,59 +61,149 @@
           </div>
         </section>
 
-        <!-- Individual Adjustments -->
-        <section>
-          <div class="flex items-center justify-between mb-4">
-            <div>
-              <h3 class="text-lg font-bold text-slate-800">个性化课程/课件调整</h3>
-              <p class="text-sm text-slate-500">在模板基础上额外添加或移除的内容</p>
+        <!-- Tab模式课程配置 -->
+        <section class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <!-- 顶部操作栏 -->
+          <div class="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <h3 class="text-base font-bold text-slate-800">课程内容配置</h3>
+              <span class="text-xs text-slate-500">({{ selectedTemplate === 'diabetes' ? '2型糖尿病' : selectedTemplate === 'weight' ? '减重塑形' : '高血压' }}模板)</span>
             </div>
             <button
-              @click="addContent"
-              class="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition-colors"
+              @click="addCustomContent"
+              class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs hover:bg-indigo-700 transition-colors"
             >
-              <Plus :size="16" /> 添加额外内容
+              <Plus :size="14" />
+              添加自定义内容
             </button>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Card 1 -->
-            <div class="flex items-center gap-3 p-3 border border-slate-200 rounded-lg bg-white hover:border-indigo-300 transition-colors cursor-pointer group">
-              <div class="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center">
-                <FileText :size="20" class="text-orange-500" />
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="text-sm font-bold text-slate-800 truncate group-hover:text-indigo-600">低 GI 饮食入门指南.pdf</div>
-                <div class="text-xs text-slate-500 truncate">来源: 模板默认</div>
-              </div>
-              <button class="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-red-500">
-                <Trash2 :size="16" />
+          <!-- 模块Tab切换栏 -->
+          <div class="border-b border-slate-200 bg-white">
+            <div class="flex overflow-x-auto">
+              <button
+                v-for="module in courseModules"
+                :key="module.id"
+                @click="activeModule = module.id"
+                :class="`px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  activeModule === module.id
+                    ? 'border-indigo-600 text-indigo-600 bg-indigo-50'
+                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                }`"
+              >
+                <span class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full" :class="module.color"></span>
+                  {{ module.name }}
+                  <span class="text-xs px-2 py-0.5 rounded-full" :class="activeModule === module.id ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500'">
+                    {{ module.days.length }} 天
+                  </span>
+                </span>
               </button>
             </div>
-            <!-- Card 2 -->
-            <div class="flex items-center gap-3 p-3 border border-slate-200 rounded-lg bg-white hover:border-indigo-300 transition-colors cursor-pointer group">
-              <div class="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center">
-                <Video :size="20" class="text-blue-500" />
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="text-sm font-bold text-slate-800 truncate group-hover:text-indigo-600">七天控糖特训营</div>
-                <div class="text-xs text-slate-500 truncate">来源: 模板默认 • 进度 42%</div>
-              </div>
-              <button class="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-red-500">
-                <Trash2 :size="16" />
+          </div>
+
+          <!-- Day Tab切换栏 -->
+          <div class="border-b border-slate-200 bg-slate-50">
+            <div class="flex overflow-x-auto px-4">
+              <button
+                v-for="day in currentModuleDays"
+                :key="day.id"
+                @click="activeDay = day.id"
+                :class="`px-4 py-2.5 text-xs font-medium rounded-lg transition-all mx-1 my-2 ${
+                  activeDay === day.id
+                    ? 'bg-white text-indigo-600 shadow-md border-2 border-indigo-300'
+                    : 'text-slate-600 hover:bg-white hover:shadow-sm border-2 border-transparent'
+                }`"
+              >
+                <span class="flex items-center gap-1.5">
+                  {{ day.label }}
+                  <span v-if="day.contentCount > 0" class="text-[10px] px-1.5 py-0.5 rounded-full" :class="activeDay === day.id ? 'bg-indigo-100' : 'bg-slate-200'">
+                    {{ day.contentCount }}
+                  </span>
+                </span>
               </button>
             </div>
-            <!-- Card 3 -->
-            <div class="flex items-center gap-3 p-3 border border-slate-200 rounded-lg bg-white hover:border-indigo-300 transition-colors cursor-pointer group">
-              <div class="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center">
-                <Video :size="20" class="text-purple-500" />
+          </div>
+
+          <!-- 课件列表内容区 -->
+          <div class="p-6">
+            <!-- 当前选中的Day标题 -->
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h4 class="text-sm font-semibold text-slate-700">
+                  {{ currentDayInfo?.label }} - 课程内容
+                </h4>
+                <p class="text-xs text-slate-500 mt-0.5">
+                  {{ currentDayContent.length }} 个课件
+                </p>
               </div>
-              <div class="flex-1 min-w-0">
-                <div class="text-sm font-bold text-slate-800 truncate group-hover:text-indigo-600">冥想入门 (赠送)</div>
-                <div class="text-xs text-slate-500 truncate">来源: 教练添加 • 2026-02-01</div>
+              <button
+                @click="addContentToDay"
+                class="flex items-center gap-1.5 px-3 py-1.5 border border-indigo-300 text-indigo-600 rounded-lg text-xs hover:bg-indigo-50 transition-colors"
+              >
+                <Plus :size="16" />
+                添加课件
+              </button>
+            </div>
+
+            <!-- 课件列表 -->
+            <div v-if="currentDayContent.length > 0" class="space-y-2">
+              <div
+                v-for="item in currentDayContent"
+                :key="item.id"
+                class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200 hover:border-indigo-300 hover:bg-white transition-all group"
+              >
+                <!-- 课件图标 -->
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" :class="getContentTypeIcon(item.type).bgColor">
+                  <component :is="getContentTypeIcon(item.type).icon" :size="18" :class="getContentTypeIcon(item.type).iconColor" />
+                </div>
+
+                <!-- 课件信息 -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-0.5">
+                    <span class="text-sm font-medium text-slate-800 truncate">{{ item.title }}</span>
+                    <span v-if="item.required" class="text-[9px] px-1.5 py-0.5 bg-red-100 text-red-600 rounded">必学</span>
+                    <span v-if="item.source === 'template'" class="text-[9px] px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded">模板</span>
+                    <span v-else class="text-[9px] px-1.5 py-0.5 bg-green-100 text-green-600 rounded">自定义</span>
+                  </div>
+                  <div class="flex items-center gap-3 text-[10px] text-slate-500">
+                    <span>{{ item.duration }}</span>
+                    <span v-if="item.progress">• 进度 {{ item.progress }}%</span>
+                  </div>
+                </div>
+
+                <!-- 操作区域 -->
+                <div class="flex items-center gap-2">
+                  <!-- 启用开关 -->
+                  <div
+                    @click="toggleContentEnabled(item.id)"
+                    :class="`w-10 h-5 rounded-full p-0.5 cursor-pointer transition-colors ${item.enabled ? 'bg-green-500' : 'bg-slate-300'}`"
+                  >
+                    <div :class="`w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${item.enabled ? 'translate-x-5' : 'translate-x-0'}`"></div>
+                  </div>
+
+                  <!-- 删除按钮 -->
+                  <button
+                    @click="removeContent(item.id)"
+                    class="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    <Trash2 :size="14" />
+                  </button>
+                </div>
               </div>
-              <button class="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-red-500">
-                <Trash2 :size="16" />
+            </div>
+
+            <!-- 空状态 -->
+            <div v-else class="text-center py-12">
+              <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
+                <BookOpen :size="32" class="text-slate-400" />
+              </div>
+              <p class="text-sm text-slate-500">该天暂未配置课件</p>
+              <button
+                @click="addContentToDay"
+                class="mt-3 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition-colors"
+              >
+                添加课件
               </button>
             </div>
           </div>
@@ -333,7 +423,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import {
   BookOpen,
   Video,
@@ -355,6 +445,166 @@ import Toast from './shared/Toast.vue'
 const toastRef = ref<InstanceType<typeof Toast>>()
 const activeSection = ref('learning')
 const selectedTemplate = ref('diabetes')
+
+// 课程配置相关状态
+const activeModule = ref('module1')
+const activeDay = ref('day1')
+
+// 课程内容类型
+interface CourseContent {
+  id: string
+  title: string
+  type: 'pdf' | 'video' | 'audio' | 'quiz'
+  duration: string
+  required: boolean
+  enabled: boolean
+  source: 'template' | 'custom'
+  progress?: number
+}
+
+// Day信息
+interface DayInfo {
+  id: string
+  label: string
+  contentCount: number
+}
+
+// 模块信息
+interface ModuleInfo {
+  id: string
+  name: string
+  color: string
+  days: DayInfo[]
+}
+
+// 模块数据
+const courseModules = ref<ModuleInfo[]>([
+  {
+    id: 'module1',
+    name: '模块1: 基础知识',
+    color: 'bg-blue-500',
+    days: [
+      { id: 'day1', label: 'Day 1', contentCount: 3 },
+      { id: 'day2', label: 'Day 2', contentCount: 2 },
+      { id: 'day3', label: 'Day 3', contentCount: 4 }
+    ]
+  },
+  {
+    id: 'module2',
+    name: '模块2: 实践训练',
+    color: 'bg-green-500',
+    days: [
+      { id: 'day11', label: 'Day 11', contentCount: 2 },
+      { id: 'day12', label: 'Day 12', contentCount: 3 },
+      { id: 'day13', label: 'Day 13', contentCount: 2 }
+    ]
+  },
+  {
+    id: 'module3',
+    name: '模块3: 进阶提升',
+    color: 'bg-purple-500',
+    days: [
+      { id: 'day21', label: 'Day 21', contentCount: 1 },
+      { id: 'day22', label: 'Day 22', contentCount: 2 }
+    ]
+  }
+])
+
+// 课程内容数据
+const courseContentData = ref<Record<string, CourseContent[]>>({
+  'day1': [
+    { id: 'c1', title: '欢迎来到第一模块', type: 'video', duration: '15分钟', required: true, enabled: true, source: 'template', progress: 100 },
+    { id: 'c2', title: '什么是2型糖尿病', type: 'pdf', duration: '12页', required: true, enabled: true, source: 'template' },
+    { id: 'c3', title: '基础知识测试', type: 'quiz', duration: '10分钟', required: false, enabled: true, source: 'template' }
+  ],
+  'day2': [
+    { id: 'c21', title: '血糖监测基础', type: 'video', duration: '20分钟', required: true, enabled: true, source: 'template' },
+    { id: 'c22', title: '饮食记录入门', type: 'pdf', duration: '8页', required: true, enabled: true, source: 'template' }
+  ],
+  'day3': [
+    { id: 'c31', title: '运动指导', type: 'video', duration: '25分钟', required: true, enabled: true, source: 'template' },
+    { id: 'c32', title: '用药须知', type: 'pdf', duration: '15页', required: true, enabled: true, source: 'template' },
+    { id: 'c33', title: '生活习惯调整', type: 'video', duration: '18分钟', required: false, enabled: true, source: 'template' },
+    { id: 'c34', title: '第一周总结', type: 'quiz', duration: '15分钟', required: false, enabled: true, source: 'template' }
+  ],
+  'day11': [
+    { id: 'c111', title: '血糖监测实操', type: 'video', duration: '20分钟', required: true, enabled: true, source: 'template', progress: 42 },
+    { id: 'c112', title: '饮食记录指南', type: 'pdf', duration: '8页', required: true, enabled: false, source: 'custom' }
+  ],
+  'day12': [
+    { id: 'c121', title: '运动计划入门', type: 'video', duration: '25分钟', required: true, enabled: true, source: 'template' },
+    { id: 'c122', title: '用药指导', type: 'pdf', duration: '15页', required: true, enabled: true, source: 'template' },
+    { id: 'c123', title: '生活习惯评估', type: 'quiz', duration: '15分钟', required: false, enabled: true, source: 'template' }
+  ],
+  'day13': [
+    { id: 'c131', title: '进阶饮食技巧', type: 'video', duration: '30分钟', required: true, enabled: true, source: 'template' },
+    { id: 'c132', title: '营养搭配方案', type: 'pdf', duration: '20页', required: true, enabled: true, source: 'template' }
+  ],
+  'day21': [
+    { id: 'c211', title: '长期管理策略', type: 'video', duration: '35分钟', required: true, enabled: true, source: 'template' }
+  ],
+  'day22': [
+    { id: 'c221', title: '并发症预防', type: 'pdf', duration: '18页', required: true, enabled: true, source: 'template' },
+    { id: 'c222', title: '综合测评', type: 'quiz', duration: '20分钟', required: true, enabled: true, source: 'template' }
+  ]
+})
+
+// 当前模块的Days
+const currentModuleDays = computed(() => {
+  const module = courseModules.value.find(m => m.id === activeModule.value)
+  return module?.days || []
+})
+
+// 当前Day的信息
+const currentDayInfo = computed(() => {
+  return currentModuleDays.value.find(d => d.id === activeDay.value)
+})
+
+// 当前Day的内容
+const currentDayContent = computed(() => {
+  return courseContentData.value[activeDay.value] || []
+})
+
+// 根据内容类型获取图标
+const getContentTypeIcon = (type: string) => {
+  const icons = {
+    pdf: { icon: FileText, iconColor: 'text-orange-500', bgColor: 'bg-orange-50' },
+    video: { icon: Video, iconColor: 'text-blue-500', bgColor: 'bg-blue-50' },
+    audio: { icon: BookOpen, iconColor: 'text-purple-500', bgColor: 'bg-purple-50' },
+    quiz: { icon: CheckSquare, iconColor: 'text-green-500', bgColor: 'bg-green-50' }
+  }
+  return icons[type as keyof typeof icons] || icons.pdf
+}
+
+// 课程配置相关方法
+const toggleContentEnabled = (contentId: string) => {
+  const content = currentDayContent.value.find(c => c.id === contentId)
+  if (content) {
+    content.enabled = !content.enabled
+    toastRef.value?.show(content.enabled ? '已启用课件' : '已禁用课件', 'success')
+  }
+}
+
+const removeContent = (contentId: string) => {
+  if (confirm('确定要删除这个课件吗？')) {
+    const contents = courseContentData.value[activeDay.value]
+    if (contents) {
+      const index = contents.findIndex(c => c.id === contentId)
+      if (index > -1) {
+        contents.splice(index, 1)
+        toastRef.value?.show('课件已删除', 'success')
+      }
+    }
+  }
+}
+
+const addContentToDay = () => {
+  toastRef.value?.show(`打开添加课件弹窗到 ${currentDayInfo.value?.label}`, 'info')
+}
+
+const addCustomContent = () => {
+  toastRef.value?.show('打开添加自定义内容弹窗', 'info')
+}
 
 interface Habit {
   id: number

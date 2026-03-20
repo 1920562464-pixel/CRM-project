@@ -1,206 +1,15 @@
 <template>
   <div class="flex flex-col h-full bg-slate-50 animate-in fade-in duration-500">
     <!-- Top Header Section -->
-    <header class="bg-white border-b border-slate-200 px-6 py-4 flex-shrink-0">
-      <div class="flex items-start justify-between">
-        <div class="flex items-start gap-4">
-          <button
-            @click="goBack"
-            class="mt-1 p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-          >
-            <ArrowLeft :size="20" />
-          </button>
-
-          <div class="flex items-start gap-4">
-            <div
-              :class="`w-14 h-14 rounded-full ${client.avatarColor} flex items-center justify-center text-xl font-bold text-white shadow-md ring-2 ring-slate-50`"
-            >
-              {{ client.name.charAt(0) }}
-            </div>
-            <div>
-              <div class="flex items-center gap-3">
-                <h1 class="text-2xl font-bold text-slate-800">
-                  {{ client.name }}
-                </h1>
-                <span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded uppercase tracking-wider border border-indigo-100">
-                  {{ client.level }} 等级
-                </span>
-                <span class="px-2 py-0.5 bg-green-50 text-green-600 text-[10px] font-bold rounded border border-green-100 flex items-center gap-1">
-                  <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                  活跃中
-                </span>
-              </div>
-
-              <div class="mt-2 flex flex-wrap gap-2 items-center">
-                <!-- 标签列表 - 支持编辑和删除 -->
-                <template v-for="(tag, i) in tags" :key="i">
-                  <!-- 编辑模式 -->
-                  <input
-                    v-if="editingTagIndex === i"
-                    v-model="editingTagValue"
-                    @blur="saveEditingTag"
-                    @keydown.enter="saveEditingTag"
-                    @keydown.esc="cancelEditingTag"
-                    class="w-20 px-2 py-0.5 text-xs border border-indigo-300 rounded focus:outline-none"
-                    ref="editTagInput"
-                  />
-                  <!-- 显示模式 -->
-                  <div v-else class="group relative">
-                    <span
-                      @click="startEditingTag(i, tag)"
-                      class="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded-full text-xs text-slate-600 font-medium hover:bg-white hover:border-indigo-300 hover:text-indigo-600 transition-colors cursor-pointer"
-                    >
-                      #{{ tag }}
-                    </span>
-                    <button
-                      @click.stop="deleteTag(i)"
-                      class="absolute -top-1.5 -right-1.5 bg-slate-400 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
-                    >
-                      <X :size="8" />
-                    </button>
-                  </div>
-                </template>
-
-                <!-- 添加新标签 -->
-                <div v-if="showAddTag" class="flex items-center gap-1">
-                  <input
-                    v-model="newTag"
-                    @keydown.enter="handleAddTag"
-                    type="text"
-                    class="w-20 px-2 py-0.5 text-xs border border-indigo-300 rounded focus:outline-none"
-                    placeholder="输入标签..."
-                    ref="addTagInput"
-                  />
-                  <button @click="handleAddTag" class="text-indigo-600 hover:text-indigo-700">
-                    <CheckCircle2 :size="14" />
-                  </button>
-                  <button @click="showAddTag = false" class="text-slate-400 hover:text-slate-600">
-                    <X :size="14" />
-                  </button>
-                </div>
-
-                <button
-                  v-if="!showAddTag"
-                  @click="openAddTag"
-                  class="px-2 py-0.5 border border-dashed border-slate-300 text-slate-400 rounded-full text-xs hover:text-indigo-600 hover:border-indigo-300 transition-colors flex items-center gap-1"
-                >
-                  <Plus :size="12" /> 添加
-                </button>
-              </div>
-
-              <!-- 教练/医生分配信息 -->
-              <div class="mt-3 flex flex-col gap-2">
-                <!-- 教练分配区域 -->
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span class="text-base">👨‍⚕️</span>
-                  <span class="text-xs text-slate-600 font-medium">教练团队:</span>
-
-                  <!-- 教练列表 -->
-                  <template v-if="clientAssignment?.coaches && clientAssignment.coaches.length > 0">
-                    <div
-                      v-for="(coachAssignment, index) in clientAssignment.coaches"
-                      :key="coachAssignment.coachId"
-                      class="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-lg group"
-                    >
-                      <span class="text-sm font-medium text-slate-900">{{ coachAssignment.coachName }}</span>
-                      <span class="text-xs text-slate-500">(负载: {{ getCoachLoad(coachAssignment.coachId) }}/{{ getCoachMaxLoad(coachAssignment.coachId) }})</span>
-                      <span
-                        :class="[
-                          'text-xs px-1.5 py-0.5 rounded',
-                          coachAssignment.isNewClient ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'
-                        ]"
-                      >
-                        {{ coachAssignment.isNewClient ? '新用户' : '老用户' }}
-                      </span>
-                      <span
-                        :class="[
-                          'text-xs px-1.5 py-0.5 rounded',
-                          coachAssignment.serviceType === 'deep' ? 'bg-indigo-100 text-indigo-700' : 'bg-cyan-100 text-cyan-700'
-                        ]"
-                      >
-                        {{ coachAssignment.serviceType === 'deep' ? '深度' : '基础' }}
-                      </span>
-                      <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          @click="openChangeCoachModal(coachAssignment.coachId)"
-                          class="p-1 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
-                          title="更换教练"
-                        >
-                          更换
-                        </button>
-                        <button
-                          @click="confirmRemoveCoach(coachAssignment.coachId)"
-                          class="p-1 text-xs text-red-600 hover:text-red-800 hover:bg-red-100 rounded transition-colors"
-                          title="移除教练"
-                        >
-                          移除
-                        </button>
-                      </div>
-                    </div>
-                  </template>
-
-                  <!-- 添加教练按钮 -->
-                  <button
-                    @click="openAssignCoachModal"
-                    class="flex items-center gap-1 px-3 py-1.5 border border-dashed border-emerald-300 text-emerald-600 rounded-lg text-xs hover:bg-emerald-50 transition-colors font-medium"
-                  >
-                    <Plus :size="12" />
-                    添加教练
-                  </button>
-                </div>
-
-                <!-- 医生分配区域 -->
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span class="text-base">🩺</span>
-                  <span class="text-xs text-slate-600 font-medium">医生:</span>
-                  <div class="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
-                    <template v-if="clientAssignment?.doctorId">
-                      <span class="text-sm font-medium text-slate-900">{{ clientAssignment?.doctorName }}</span>
-                      <span class="text-xs text-green-600">(在线)</span>
-                      <button
-                        @click="openChangeDoctorModal"
-                        class="p-1 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
-                        title="更换医生"
-                      >
-                        更换
-                      </button>
-                      <button
-                        @click="confirmRemoveDoctor"
-                        class="p-1 text-xs text-red-600 hover:text-red-800 hover:bg-red-100 rounded transition-colors"
-                        title="移除医生"
-                      >
-                        移除
-                      </button>
-                  </template>
-                  <template v-else>
-                    <button
-                      @click="openAssignDoctorModal"
-                      class="text-xs text-indigo-600 hover:text-indigo-800 hover:bg-indigo-100 px-2 py-1 rounded transition-colors font-medium"
-                    >
-                      + 分配医生
-                    </button>
-                  </template>
-                </div>
-              </div>
-            </div>
-          </div>
-          </div>
-
-          <div class="flex flex-col items-end gap-2">
-            <div class="flex items-center gap-2">
-              <button
-                @click="showNotesSidebar = true"
-                class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors border border-transparent hover:border-indigo-100"
-                title="查看备注"
-              >
-                <FileText :size="18" />
-              </button>
-            </div>
-            <div class="text-[10px] text-slate-400 font-mono">
-              ID: {{ clientId }} | Last Active: 10m ago
-            </div>
-          </div>
-        </div>
+    <header class="bg-white border-b border-slate-200 px-6 py-1 flex-shrink-0">
+      <div class="flex items-center gap-4">
+        <button
+          @click="goBack"
+          class="p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+        >
+          <ArrowLeft :size="20" />
+        </button>
+        <h1 class="text-2xl font-bold text-slate-800">{{ client.name }}</h1>
       </div>
 
       <div class="flex items-center gap-6 mt-4 border-b border-transparent">
@@ -236,7 +45,7 @@
               <p class="text-indigo-100 text-sm opacity-90 max-w-lg">
                 基于用户的 128 项健康数据（体检、设备、问卷）实时生成个性化干预方案。
               </p>
-              <div class="flex items-center gap-3 mt-4">
+              <div class="flex items-center gap-3 mt-4 flex-wrap">
                 <button
                   @click="openAIModal('lifestyle')"
                   class="relative z-10 px-5 py-2.5 bg-white text-indigo-600 font-bold rounded-lg shadow-sm hover:bg-indigo-50 transition-colors flex items-center gap-2"
@@ -250,6 +59,34 @@
                 >
                   <Apple :size="16" />
                   营养素处方
+                </button>
+                <button
+                  @click="openAIModal('diet')"
+                  class="relative z-10 px-5 py-2.5 bg-white/10 backdrop-blur-sm text-white font-bold rounded-lg shadow-sm hover:bg-white/20 transition-colors flex items-center gap-2 border border-white/30"
+                >
+                  <UtensilsCrossed :size="16" />
+                  饮食处方
+                </button>
+                <button
+                  @click="openAIModal('exercise')"
+                  class="relative z-10 px-5 py-2.5 bg-white/10 backdrop-blur-sm text-white font-bold rounded-lg shadow-sm hover:bg-white/20 transition-colors flex items-center gap-2 border border-white/30"
+                >
+                  <Dumbbell :size="16" />
+                  运动处方
+                </button>
+                <button
+                  @click="openAIModal('sleep')"
+                  class="relative z-10 px-5 py-2.5 bg-white/10 backdrop-blur-sm text-white font-bold rounded-lg shadow-sm hover:bg-white/20 transition-colors flex items-center gap-2 border border-white/30"
+                >
+                  <Moon :size="16" />
+                  睡眠与压力处方
+                </button>
+                <button
+                  @click="openAIModal('doctor')"
+                  class="relative z-10 px-5 py-2.5 bg-white/10 backdrop-blur-sm text-white font-bold rounded-lg shadow-sm hover:bg-white/20 transition-colors flex items-center gap-2 border border-white/30"
+                >
+                  <UserCog :size="16" />
+                  医生端处方
                 </button>
               </div>
             </div>
@@ -681,19 +518,23 @@
           <InterventionManager />
         </div>
 
-        <div v-else-if="activeTab === 'health'">
+        <div v-else-if="activeTab === 'health'" id="health-data-section">
           <HealthData :clientId="route.params.id as string" />
         </div>
 
-        <div v-else-if="activeTab === 'datacenter'">
+        <div v-else-if="activeTab === 'datacenter'" id="datacenter-section">
           <DataCenter />
         </div>
 
-        <div v-else-if="activeTab === 'labeling'">
+        <div v-else-if="activeTab === 'intervention'" id="intervention-section">
+          <InterventionManager />
+        </div>
+
+        <div v-else-if="activeTab === 'labeling'" id="labeling-section">
           <ConversationLabeling />
         </div>
 
-        <div v-else-if="activeTab === 'config'">
+        <div v-else-if="activeTab === 'config'" id="config-section">
           <ContentConfig />
         </div>
 
@@ -717,11 +558,11 @@
           <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
             <div class="flex items-center gap-3">
               <div class="bg-gradient-to-br from-indigo-500 to-violet-600 text-white p-2 rounded-lg shadow-sm">
-                <component :is="prescriptionType === 'lifestyle' ? Heart : BrainCircuit" :size="24" />
+                <component :is="prescriptionConfig.icon" :size="24" />
               </div>
               <div>
                 <h3 class="text-xl font-bold text-slate-800">
-                  {{ prescriptionType === 'lifestyle' ? '生活方式医学处方' : '营养素处方' }}
+                  {{ prescriptionConfig.title }}
                 </h3>
                 <p class="text-xs text-slate-500">
                   基于 128 项健康数据由 AI Agent 实时生成
@@ -1109,7 +950,11 @@ import {
   Search,
   Trash2,
   Users,
-  Stethoscope
+  Stethoscope,
+  UtensilsCrossed,
+  Dumbbell,
+  Moon,
+  UserCog
 } from 'lucide-vue-next'
 import InterventionManager from '../components/InterventionManager.vue'
 import HealthData from '../components/HealthData.vue'
@@ -1361,7 +1206,97 @@ const confirmRemoveDoctor = () => {
 const activeTab = ref('overview')
 const showAIModal = ref(false)
 const aiStep = ref<'loading' | 'result'>('loading')
-const prescriptionType = ref<'lifestyle' | 'nutrition'>('lifestyle')
+const prescriptionType = ref<'lifestyle' | 'nutrition' | 'diet' | 'exercise' | 'sleep' | 'doctor'>('lifestyle')
+
+// 监听路由变化，处理 action 参数自动触发功能
+watch(() => route.query, (newQuery) => {
+  // 获取 tab 参数
+  const tab = newQuery.tab as string
+  if (tab) {
+    activeTab.value = tab
+  }
+
+  // 处理 action 参数
+  const action = newQuery.action as string
+  if (!action) return
+
+  // 使用 nextTick 确保 DOM 更新后再执行
+  nextTick(() => {
+    switch (action) {
+      case 'ai-prescription':
+        // AI处方 - 直接打开弹窗
+        openAIModal()
+        router.replace({ query: { ...newQuery, action: undefined } })
+        break
+
+      case 'view-health-data':
+        // 健康指标 - 滚动到健康数据区域
+        const healthElement = document.getElementById('health-data-section')
+        if (healthElement) {
+          healthElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          toastRef.value?.show('已跳转到健康指标', 'success')
+        }
+        router.replace({ query: { ...newQuery, action: undefined } })
+        break
+
+      case 'open-data-export':
+        // 数据中心 - 滚动到数据中心区域
+        const datacenterElement = document.getElementById('datacenter-section')
+        if (datacenterElement) {
+          datacenterElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          toastRef.value?.show('已跳转到数据中心', 'success')
+        }
+        router.replace({ query: { ...newQuery, action: undefined } })
+        break
+
+      case 'create-intervention':
+        // 干预管理 - 滚动到干预管理区域
+        const interventionElement = document.getElementById('intervention-section')
+        if (interventionElement) {
+          interventionElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          toastRef.value?.show('已跳转到干预管理', 'success')
+        }
+        router.replace({ query: { ...newQuery, action: undefined } })
+        break
+
+      case 'start-labeling':
+        // 对话标注 - 滚动到对话标注区域
+        const labelingElement = document.getElementById('labeling-section')
+        if (labelingElement) {
+          labelingElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          toastRef.value?.show('已跳转到对话标注', 'success')
+        }
+        router.replace({ query: { ...newQuery, action: undefined } })
+        break
+
+      case 'open-learning-config':
+        // 内容配置 - 滚动到内容配置区域
+        const configElement = document.getElementById('config-section')
+        if (configElement) {
+          configElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          toastRef.value?.show('已跳转到课程配置', 'success')
+        }
+        router.replace({ query: { ...newQuery, action: undefined } })
+        break
+
+      default:
+        break
+    }
+  })
+}, { immediate: true })
+
+// 处方类型对应的图标和标题
+const prescriptionConfig = computed(() => {
+  const configs = {
+    lifestyle: { icon: Heart, title: '生活方式医学处方' },
+    nutrition: { icon: Apple, title: '营养素处方' },
+    diet: { icon: UtensilsCrossed, title: '饮食处方' },
+    exercise: { icon: Dumbbell, title: '运动处方' },
+    sleep: { icon: Moon, title: '睡眠与压力处方' },
+    doctor: { icon: UserCog, title: '医生端处方' }
+  }
+  return configs[prescriptionType.value] || configs.lifestyle
+})
 const showAddTag = ref(false)
 const newTag = ref('')
 const editingTagIndex = ref<number | null>(null)
@@ -1665,7 +1600,7 @@ const handleExportData = () => {
   toastRef.value?.success('档案数据已导出')
 }
 
-const openAIModal = (type: 'lifestyle' | 'nutrition' = 'lifestyle') => {
+const openAIModal = (type: 'lifestyle' | 'nutrition' | 'diet' | 'exercise' | 'sleep' | 'doctor' = 'lifestyle') => {
   prescriptionType.value = type
   showAIModal.value = true
   aiStep.value = 'loading'
