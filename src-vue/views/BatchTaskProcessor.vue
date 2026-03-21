@@ -18,10 +18,11 @@
         }"
       >
         <!-- Sidebar Header -->
-        <div class="p-3 flex items-center justify-between" :style="{ borderBottom: '1px solid var(--border-light)' }">
+        <div class="flex items-center gap-2" :class="isSidebarCollapsed ? 'p-3 justify-center' : 'p-3'" :style="{ borderBottom: '1px solid var(--border-light)' }">
+          <!-- Collapse Button -->
           <button
             @click="isSidebarCollapsed = !isSidebarCollapsed"
-            class="p-2 rounded-lg transition-colors"
+            class="p-2 rounded-lg transition-colors flex-shrink-0"
             style="color: var(--text-secondary);"
             @mouseenter="$event.currentTarget.style.backgroundColor = 'var(--fill-light)'"
             @mouseleave="$event.currentTarget.style.backgroundColor = 'transparent'"
@@ -30,22 +31,8 @@
             <ChevronLeft v-if="!isSidebarCollapsed" :size="16" />
             <ChevronRight v-else :size="16" />
           </button>
-          <button
-            v-if="!isSidebarCollapsed"
-            @click="showAgingIndexInfo = true"
-            class="p-2 rounded-lg transition-colors flex-shrink-0"
-            style="color: var(--text-secondary);"
-            @mouseenter="$event.currentTarget.style.backgroundColor = 'var(--fill-light)'"
-            @mouseleave="$event.currentTarget.style.backgroundColor = 'transparent'"
-            title="衰老指数说明"
-          >
-            <HelpCircle :size="16" />
-          </button>
-        </div>
-
-        <!-- Search -->
-        <div v-if="!isSidebarCollapsed" class="p-3" :style="{ borderBottom: '1px solid var(--border-light)' }">
-          <div class="relative">
+          <!-- Search Bar -->
+          <div v-if="!isSidebarCollapsed" class="relative flex-1">
             <Search class="absolute left-2.5 top-1/2 -translate-y-1/2" :size="14" :style="{ color: 'var(--text-placeholder)' }" />
             <input
               v-model="searchQuery"
@@ -60,6 +47,18 @@
               }"
             />
           </div>
+          <!-- Aging Index Info Button -->
+          <button
+            v-if="!isSidebarCollapsed"
+            @click="showAgingIndexInfo = true"
+            class="p-2 rounded-lg transition-colors flex-shrink-0"
+            style="color: var(--text-secondary);"
+            @mouseenter="$event.currentTarget.style.backgroundColor = 'var(--fill-light)'"
+            @mouseleave="$event.currentTarget.style.backgroundColor = 'transparent'"
+            title="衰老指数说明"
+          >
+            <HelpCircle :size="16" />
+          </button>
         </div>
 
         <!-- Filter Tabs -->
@@ -145,7 +144,8 @@
                 v-for="group in groups"
                 :key="group.id"
                 @click="selectGroup(group)"
-                class="p-2.5 rounded-lg cursor-pointer transition-all"
+                class="rounded-lg cursor-pointer transition-all relative"
+                :class="isSidebarCollapsed ? 'p-2' : 'p-2.5'"
                 :style="{
                   border: '1px solid transparent'
                 }"
@@ -154,7 +154,28 @@
               >
                 <div class="flex items-center gap-2" :class="{ 'justify-center': isSidebarCollapsed }">
                   <!-- 群组头像 -->
-                  <div class="rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" :class="isSidebarCollapsed ? 'w-10 h-10' : 'w-8 h-8'" :style="{ background: group.color, color: 'white' }">
+                  <div
+                    v-if="isSidebarCollapsed"
+                    class="relative"
+                    @mouseenter="hoveredTooltip = { text: group.name, x: $event.clientX, y: $event.clientY }"
+                    @mouseleave="hoveredTooltip = null"
+                  >
+                    <div class="rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 w-10 h-10" :style="{ background: group.color, color: 'white' }">
+                      <template v-if="group.type === 'vip' && group.icon">
+                        {{ group.icon }}
+                      </template>
+                      <template v-else>
+                        {{ group.name.charAt(0) }}
+                      </template>
+                    </div>
+                  </div>
+
+                  <!-- 非折叠状态的头像 -->
+                  <div
+                    v-else
+                    class="rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 w-8 h-8"
+                    :style="{ background: group.color, color: 'white' }"
+                  >
                     <template v-if="group.type === 'vip' && group.icon">
                       {{ group.icon }}
                     </template>
@@ -162,6 +183,7 @@
                       {{ group.name.charAt(0) }}
                     </template>
                   </div>
+
                   <!-- 群组信息 -->
                   <div v-if="!isSidebarCollapsed" class="flex-1 min-w-0">
                     <div class="flex items-center gap-1.5">
@@ -191,7 +213,8 @@
               v-for="user in filteredUsers"
               :key="user.id"
               @click="selectUser(user.id)"
-              class="p-2.5 rounded-lg cursor-pointer transition-all"
+              class="rounded-lg cursor-pointer transition-all relative"
+              :class="isSidebarCollapsed ? 'p-2' : 'p-2.5'"
               :style="selectedUser === user.id ? {
                 background: isBlackGold.value ? 'rgba(184, 134, 11, 0.15)' : '#eef2ff',
                 border: '1px solid ' + (isBlackGold.value ? '#B8860B' : '#c7d2fe')
@@ -199,11 +222,43 @@
                 border: '1px solid transparent'
               }"
             >
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2" :class="{ 'justify-center': isSidebarCollapsed }">
                 <!-- Avatar -->
                 <div
-                  class="rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                  :class="isSidebarCollapsed ? 'w-10 h-10' : 'w-8 h-8'"
+                  class="relative"
+                  v-if="isSidebarCollapsed"
+                  @mouseenter="hoveredTooltip = { text: user.name, x: $event.clientX, y: $event.clientY }"
+                  @mouseleave="hoveredTooltip = null"
+                >
+                  <div
+                    class="rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 w-10 h-10"
+                    :style="selectedUser === user.id ? {
+                      background: user.avatarColor,
+                      color: 'white'
+                    } : isBlackGold.value ? {
+                      background: 'linear-gradient(135deg, #B8860B 0%, #D4A84A 100%)',
+                      color: 'white'
+                    } : {
+                      background: 'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)',
+                      color: 'white'
+                    }"
+                  >
+                    {{ user.name.charAt(0) }}
+                  </div>
+                  <!-- 选中状态外环（仅折叠时显示） -->
+                  <div
+                    v-if="selectedUser === user.id"
+                    class="absolute -inset-1 rounded-full"
+                    :style="{
+                      border: '2px solid ' + (isBlackGold.value ? '#B8860B' : '#6366f1')
+                    }"
+                  ></div>
+                </div>
+
+                <!-- Avatar (非折叠状态) -->
+                <div
+                  v-else
+                  class="rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 w-8 h-8"
                   :style="selectedUser === user.id ? {
                     background: user.avatarColor,
                     color: 'white'
@@ -255,7 +310,7 @@
                 </div>
 
                 <!-- 衰老指数 -->
-                <div class="flex flex-col items-end flex-shrink-0 ml-2">
+                <div v-if="!isSidebarCollapsed" class="flex flex-col items-end flex-shrink-0 ml-2">
                   <div class="flex items-center gap-1">
                     <span
                       class="text-xs font-bold"
@@ -275,8 +330,8 @@
                   </span>
                 </div>
 
-                <!-- Selection Indicator -->
-                <div v-if="selectedUser === user.id" class="w-2 h-2 rounded-full flex-shrink-0" :style="{ background: isBlackGold.value ? '#B8860B' : '#6366f1' }"></div>
+                <!-- Selection Indicator (only show when not collapsed) -->
+                <div v-if="!isSidebarCollapsed && selectedUser === user.id" class="w-2 h-2 rounded-full flex-shrink-0" :style="{ background: isBlackGold.value ? '#B8860B' : '#6366f1' }"></div>
               </div>
             </div>
             </div>
@@ -288,6 +343,21 @@
             </div>
           </div>
         </div>
+
+        <!-- Tooltip (折叠状态下悬停显示) -->
+        <Teleport to="body">
+          <div
+            v-if="hoveredTooltip && isSidebarCollapsed"
+            class="fixed z-50 px-2 py-1 text-xs text-white bg-slate-800 rounded shadow-lg pointer-events-none"
+            :style="{
+              left: hoveredTooltip.x + 20 + 'px',
+              top: hoveredTooltip.y - 10 + 'px',
+              transform: 'translateY(-50%)'
+            }"
+          >
+            {{ hoveredTooltip.text }}
+          </div>
+        </Teleport>
       </aside>
 
       <!-- Right Workspace -->
@@ -312,79 +382,10 @@
               border: '1px solid var(--border)'
             }">
               <div class="flex items-start justify-between">
-                <div class="flex items-center gap-3">
-                  <div
-                    class="w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-bold shadow-lg"
-                    :style="currentUser?.avatarColor || { background: 'var(--fill)', color: 'var(--text-secondary)' }"
-                  >
-                    {{ currentUser?.name?.charAt(0) || '?' }}
-                  </div>
+                <div class="flex-1">
                   <div>
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
-                      <h2 class="text-lg font-bold" :style="{ color: 'var(--text-primary)' }">{{ currentUser?.name }}</h2>
-                      <span v-if="currentUser?.gender" class="text-xs text-slate-500">{{ currentUser.gender }}</span>
-                      <span v-if="currentUser?.age" class="text-xs text-slate-500">{{ currentUser.age }}岁</span>
-                      <div class="relative">
-                        <!-- 编辑模式 -->
-                        <select
-                          v-if="editingCompliance"
-                          v-model.number="tempCompliance"
-                          @blur="saveCompliance"
-                          @keydown.enter="saveCompliance"
-                          @keydown.esc="cancelEditCompliance"
-                          class="px-2 py-0.5 text-xs font-bold rounded border focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer appearance-none pr-6"
-                          :style="{
-                            background: getComplianceColor(tempCompliance).bg,
-                            color: getComplianceColor(tempCompliance).text,
-                            borderColor: getComplianceColor(tempCompliance).border
-                          }"
-                          ref="complianceSelect"
-                        >
-                          <option value="0">0</option>
-                          <option value="1">1</option>
-                          <option value="2">2</option>
-                          <option value="3">3</option>
-                          <option value="4">4</option>
-                          <option value="5">5</option>
-                          <option value="6">6</option>
-                          <option value="7">7</option>
-                          <option value="8">8</option>
-                          <option value="9">9</option>
-                          <option value="10">10</option>
-                        </select>
-
-                        <!-- 显示模式 -->
-                        <span
-                          v-else
-                          @click="startEditCompliance"
-                          class="px-2 py-0.5 text-xs font-bold rounded border cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1"
-                          :style="{
-                            background: getComplianceColor(userComplianceLevel).bg,
-                            color: getComplianceColor(userComplianceLevel).text,
-                            borderColor: getComplianceColor(userComplianceLevel).border
-                          }"
-                          title="点击调整依从度"
-                        >
-                          依从度 {{ userComplianceLevel }}
-                        </span>
-
-                        <!-- 编辑模式下的下拉箭头 -->
-                        <svg
-                          v-if="editingCompliance"
-                          class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"
-                          width="10"
-                          height="10"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          :style="{ color: getComplianceColor(tempCompliance).text }"
-                        >
-                          <path d="m6 9 6 6 6-6"></path>
-                        </svg>
-                      </div>
-                      <span class="text-xs text-slate-400">|</span>
-                      <span class="text-xs text-slate-500">ID: {{ selectedUser }}</span>
+                      <h2 class="text-base font-bold" :style="{ color: 'var(--text-primary)' }">{{ currentUser?.name }}</h2>
                       <div class="flex items-center gap-1.5 flex-wrap">
                         <!-- 标签列表 - 支持编辑和删除 -->
                         <template v-for="(tag, i) in userTags" :key="i">
@@ -395,14 +396,14 @@
                             @blur="saveEditingTag"
                             @keydown.enter="saveEditingTag"
                             @keydown.esc="cancelEditingTag"
-                            class="w-20 px-2 py-0.5 text-xs border border-indigo-300 rounded focus:outline-none"
+                            class="w-20 px-2 py-0.5 text-[10px] border border-indigo-300 rounded focus:outline-none"
                             ref="editTagInput"
                           />
                           <!-- 显示模式 -->
                           <div v-else class="group relative">
                             <span
                               @click="startEditingTag(i, tag)"
-                              class="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded-full text-xs text-slate-600 font-medium hover:bg-white hover:border-indigo-300 hover:text-indigo-600 transition-colors cursor-pointer"
+                              class="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded-full text-[10px] text-slate-600 font-medium hover:bg-white hover:border-indigo-300 hover:text-indigo-600 transition-colors cursor-pointer"
                             >
                               #{{ tag }}
                             </span>
@@ -421,119 +422,180 @@
                             v-model="newTag"
                             @keydown.enter="handleAddTag"
                             type="text"
-                            class="w-20 px-2 py-0.5 text-xs border border-indigo-300 rounded focus:outline-none"
+                            class="w-20 px-2 py-0.5 text-[10px] border border-indigo-300 rounded focus:outline-none"
                             placeholder="输入标签..."
                             ref="addTagInput"
                           />
                           <button @click="handleAddTag" class="text-indigo-600 hover:text-indigo-700">
-                            <CheckCircle :size="14" />
+                            <CheckCircle :size="12" />
                           </button>
                           <button @click="showAddTag = false" class="text-slate-400 hover:text-slate-600">
-                            <X :size="14" />
+                            <X :size="12" />
                           </button>
                         </div>
 
                         <button
                           v-if="!showAddTag"
                           @click="openAddTag"
-                          class="px-2 py-0.5 border border-dashed border-slate-300 text-slate-400 rounded-full text-xs hover:text-indigo-600 hover:border-indigo-300 transition-colors flex items-center gap-1"
+                          class="px-1.5 py-0.5 border border-dashed border-slate-300 text-slate-400 rounded-full text-[10px] hover:text-indigo-600 hover:border-indigo-300 transition-colors flex items-center gap-1"
                         >
-                          <Plus :size="12" /> 添加
+                          <Plus :size="10" /> 添加
                         </button>
                       </div>
                     </div>
 
-                    <!-- 教练和医生分配信息 -->
-                    <div class="mt-3 flex items-center gap-3 flex-wrap">
-                      <!-- 教练分配区域 -->
-                      <div class="flex items-center gap-1.5 flex-wrap">
-                        <span class="text-xs">👨‍⚕️</span>
-                        <span class="text-[10px] text-slate-600 font-medium">教练:</span>
-
-                        <!-- 教练列表 -->
-                        <template v-if="userAssignment?.coaches && userAssignment.coaches.length > 0">
-                          <div
-                            v-for="(coachAssignment, index) in userAssignment.coaches"
-                            :key="coachAssignment.coachId"
-                            class="flex items-center gap-1 px-1.5 py-0.5 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded"
-                          >
-                            <span class="text-[10px] font-medium text-slate-900">{{ coachAssignment.coachName }}</span>
-                            <span class="text-[9px] text-slate-500">({{ getCoachLoad(coachAssignment.coachId) }}/{{ getCoachMaxLoad(coachAssignment.coachId) }})</span>
-                          </div>
-                        </template>
-
-                        <!-- 教练管理按钮 -->
+                    <!-- 基础信息：性别、年龄、依从度、ID、来源渠道、付费金额、用户目标、干预日期 -->
+                    <div class="mt-2 p-2 rounded-lg border border-transparent hover:border-slate-200 transition-colors group" :style="{ background: 'var(--fill-light)' }">
+                      <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-[10px] font-semibold" :style="{ color: 'var(--text-secondary)' }">客情基础信息</span>
                         <button
-                          @click="showCoachManagementModal = true"
-                          class="flex items-center gap-1 px-1.5 py-0.5 border border-dashed border-emerald-300 text-emerald-600 rounded text-[9px] hover:bg-emerald-50 transition-colors font-medium"
+                          @click="openBasicInfoEditModal"
+                          class="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-all"
+                          title="编辑基础信息"
                         >
-                          <Plus :size="8" />
-                          管理
+                          <Edit3 :size="10" />
                         </button>
                       </div>
-
-                      <!-- 医生分配区域 -->
-                      <div class="flex items-center gap-1.5 flex-wrap">
-                        <span class="text-xs">🩺</span>
-                        <span class="text-[10px] text-slate-600 font-medium">医生:</span>
-                        <div class="flex items-center gap-1 px-1.5 py-0.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded">
-                          <template v-if="userAssignment?.doctorId">
-                            <span class="text-[10px] font-medium text-slate-900">{{ userAssignment?.doctorName }}</span>
-                          </template>
-                          <template v-else>
-                            <span class="text-[9px] text-slate-400">未分配</span>
-                          </template>
+                      <div class="grid grid-cols-5 gap-x-2 gap-y-1">
+                        <!-- 性别 -->
+                        <div class="flex items-center gap-1">
+                          <User :size="10" class="text-slate-400 flex-shrink-0" />
+                          <p class="text-[9px] text-slate-400">性别</p>
+                          <p class="text-[10px] font-medium truncate" :style="{ color: 'var(--text-primary)' }">{{ currentUser?.gender || '未设置' }}</p>
                         </div>
 
-                        <!-- 医生管理按钮 -->
-                        <button
-                          @click="showDoctorManagementModal = true"
-                          class="flex items-center gap-1 px-1.5 py-0.5 border border-dashed border-blue-300 text-blue-600 rounded text-[9px] hover:bg-blue-50 transition-colors font-medium"
-                        >
-                          <Plus :size="8" />
-                          管理
-                        </button>
+                        <!-- 年龄 -->
+                        <div class="flex items-center gap-1">
+                          <Calendar :size="10" class="text-slate-400 flex-shrink-0" />
+                          <p class="text-[9px] text-slate-400">年龄</p>
+                          <p class="text-[10px] font-medium" :style="{ color: 'var(--text-primary)' }">{{ currentUser?.age ? `${currentUser.age}岁` : '未设置' }}</p>
+                        </div>
+
+                        <!-- 依从度 -->
+                        <div class="flex items-center gap-1">
+                          <span
+                            class="px-1 py-0.5 text-[9px] font-bold rounded border"
+                            :style="{
+                              background: getComplianceColor(userComplianceLevel).bg,
+                              color: getComplianceColor(userComplianceLevel).text,
+                              borderColor: getComplianceColor(userComplianceLevel).border
+                            }"
+                          >
+                            {{ userComplianceLevel }}分
+                          </span>
+                        </div>
+
+                        <!-- 用户ID -->
+                        <div class="flex items-center gap-1">
+                          <Hash :size="10" class="text-slate-400 flex-shrink-0" />
+                          <p class="text-[9px] text-slate-400">ID</p>
+                          <p class="text-[10px] font-medium" :style="{ color: 'var(--text-primary)' }">{{ selectedUser }}</p>
+                        </div>
+
+                        <!-- 来源渠道 -->
+                        <div class="flex items-center gap-1">
+                          <Share2 :size="10" class="text-slate-400 flex-shrink-0" />
+                          <p class="text-[9px] text-slate-400">来源</p>
+                          <p class="text-[10px] font-medium truncate" :style="{ color: 'var(--text-primary)' }">{{ userData?.sourceChannel || '未设置' }}</p>
+                        </div>
+
+                        <!-- 付费金额 -->
+                        <div class="flex items-center gap-1">
+                          <span class="text-[10px] flex-shrink-0">💰</span>
+                          <p class="text-[9px] text-slate-400">付费</p>
+                          <p class="text-[10px] font-medium" :style="{ color: 'var(--text-primary)' }">
+                            {{ userData?.paymentAmount ? `¥${userData.paymentAmount.toLocaleString()}` : '未设置' }}
+                          </p>
+                        </div>
+
+                        <!-- 用户目标 -->
+                        <div class="flex items-center gap-1 col-span-2">
+                          <Target :size="10" class="text-slate-400 flex-shrink-0" />
+                          <p class="text-[9px] text-slate-400">目标</p>
+                          <p class="text-[10px] font-medium truncate" :style="{ color: 'var(--text-primary)' }">{{ userData?.userGoal || '未设定' }}</p>
+                        </div>
+
+                        <!-- 干预日期 -->
+                        <div class="flex items-center gap-1 col-span-2">
+                          <Activity :size="10" class="text-slate-400 flex-shrink-0" />
+                          <p class="text-[9px] text-slate-400">干预</p>
+                          <p class="text-[10px] font-medium" :style="{ color: 'var(--text-primary)' }">
+                            {{ interventionStartDate }}-{{ interventionEndDate }}·{{ interventionDays }}天
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div class="flex flex-col items-end gap-2">
-                  <div class="flex items-center gap-2">
+                <div class="flex flex-col items-end gap-1.5">
+                  <div class="flex items-center gap-1.5">
                     <!-- 查看备注按钮 -->
                     <button
                       @click="showNotesSidebar = true"
-                      class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors border border-transparent hover:border-indigo-100"
+                      class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors border border-transparent hover:border-indigo-100"
                       title="查看备注"
                     >
-                      <FileText :size="18" />
+                      <FileText :size="16" />
                     </button>
 
                     <!-- 查看档案按钮 -->
                     <button
                       @click="goToProfile"
-                      class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg border border-slate-200 hover:border-indigo-200 transition-all"
+                      class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg border border-slate-200 hover:border-indigo-200 transition-all"
                     >
-                      查看完整档案
+                      查看档案
                     </button>
                   </div>
-                  <div class="text-[10px] text-slate-400 font-mono">
-                    <div>{{ interventionStartDate }}至{{ interventionEndDate }}</div>
-                    <div class="mt-1">已干预 {{ interventionDays }} 天</div>
+
+                  <!-- 教练和医生分配按钮 - 垂直排列 -->
+                  <div class="flex flex-col gap-1 w-28">
+                    <!-- 教练管理按钮 -->
+                    <button
+                      @click="showCoachManagementModal = true"
+                      class="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-lg text-[9px] hover:from-emerald-100 hover:to-green-100 transition-all font-medium text-emerald-700"
+                      title="管理教练分配"
+                    >
+                      <span>👨‍⚕️</span>
+                      <div class="flex-1 text-left">
+                        <div class="text-[8px] opacity-70">教练</div>
+                        <div class="text-[9px] font-semibold truncate max-w-[70px]">
+                          {{ userAssignment?.coaches && userAssignment.coaches.length > 0 ? userAssignment.coaches.map(c => c.coachName).join(', ') : '未分配' }}
+                        </div>
+                      </div>
+                      <Edit3 :size="9" />
+                    </button>
+
+                    <!-- 医生管理按钮 -->
+                    <button
+                      @click="showDoctorManagementModal = true"
+                      class="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg text-[9px] hover:from-blue-100 hover:to-indigo-100 transition-all font-medium text-blue-700"
+                      title="管理医生分配"
+                    >
+                      <span>🩺</span>
+                      <div class="flex-1 text-left">
+                        <div class="text-[8px] opacity-70">医生</div>
+                        <div class="text-[9px] font-semibold truncate max-w-[70px]">
+                          {{ userAssignment?.doctorId ? userAssignment?.doctorName : '未分配' }}
+                        </div>
+                      </div>
+                      <Edit3 :size="9" />
+                    </button>
                   </div>
                 </div>
               </div>
 
               <!-- Quick Stats -->
-              <div class="mt-3 pt-3 border-t border-slate-200/60">
-                <div class="grid grid-cols-12 gap-2.5">
+              <div class="mt-2 pt-2 border-t border-slate-200/60">
+                <!-- 第一行：统计卡片 + 快捷按钮 -->
+                <div class="grid grid-cols-12 gap-2 mb-2">
                   <!-- 今日任务 -->
                   <div
                     @click="showTaskDetailModal = true"
-                    class="col-span-2 bg-gradient-to-br from-indigo-50 via-white to-purple-50 rounded-xl border border-indigo-100/80 p-3 shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-105"
+                    class="col-span-2 bg-gradient-to-br from-indigo-50 via-white to-purple-50 rounded border border-indigo-100/80 px-1 py-0.5 shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-105"
                   >
-                    <div class="flex items-center gap-3">
-                      <div class="relative w-12 h-12 flex-shrink-0">
+                    <div class="flex items-center gap-0.5">
+                      <div class="relative w-6 h-6 flex-shrink-0">
                         <svg viewBox="0 0 36 36" class="w-full h-full transform -rotate-90">
                           <path
                             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
@@ -551,111 +613,158 @@
                           />
                         </svg>
                         <div class="absolute inset-0 flex flex-col items-center justify-center">
-                          <span class="text-sm font-bold text-slate-700">{{ userData?.todayCompleted || 0 }}</span>
-                          <span class="text-[9px] text-slate-400">/ {{ userData?.todayTasks || 0 }}</span>
+                          <span class="text-[10px] font-bold text-slate-700 leading-none">{{ userData?.todayCompleted || 0 }}</span>
+                          <span class="text-[8px] text-slate-400 leading-none">/ {{ userData?.todayTasks || 0 }}</span>
                         </div>
                       </div>
-                      <div class="flex-1">
-                        <p class="text-xs font-semibold text-slate-700">今日任务</p>
-                        <p class="text-[10px] text-slate-500 mt-0.5">
+                      <div class="flex-1 min-w-0">
+                        <p class="text-[10px] font-semibold text-slate-700 truncate leading-none">今日任务</p>
+                        <p class="text-[9px] text-slate-500 truncate leading-none">
                           {{ userData?.todayTasks > 0 && (userData?.todayCompleted || 0) >= userData?.todayTasks ? '已完成' : '进行中' }}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <!-- 快捷操作 -->
-                  <div class="col-span-10 flex justify-end">
-                    <div class="grid grid-cols-5 gap-2 w-fit">
+                  <!-- 课程学习 -->
+                  <div
+                    @click="showCourseLearningModal = true"
+                    class="col-span-2 bg-gradient-to-br from-teal-50 via-white to-cyan-50 rounded border border-teal-100/80 px-1 py-0.5 shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-105"
+                  >
+                    <div class="flex items-center gap-0.5">
+                      <div class="relative w-6 h-6 flex-shrink-0">
+                        <svg viewBox="0 0 36 36" class="w-full h-full transform -rotate-90">
+                          <path
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="#e2e8f0"
+                            stroke-width="3"
+                          />
+                          <path
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            :stroke="courseLearningData.completedCount >= courseLearningData.totalCount ? '#22c55e' : '#14b8a6'"
+                            stroke-width="3"
+                            :stroke-dasharray="`${courseLearningData.totalCount > 0 ? (courseLearningData.completedCount / courseLearningData.totalCount * 100) : 0}, 100`"
+                            class="transition-all duration-500"
+                          />
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                          <span class="text-[10px] font-bold text-slate-700 leading-none">{{ courseLearningData.completedCount }}</span>
+                          <span class="text-[8px] text-slate-400 leading-none">/ {{ courseLearningData.totalCount }}</span>
+                        </div>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-[10px] font-semibold text-slate-700 truncate leading-none">课程学习</p>
+                        <p class="text-[9px] text-slate-500 truncate leading-none">
+                          {{ courseLearningData.completedCount >= courseLearningData.totalCount ? '已完成' : '学习中' }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 快捷操作按钮区域 -->
+                  <div class="col-span-8 flex items-center">
+                    <div class="grid grid-cols-9 gap-1 w-full">
                       <!-- AI处方 -->
                       <button
                         @click="openAIPrescription"
-                        class="px-4 py-2.5 rounded-lg border border-purple-200/60 bg-gradient-to-r from-purple-50 to-purple-100/50 hover:from-purple-100 hover:to-purple-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-2"
+                        class="px-2 py-1.5 rounded-lg border border-purple-200/60 bg-gradient-to-r from-purple-50 to-purple-100/50 hover:from-purple-100 hover:to-purple-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-1"
                         title="AI生成处方"
                       >
-                        <BrainCircuit :size="16" class="text-purple-600" />
-                        <span class="text-xs font-medium text-purple-700">AI处方</span>
+                        <BrainCircuit :size="12" class="text-purple-600" />
+                        <span class="text-[9px] font-medium text-purple-700">AI处方</span>
                       </button>
 
                       <!-- 健康指标 -->
                       <button
                         @click="goToHealthTab"
-                        class="px-4 py-2.5 rounded-lg border border-emerald-200/60 bg-gradient-to-r from-emerald-50 to-emerald-100/50 hover:from-emerald-100 hover:to-emerald-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-2"
+                        class="px-2 py-1.5 rounded-lg border border-emerald-200/60 bg-gradient-to-r from-emerald-50 to-emerald-100/50 hover:from-emerald-100 hover:to-emerald-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-1"
                         title="查看健康指标"
                       >
-                        <Activity :size="16" class="text-emerald-600" />
-                        <span class="text-xs font-medium text-emerald-700">健康指标</span>
+                        <Activity :size="12" class="text-emerald-600" />
+                        <span class="text-[9px] font-medium text-emerald-700">健康</span>
                       </button>
 
                       <!-- 数据中心 -->
                       <button
                         @click="goToDataCenter"
-                        class="px-4 py-2.5 rounded-lg border border-blue-200/60 bg-gradient-to-r from-blue-50 to-blue-100/50 hover:from-blue-100 hover:to-blue-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-2"
+                        class="px-2 py-1.5 rounded-lg border border-blue-200/60 bg-gradient-to-r from-blue-50 to-blue-100/50 hover:from-blue-100 hover:to-blue-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-1"
                         title="数据中心"
                       >
-                        <Database :size="16" class="text-blue-600" />
-                        <span class="text-xs font-medium text-blue-700">数据中心</span>
+                        <Database :size="12" class="text-blue-600" />
+                        <span class="text-[9px] font-medium text-blue-700">数据</span>
                       </button>
 
                       <!-- 干预管理 -->
                       <button
                         @click="goToIntervention"
-                        class="px-4 py-2.5 rounded-lg border border-red-200/60 bg-gradient-to-r from-red-50 to-red-100/50 hover:from-red-100 hover:to-red-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-2"
+                        class="px-2 py-1.5 rounded-lg border border-red-200/60 bg-gradient-to-r from-red-50 to-red-100/50 hover:from-red-100 hover:to-red-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-1"
                         title="干预管理"
                       >
-                        <Target :size="16" class="text-red-600" />
-                        <span class="text-xs font-medium text-red-700">干预管理</span>
+                        <Target :size="12" class="text-red-600" />
+                        <span class="text-[9px] font-medium text-red-700">干预</span>
                       </button>
 
                       <!-- 对话标注 -->
                       <button
                         @click="goToLabeling"
-                        class="px-4 py-2.5 rounded-lg border border-amber-200/60 bg-gradient-to-r from-amber-50 to-amber-100/50 hover:from-amber-100 hover:to-amber-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-2"
+                        class="px-2 py-1.5 rounded-lg border border-amber-200/60 bg-gradient-to-r from-amber-50 to-amber-100/50 hover:from-amber-100 hover:to-amber-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-1"
                         title="对话标注"
                       >
-                        <MessageSquare :size="16" class="text-amber-600" />
-                        <span class="text-xs font-medium text-amber-700">对话标注</span>
+                        <MessageSquare :size="12" class="text-amber-600" />
+                        <span class="text-[9px] font-medium text-amber-700">标注</span>
                       </button>
 
                       <!-- 内容配置 -->
                       <button
                         @click="goToConfig"
-                        class="px-4 py-2.5 rounded-lg border border-slate-200/60 bg-gradient-to-r from-slate-50 to-slate-100/50 hover:from-slate-100 hover:to-slate-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-2"
+                        class="px-2 py-1.5 rounded-lg border border-slate-200/60 bg-gradient-to-r from-slate-50 to-slate-100/50 hover:from-slate-100 hover:to-slate-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-1"
                         title="内容配置"
                       >
-                        <Settings :size="16" class="text-slate-600" />
-                        <span class="text-xs font-medium text-slate-700">内容配置</span>
+                        <Settings :size="12" class="text-slate-600" />
+                        <span class="text-[9px] font-medium text-slate-700">配置</span>
+                      </button>
+
+                      <!-- 硬件设备 -->
+                      <button
+                        @click="goToDevicesTab"
+                        class="px-2 py-1.5 rounded-lg border border-teal-200/60 bg-gradient-to-r from-teal-50 to-teal-100/50 hover:from-teal-100 hover:to-teal-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-1"
+                        title="硬件设备"
+                      >
+                        <Watch :size="12" class="text-teal-600" />
+                        <span class="text-[9px] font-medium text-teal-700">设备</span>
                       </button>
 
                       <!-- 预约服务 -->
                       <button
                         @click="openBookingModal"
-                        class="px-4 py-2.5 rounded-lg border border-cyan-200/60 bg-gradient-to-r from-cyan-50 to-cyan-100/50 hover:from-cyan-100 hover:to-cyan-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-2"
+                        class="px-2 py-1.5 rounded-lg border border-cyan-200/60 bg-gradient-to-r from-cyan-50 to-cyan-100/50 hover:from-cyan-100 hover:to-cyan-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-1"
                         title="预约服务"
                       >
-                        <CalendarCheck :size="16" class="text-cyan-600" />
-                        <span class="text-xs font-medium text-cyan-700">预约服务</span>
+                        <CalendarCheck :size="12" class="text-cyan-600" />
+                        <span class="text-[9px] font-medium text-cyan-700">预约</span>
                       </button>
 
                       <!-- 查看报告 -->
                       <button
                         @click="openReportModal"
-                        class="px-4 py-2.5 rounded-lg border border-rose-200/60 bg-gradient-to-r from-rose-50 to-rose-100/50 hover:from-rose-100 hover:to-rose-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-2"
+                        class="px-2 py-1.5 rounded-lg border border-rose-200/60 bg-gradient-to-r from-rose-50 to-rose-100/50 hover:from-rose-100 hover:to-rose-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-1"
                         title="查看体检报告"
                       >
-                        <FileText :size="16" class="text-rose-600" />
-                        <span class="text-xs font-medium text-rose-700">查看报告</span>
+                        <FileText :size="12" class="text-rose-600" />
+                        <span class="text-[9px] font-medium text-rose-700">报告</span>
                       </button>
 
                       <!-- 全部阻碍 -->
                       <button
                         @click="openObstacleLibrary"
-                        class="px-4 py-2.5 rounded-lg border border-orange-200/60 bg-gradient-to-r from-orange-50 to-amber-100/50 hover:from-orange-100 hover:to-amber-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-2"
+                        class="px-2 py-1.5 rounded-lg border border-orange-200/60 bg-gradient-to-r from-orange-50 to-amber-100/50 hover:from-orange-100 hover:to-amber-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-1"
                         title="查看全部阻碍"
                       >
-                        <AlertTriangle :size="16" class="text-orange-600" />
-                        <span class="text-xs font-medium text-orange-700">全部阻碍</span>
-                        <span class="bg-orange-500 text-white text-[9px] px-1.5 py-0.5 rounded-full">{{ obstacleLibrary.length }}</span>
+                        <AlertTriangle :size="12" class="text-orange-600" />
+                        <span class="text-[9px] font-medium text-orange-700">阻碍</span>
+                        <span class="bg-orange-500 text-white text-[8px] px-1 py-0.5 rounded-full">{{ obstacleLibrary.length }}</span>
                       </button>
                     </div>
                   </div>
@@ -741,19 +850,11 @@
                     <h3 class="font-bold text-slate-800 flex items-center gap-2">
                       <Activity :size="18" class="text-indigo-500" /> 趋势分析
                     </h3>
-                    <button
-                      @click="showToastMessage('打开日期范围选择器（如：近30天、本月等）')"
-                      class="text-xs flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-indigo-600 transition-colors active:scale-95 shadow-sm"
-                    >
-                      <CalendarIcon :size="12" />
-                      近7天
-                      <ChevronDown :size="12" />
-                    </button>
                   </div>
 
                   <div class="space-y-5 flex-1">
                     <!-- 折线趋势图循环 -->
-                    <div v-for="(chart, idx) in trendCharts" :key="idx" class="group cursor-pointer bg-slate-50 rounded-xl p-3 border border-slate-100 hover:border-indigo-200 hover:shadow-sm transition-all" @click="showToastMessage(chart.msg)">
+                    <div v-for="(chart, idx) in trendCharts" :key="idx" class="group cursor-pointer bg-slate-50 rounded-xl p-3 border border-slate-100 hover:border-indigo-200 hover:shadow-sm transition-all" @click="openTrendDetail(chart)">
                       <div class="flex justify-between items-start mb-2">
                         <div>
                           <span class="text-xs font-semibold text-slate-500 flex items-center gap-1.5 mb-1">
@@ -776,7 +877,7 @@
                     </div>
 
                     <!-- 睡眠质量分析柱状图 -->
-                    <div class="group cursor-pointer bg-slate-50 rounded-xl p-3 border border-slate-100 hover:border-indigo-200 hover:shadow-sm transition-all" @click="showToastMessage('查看深度睡眠与浅睡比例')">
+                    <div class="group cursor-pointer bg-slate-50 rounded-xl p-3 border border-slate-100 hover:border-indigo-200 hover:shadow-sm transition-all" @click="openTrendDetail({ label: '睡眠时长评估', icon: Moon, iconColor: 'text-indigo-500', value: '7.0', unit: '小时 (平均)', status: '良好', statusColor: 'bg-indigo-100 text-indigo-700 border-indigo-200', type: 'sleep' })">
                       <div class="flex justify-between items-start mb-2">
                         <div>
                           <span class="text-xs font-semibold text-slate-500 flex items-center gap-1.5 mb-1"><Moon :size="14" class="text-indigo-500"/> 睡眠时长评估</span>
@@ -1497,6 +1598,117 @@
       </div>
     </Teleport>
 
+    <!-- 课程学习详情弹窗 -->
+    <Teleport to="body">
+      <div v-if="showCourseLearningModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200">
+          <!-- 标题栏 -->
+          <div class="flex items-center justify-between p-5 border-b border-slate-100">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center">
+                <BookOpen :size="20" class="text-white" />
+              </div>
+              <div>
+                <h3 class="font-bold text-lg text-slate-800">今日课程学习</h3>
+                <p class="text-xs text-slate-500">{{ courseLearningData.completedCount }}/{{ courseLearningData.totalCount }} 已完成</p>
+              </div>
+            </div>
+            <button @click="showCourseLearningModal = false" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+              <X :size="20" />
+            </button>
+          </div>
+
+          <!-- 弹窗内容 -->
+          <div class="p-5 max-h-[60vh] overflow-y-auto">
+            <div class="space-y-3">
+              <div
+                v-for="course in courseLearningData.courses"
+                :key="course.id"
+                class="flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer hover:shadow-md"
+                :class="course.completed ? 'bg-green-50 border-green-200' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'"
+              >
+                <!-- 课程图标 -->
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0" :class="course.completed ? 'bg-green-500' : 'bg-teal-500'">
+                  <template v-if="course.completed">
+                    ✓
+                  </template>
+                  <template v-else>
+                    📚
+                  </template>
+                </div>
+
+                <!-- 课程信息 -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-0.5">
+                    <span class="text-sm font-semibold" :class="course.completed ? 'text-green-800' : 'text-slate-800'">
+                      {{ course.title }}
+                    </span>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-teal-100 text-teal-700">
+                      {{ course.duration }}
+                    </span>
+                  </div>
+                  <p class="text-xs text-slate-500">
+                    <template v-if="course.completed">
+                      完成时间：{{ course.completedAt }}
+                    </template>
+                    <template v-else>
+                      未完成
+                    </template>
+                  </p>
+                </div>
+
+                <!-- 完成状态 -->
+                <div class="flex-shrink-0">
+                  <div
+                    class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all"
+                    :class="course.completed ? 'bg-green-500 border-green-500' : 'border-slate-300 hover:border-teal-400'"
+                  >
+                    <Check v-if="course.completed" :size="14" class="text-white" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 进度总结 -->
+            <div class="mt-6 p-4 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-xl border border-teal-100">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-sm font-semibold text-slate-800">学习进度</span>
+                <span class="text-lg font-bold" :style="{ color: courseLearningData.completedCount >= courseLearningData.totalCount ? '#22c55e' : '#14b8a6' }">
+                  {{ courseLearningData.totalCount > 0 ? Math.round((courseLearningData.completedCount / courseLearningData.totalCount) * 100) : 0 }}%
+                </span>
+              </div>
+              <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                <div
+                  class="h-full rounded-full transition-all duration-500"
+                  :style="{
+                    width: `${courseLearningData.totalCount > 0 ? (courseLearningData.completedCount / courseLearningData.totalCount * 100) : 0}%`,
+                    background: courseLearningData.completedCount >= courseLearningData.totalCount ? 'linear-gradient(90deg, #22c55e 0%, #16a34a 100%)' : 'linear-gradient(90deg, #14b8a6 0%, #0d9488 100%)'
+                  }"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 弹窗底部 -->
+          <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-between items-center">
+            <button
+              @click="goToConfig"
+              class="px-4 py-2.5 text-sm font-medium text-teal-600 bg-white border border-teal-200 hover:bg-teal-50 rounded-xl transition-colors flex items-center gap-2"
+            >
+              <Settings :size="16" />
+              课程配置
+            </button>
+            <button
+              @click="showCourseLearningModal = false"
+              class="px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-xl transition-colors"
+            >
+              关闭
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
     <!-- 预约服务弹窗 -->
     <Teleport to="body">
       <div v-if="showBookingModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200 p-4">
@@ -1745,9 +1957,13 @@
                   <div class="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold">
                     {{ coachAssignment.coachName.charAt(0) }}
                   </div>
-                  <div>
+                  <div class="flex-1">
                     <div class="font-medium text-slate-800">{{ coachAssignment.coachName }}</div>
-                    <div class="text-xs text-slate-500">负载: {{ getCoachLoad(coachAssignment.coachId) }}/{{ getCoachMaxLoad(coachAssignment.coachId) }}</div>
+                    <div class="text-xs text-slate-500 mt-1">
+                      <div>负载: {{ getCoachLoad(coachAssignment.coachId) }}/{{ getCoachMaxLoad(coachAssignment.coachId) }}</div>
+                      <div class="mt-0.5">{{ formatDateRange(coachAssignment.startDate, coachAssignment.endDate) }}</div>
+                      <div class="font-semibold text-emerald-600 mt-0.5">已干预 {{ calculateInterventionDays(coachAssignment.startDate, coachAssignment.endDate) }} 天</div>
+                    </div>
                   </div>
                 </div>
                 <div class="flex items-center gap-2">
@@ -1805,13 +2021,17 @@
             <h4 class="text-sm font-semibold text-slate-700 mb-3">已分配医生</h4>
             <div v-if="userAssignment?.doctorId" class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl">
               <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 flex-1">
                   <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
                     {{ userAssignment.doctorName?.charAt(0) || '?' }}
                   </div>
-                  <div>
+                  <div class="flex-1">
                     <div class="font-medium text-slate-800">{{ userAssignment.doctorName }}</div>
-                    <div class="text-xs text-slate-500">主治医生</div>
+                    <div class="text-xs text-slate-500 mt-1">
+                      <div>主治医生</div>
+                      <div v-if="userAssignment.doctorStartDate" class="mt-0.5">{{ formatDateRange(userAssignment.doctorStartDate, userAssignment.doctorEndDate) }}</div>
+                      <div v-if="userAssignment.doctorStartDate" class="font-semibold text-blue-600 mt-0.5">已干预 {{ calculateInterventionDays(userAssignment.doctorStartDate, userAssignment.doctorEndDate) }} 天</div>
+                    </div>
                   </div>
                 </div>
                 <div class="flex items-center gap-2">
@@ -2231,19 +2451,31 @@
             </div>
 
             <!-- 底部按钮 -->
-            <div class="flex gap-3 p-5 border-t border-slate-100 bg-slate-50">
+            <div class="flex flex-col gap-3 p-5 border-t border-slate-100 bg-slate-50">
+              <!-- 快捷操作 -->
               <button
-                @click="showVitalDataModal = false"
-                class="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 text-slate-600 font-medium hover:bg-white transition-all text-sm"
+                @click="goToDevicesFromVitalModal"
+                class="w-full px-4 py-2.5 rounded-lg border-2 border-teal-200 text-teal-700 font-medium hover:bg-teal-50 transition-all text-sm flex items-center justify-center gap-2"
               >
-                取消
+                <Watch :size="16" />
+                硬件设备配置
               </button>
-              <button
-                @click="saveVitalData"
-                class="flex-1 px-4 py-2.5 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium hover:from-indigo-600 hover:to-purple-600 transition-all text-sm shadow-md hover:shadow-lg"
-              >
-                保存
-              </button>
+
+              <!-- 主操作按钮 -->
+              <div class="flex gap-3">
+                <button
+                  @click="showVitalDataModal = false"
+                  class="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 text-slate-600 font-medium hover:bg-white transition-all text-sm"
+                >
+                  取消
+                </button>
+                <button
+                  @click="saveVitalData"
+                  class="flex-1 px-4 py-2.5 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium hover:from-indigo-600 hover:to-purple-600 transition-all text-sm shadow-md hover:shadow-lg"
+                >
+                  保存
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -2543,6 +2775,404 @@
       </div>
     </Teleport>
 
+    <!-- 基础信息编辑弹窗 -->
+    <Teleport to="body">
+      <div v-if="showBasicInfoEditModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+          <!-- 标题栏 -->
+          <div class="flex items-center justify-between p-4 border-b border-slate-100 bg-gradient-to-r from-indigo-50 to-purple-50 flex-shrink-0">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm">
+                <Edit3 :size="16" class="text-white" />
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-slate-800">编辑客情基础信息</h3>
+                <p class="text-[10px] text-slate-500">更新性别、年龄、依从度等基础信息</p>
+              </div>
+            </div>
+            <button
+              @click="showBasicInfoEditModal = false"
+              class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-white rounded-lg transition-all"
+            >
+              <X :size="18" />
+            </button>
+          </div>
+
+          <!-- 表单内容 - 可滚动 -->
+          <div class="p-4 space-y-3 overflow-y-auto">
+            <!-- 性别和年龄 -->
+            <div class="grid grid-cols-2 gap-3">
+              <!-- 性别 -->
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1.5">性别</label>
+                <select
+                  v-model="basicInfoForm.gender"
+                  class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-xs"
+                >
+                  <option value="">请选择性别</option>
+                  <option value="男">男</option>
+                  <option value="女">女</option>
+                </select>
+              </div>
+
+              <!-- 年龄 -->
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1.5">年龄</label>
+                <input
+                  v-model.number="basicInfoForm.age"
+                  type="number"
+                  min="0"
+                  max="120"
+                  placeholder="请输入年龄"
+                  class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-xs"
+                />
+              </div>
+            </div>
+
+            <!-- 依从度 -->
+            <div>
+              <label class="block text-xs font-medium text-slate-700 mb-1.5">依从度评分（0-10分）</label>
+              <div class="flex items-center gap-2">
+                <input
+                  v-model.number="basicInfoForm.compliance"
+                  type="number"
+                  min="0"
+                  max="10"
+                  class="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-xs"
+                />
+                <div class="flex items-center gap-1">
+                  <span
+                    class="px-2.5 py-1.5 text-xs font-bold rounded-lg border"
+                    :style="{
+                      background: getComplianceColor(basicInfoForm.compliance).bg,
+                      color: getComplianceColor(basicInfoForm.compliance).text,
+                      borderColor: getComplianceColor(basicInfoForm.compliance).border
+                    }"
+                  >
+                    {{ basicInfoForm.compliance }}分
+                  </span>
+                </div>
+              </div>
+              <p class="text-[10px] text-slate-500 mt-1">0-2分：很差 | 3-4分：较差 | 5-6分：一般 | 7-8分：良好 | 9-10分：优秀</p>
+            </div>
+
+            <!-- 来源渠道 -->
+            <div>
+              <label class="block text-xs font-medium text-slate-700 mb-1.5">来源渠道</label>
+              <select
+                v-model="basicInfoForm.sourceChannel"
+                class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-xs"
+              >
+                <option value="">请选择来源渠道</option>
+                <option value="抖音推广">抖音推广</option>
+                <option value="微信公众号">微信公众号</option>
+                <option value="小红书">小红书</option>
+                <option value="线上广告">线上广告</option>
+                <option value="线下讲座">线下讲座</option>
+                <option value="线下转介绍">线下转介绍</option>
+                <option value="朋友推荐">朋友推荐</option>
+                <option value="知乎">知乎</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+
+            <!-- 付费金额 -->
+            <div>
+              <label class="block text-xs font-medium text-slate-700 mb-1.5">付费金额（元）</label>
+              <input
+                v-model.number="basicInfoForm.paymentAmount"
+                type="number"
+                min="0"
+                step="100"
+                placeholder="请输入付费金额"
+                class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-xs"
+              />
+            </div>
+
+            <!-- 用户目标 -->
+            <div>
+              <label class="block text-xs font-medium text-slate-700 mb-1.5">用户目标</label>
+              <textarea
+                v-model="basicInfoForm.userGoal"
+                rows="2"
+                placeholder="请输入用户的健康目标（如：控制血糖、减轻体重、改善睡眠等）"
+                class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-xs resize-none"
+              ></textarea>
+            </div>
+
+            <!-- 常用目标快捷选择 -->
+            <div>
+              <label class="block text-xs font-medium text-slate-700 mb-1.5">常用目标</label>
+              <div class="flex flex-wrap gap-1.5">
+                <button
+                  v-for="goal in ['控制血糖', '减轻体重', '改善睡眠', '预防并发症', '优化代谢', '建立习惯', '长期管理', '维持健康']"
+                  :key="goal"
+                  @click="basicInfoForm.userGoal = goal"
+                  class="px-2 py-1 text-[10px] rounded-lg border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-colors"
+                >
+                  {{ goal }}
+                </button>
+              </div>
+            </div>
+
+            <!-- 干预日期 -->
+            <div>
+              <label class="block text-xs font-medium text-slate-700 mb-1.5">干预开始日期</label>
+              <input
+                v-model="basicInfoForm.interventionStartDate"
+                type="date"
+                class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-xs"
+              />
+              <p class="text-[10px] text-slate-500 mt-1">该日期用于计算干预时长，建议设置为首次分配教练或医生的日期</p>
+            </div>
+          </div>
+
+          <!-- 底部按钮 -->
+          <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-2 flex-shrink-0">
+            <button
+              @click="showBasicInfoEditModal = false"
+              class="px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-200 rounded-lg transition-colors"
+            >
+              取消
+            </button>
+            <button
+              @click="saveBasicInfo"
+              class="px-3 py-2 text-xs font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg hover:from-indigo-600 hover:to-purple-600 transition-colors shadow-md hover:shadow-lg"
+            >
+              保存
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- 趋势图详情模态框 -->
+    <Teleport to="body">
+      <div v-if="showTrendDetailModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200">
+          <!-- 标题栏 -->
+          <div class="flex items-center justify-between p-5 border-b border-slate-100">
+            <div class="flex items-center gap-3">
+              <component :is="selectedTrendChart?.icon" :size="20" :class="selectedTrendChart?.iconColor" />
+              <h3 class="text-lg font-bold text-slate-800">{{ selectedTrendChart?.label }}趋势</h3>
+            </div>
+            <div class="flex items-center gap-3">
+              <!-- 时间范围切换 -->
+              <div class="flex items-center bg-slate-100 rounded-lg p-1">
+                <button
+                  @click="trendTimeRange = '7days'"
+                  :class="['px-3 py-1.5 text-xs font-medium rounded-md transition-all', trendTimeRange === '7days' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700']"
+                >
+                  近7天
+                </button>
+                <button
+                  @click="trendTimeRange = '30days'"
+                  :class="['px-3 py-1.5 text-xs font-medium rounded-md transition-all', trendTimeRange === '30days' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700']"
+                >
+                  近30天
+                </button>
+              </div>
+              <button
+                @click="showTrendDetailModal = false"
+                class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <X :size="20" />
+              </button>
+            </div>
+          </div>
+
+          <!-- 趋势图内容 -->
+          <div class="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+            <div v-if="selectedTrendChart">
+              <!-- 计算当前时间范围的天数 -->
+              <template v-if="trendTimeRange === '7days'">
+                <!-- 7天数据 -->
+                <div v-if="selectedTrendChart.type === 'sleep'" class="space-y-6">
+                  <!-- 睡眠柱状图 -->
+                  <div>
+                    <h4 class="text-sm font-semibold text-slate-700 mb-4">每日睡眠时长（近7天）</h4>
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                      <div class="flex items-end justify-between h-48 gap-2">
+                        <div
+                          v-for="(val, i) in generateTrendData('sleep', 7).data"
+                          :key="i"
+                          class="flex-1 flex flex-col items-center relative"
+                        >
+                          <span class="text-[9px] font-bold text-slate-700 mb-1">{{ val }}h</span>
+                          <div
+                            :class="['w-full rounded-t-sm transition-all duration-300', val < 6 ? 'bg-amber-400' : val >= 7 ? 'bg-indigo-400' : 'bg-slate-300']"
+                            :style="{ height: `${((val - 4) / 6) * 100}%`, minHeight: '4px' }"
+                          ></div>
+                          <span class="text-[8px] text-slate-400 mt-1">{{ generateTrendData('sleep', 7).labels[i] }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 统计摘要 -->
+                  <div class="grid grid-cols-4 gap-4">
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                      <div class="text-[10px] text-slate-500 mb-1">平均睡眠</div>
+                      <div class="text-xl font-bold text-slate-800">{{ (generateTrendData('sleep', 7).data.reduce((a, b) => a + b, 0) / 7).toFixed(1) }}h</div>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                      <div class="text-[10px] text-slate-500 mb-1">最高时长</div>
+                      <div class="text-xl font-bold text-green-600">{{ Math.max(...generateTrendData('sleep', 7).data) }}h</div>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                      <div class="text-[10px] text-slate-500 mb-1">最低时长</div>
+                      <div class="text-xl font-bold text-amber-600">{{ Math.min(...generateTrendData('sleep', 7).data) }}h</div>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                      <div class="text-[10px] text-slate-500 mb-1">达标天数</div>
+                      <div class="text-xl font-bold text-indigo-600">{{ generateTrendData('sleep', 7).data.filter(v => v >= 7).length }}天</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 其他趋势的折线图 -->
+                <div v-else class="space-y-6">
+                  <div>
+                    <h4 class="text-sm font-semibold text-slate-700 mb-4">每日{{ selectedTrendChart.label }}趋势（近7天）</h4>
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 relative">
+                      <svg viewBox="0 0 1000 220" class="w-full h-52 overflow-visible">
+                        <line v-for="i in 5" :key="i" :x1="0" :y1="i * 40" :x2="1000" :y2="i * 40" stroke="#e2e8f0" stroke-width="1" />
+                        <line v-for="i in 10" :key="`v${i}`" :x1="i * 100" :y1="0" :x2="i * 100" :y2="200" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4" />
+
+                        <g v-if="selectedTrendChart">
+                          <polygon :points="getTrendChartData(selectedTrendChart.type, 7).areaPoints" :class="selectedTrendChart.fillClass" />
+                          <polyline :points="getTrendChartData(selectedTrendChart.type, 7).points" fill="none" :class="selectedTrendChart.strokeClass" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                          <g v-for="(pt, i) in getTrendChartData(selectedTrendChart.type, 7).dataNodes" :key="i">
+                            <circle :cx="pt.x" :cy="pt.y" r="4" :class="['fill-white', selectedTrendChart.dotClass]" stroke-width="2" />
+                            <text :x="pt.x" :y="pt.y - 12" text-anchor="middle" class="text-[9px] font-semibold fill-slate-700">
+                              {{ generateTrendData(selectedTrendChart.type, 7).data[i] }}
+                            </text>
+                          </g>
+                        </g>
+                      </svg>
+                    </div>
+                  </div>
+
+                  <div class="flex justify-between px-4 text-[10px] text-slate-400">
+                    <span v-for="(label, i) in generateTrendData(selectedTrendChart.type, 7).labels" :key="i">{{ label }}</span>
+                  </div>
+
+                  <div class="grid grid-cols-4 gap-4">
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                      <div class="text-[10px] text-slate-500 mb-1">平均值</div>
+                      <div class="text-xl font-bold text-slate-800">{{ (generateTrendData(selectedTrendChart.type, 7).data.reduce((a, b) => a + b, 0) / 7).toFixed(1) }}</div>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                      <div class="text-[10px] text-slate-500 mb-1">最高值</div>
+                      <div class="text-xl font-bold text-rose-600">{{ Math.max(...generateTrendData(selectedTrendChart.type, 7).data) }}</div>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                      <div class="text-[10px] text-slate-500 mb-1">最低值</div>
+                      <div class="text-xl font-bold text-green-600">{{ Math.min(...generateTrendData(selectedTrendChart.type, 7).data) }}</div>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                      <div class="text-[10px] text-slate-500 mb-1">趋势</div>
+                      <div class="text-xl font-bold" :class="getTrendDirection(selectedTrendChart.type) === 'up' ? 'text-rose-600' : 'text-green-600'">
+                        {{ getTrendDirection(selectedTrendChart.type) === 'up' ? '↑ 上升' : '↓ 下降' }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+
+              <template v-else>
+                <!-- 30天数据 -->
+                <div v-if="selectedTrendChart.type === 'sleep'" class="space-y-6">
+                  <!-- 睡眠柱状图 -->
+                  <div>
+                    <h4 class="text-sm font-semibold text-slate-700 mb-4">每日睡眠时长（近30天）</h4>
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                      <div class="flex items-end justify-between h-48 gap-1">
+                        <div v-for="(val, i) in generateTrendData('sleep', 30).data" :key="i" class="flex-1 flex flex-col items-center relative">
+                          <span class="text-[9px] font-bold text-slate-700 mb-1">{{ val }}h</span>
+                          <div :class="['w-full rounded-t-sm transition-all duration-300', val < 6 ? 'bg-amber-400' : val >= 7 ? 'bg-indigo-400' : 'bg-slate-300']" :style="{ height: `${((val - 4) / 6) * 100}%`, minHeight: '4px' }"></div>
+                          <span class="text-[8px] text-slate-400 mt-1">{{ generateTrendData('sleep', 30).labels[i] }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 统计摘要 -->
+                  <div class="grid grid-cols-4 gap-4">
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                      <div class="text-[10px] text-slate-500 mb-1">平均睡眠</div>
+                      <div class="text-xl font-bold text-slate-800">{{ (generateTrendData('sleep', 30).data.reduce((a, b) => a + b, 0) / 30).toFixed(1) }}h</div>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                      <div class="text-[10px] text-slate-500 mb-1">最高时长</div>
+                      <div class="text-xl font-bold text-green-600">{{ Math.max(...generateTrendData('sleep', 30).data) }}h</div>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                      <div class="text-[10px] text-slate-500 mb-1">最低时长</div>
+                      <div class="text-xl font-bold text-amber-600">{{ Math.min(...generateTrendData('sleep', 30).data) }}h</div>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                      <div class="text-[10px] text-slate-500 mb-1">达标天数</div>
+                      <div class="text-xl font-bold text-indigo-600">{{ generateTrendData('sleep', 30).data.filter(v => v >= 7).length }}天</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 其他趋势的折线图 -->
+                <div v-else class="space-y-6">
+                  <div>
+                    <h4 class="text-sm font-semibold text-slate-700 mb-4">每日{{ selectedTrendChart.label }}趋势（近30天）</h4>
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 relative">
+                      <svg viewBox="0 0 1000 220" class="w-full h-52 overflow-visible">
+                        <line v-for="i in 5" :key="i" :x1="0" :y1="i * 40" :x2="1000" :y2="i * 40" stroke="#e2e8f0" stroke-width="1" />
+                        <line v-for="i in 10" :key="`v${i}`" :x1="i * 100" :y1="0" :x2="i * 100" :y2="200" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4" />
+
+                        <g v-if="selectedTrendChart">
+                          <polygon :points="getTrendChartData(selectedTrendChart.type, 30).areaPoints" :class="selectedTrendChart.fillClass" />
+                          <polyline :points="getTrendChartData(selectedTrendChart.type, 30).points" fill="none" :class="selectedTrendChart.strokeClass" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                          <g v-for="(pt, i) in getTrendChartData(selectedTrendChart.type, 30).dataNodes" :key="i">
+                            <circle :cx="pt.x" :cy="pt.y" r="4" :class="['fill-white', selectedTrendChart.dotClass]" stroke-width="2" />
+                            <text :x="pt.x" :y="pt.y - 12" text-anchor="middle" class="text-[9px] font-semibold fill-slate-700">
+                              {{ generateTrendData(selectedTrendChart.type, 30).data[i] }}
+                            </text>
+                          </g>
+                        </g>
+                      </svg>
+                    </div>
+                  </div>
+
+                  <div class="flex justify-between px-4 text-[10px] text-slate-400">
+                    <span v-for="(label, i) in generateTrendData(selectedTrendChart.type, 30).labels" :key="i" v-show="i % 5 === 0">{{ label }}</span>
+                  </div>
+
+                  <div class="grid grid-cols-4 gap-4">
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                      <div class="text-[10px] text-slate-500 mb-1">平均值</div>
+                      <div class="text-xl font-bold text-slate-800">{{ (generateTrendData(selectedTrendChart.type, 30).data.reduce((a, b) => a + b, 0) / 30).toFixed(1) }}</div>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                      <div class="text-[10px] text-slate-500 mb-1">最高值</div>
+                      <div class="text-xl font-bold text-rose-600">{{ Math.max(...generateTrendData(selectedTrendChart.type, 30).data) }}</div>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                      <div class="text-[10px] text-slate-500 mb-1">最低值</div>
+                      <div class="text-xl font-bold text-green-600">{{ Math.min(...generateTrendData(selectedTrendChart.type, 30).data) }}</div>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                      <div class="text-[10px] text-slate-500 mb-1">趋势</div>
+                      <div class="text-xl font-bold" :class="getTrendDirection(selectedTrendChart.type) === 'up' ? 'text-rose-600' : 'text-green-600'">
+                        {{ getTrendDirection(selectedTrendChart.type) === 'up' ? '↑ 上升' : '↓ 下降' }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
   </div>
 </template>
 
@@ -2584,6 +3214,7 @@ const {
 } = useSystemLog()
 import {
   Users,
+  User,
   Search,
   Check,
   X,
@@ -2633,7 +3264,11 @@ import {
   Package,
   ShoppingCart,
   Trash2,
-  Edit
+  Edit,
+  Watch,
+  Hash,
+  Share2,
+  Edit3
 } from 'lucide-vue-next'
 import DatePickerButton from '../components/shared/DatePickerButton.vue'
 import Toast from '../components/shared/Toast.vue'
@@ -2667,11 +3302,6 @@ const showAddTag = ref(false)
 const newTag = ref('')
 const editTagInput = ref<HTMLInputElement>()
 const addTagInput = ref<HTMLInputElement>()
-
-// 依从度编辑状态
-const editingCompliance = ref(false)
-const tempCompliance = ref<ComplianceScore>(5)
-const complianceSelect = ref<HTMLSelectElement>()
 
 // 获取当前用户的标签
 const userTags = computed(() => {
@@ -2739,29 +3369,6 @@ const handleAddTag = () => {
   }
 }
 
-// 依从度编辑方法
-const startEditCompliance = () => {
-  if (!selectedUser.value) return
-  tempCompliance.value = userComplianceLevel.value
-  editingCompliance.value = true
-  nextTick(() => {
-    complianceSelect.value?.focus()
-  })
-}
-
-const saveCompliance = () => {
-  if (selectedUser.value && tempCompliance.value !== userComplianceLevel.value) {
-    setUserCompliance(selectedUser.value, tempCompliance.value)
-    toastRef.value?.success(`评分已更新为：${tempCompliance.value}`)
-  }
-  editingCompliance.value = false
-}
-
-const cancelEditCompliance = () => {
-  tempCompliance.value = userComplianceLevel.value
-  editingCompliance.value = false
-}
-
 // Inject calendar state from App.vue
 const calendarState = inject<{
   selectedCalendarDate: ReturnType<typeof ref>
@@ -2823,6 +3430,9 @@ interface UserData {
   coursesCompleted?: number
   coursesTotal?: number
   interventionStartDate?: Date
+  sourceChannel?: string // 来源渠道
+  paymentAmount?: number // 付费金额
+  userGoal?: string // 用户目标
 }
 
 interface Blocker {
@@ -2877,6 +3487,90 @@ const sortBy = ref<'完成率' | '衰老指数' | '任务数' | null>(null)
 const sortOrder = ref<'asc' | 'desc'>('desc')
 const showAddTaskModal = ref(false)
 const isSidebarCollapsed = ref(false)
+const showTrendDetailModal = ref(false)
+const selectedTrendChart = ref<any>(null)
+const trendTimeRange = ref<'7days' | '30days'>('30days')
+const hoveredTooltip = ref<{ x: number, y: number, text: string } | null>(null)
+const showCourseLearningModal = ref(false)
+const showBasicInfoEditModal = ref(false)
+const basicInfoForm = ref({
+  gender: '',
+  age: 0,
+  compliance: 5,
+  sourceChannel: '',
+  paymentAmount: 0,
+  userGoal: '',
+  interventionStartDate: ''
+})
+
+// 课程学习数据
+const courseLearningData = ref({
+  totalCount: 5,
+  completedCount: 3,
+  courses: [
+    { id: 1, title: '糖尿病基础知识', duration: '15分钟', completed: true, completedAt: '09:30' },
+    { id: 2, title: '血糖监测方法', duration: '20分钟', completed: true, completedAt: '10:15' },
+    { id: 3, title: '饮食管理指南', duration: '25分钟', completed: true, completedAt: '14:20' },
+    { id: 4, title: '运动康复训练', duration: '18分钟', completed: false },
+    { id: 5, title: '药物治疗说明', duration: '22分钟', completed: false }
+  ]
+})
+
+// 30天趋势数据缓存
+const trendDataCache = ref<Record<string, { data: number[], labels: string[] }>>({})
+
+// 初始化趋势数据缓存
+const initTrendDataCache = () => {
+  const types = ['glucose', 'heartRate', 'weight', 'sleep']
+  const daysOptions: (7 | 30)[] = [7, 30]
+
+  types.forEach(type => {
+    daysOptions.forEach(days => {
+      const cacheKey = `${type}_${days}days`
+      if (!trendDataCache.value[cacheKey]) {
+        trendDataCache.value[cacheKey] = generateTrendDataUncached(type, days)
+      }
+    })
+  })
+}
+
+// 生成趋势数据（未缓存版本，支持7天和30天）
+const generateTrendDataUncached = (type: string, days: 7 | 30 = 30) => {
+  const data: number[] = []
+  const labels: string[] = []
+  const today = new Date()
+
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(today)
+    date.setDate(date.getDate() - i)
+    labels.push(`${date.getMonth() + 1}/${date.getDate()}`)
+
+    // 根据类型生成模拟数据
+    if (type === 'glucose') {
+      // 血糖：5.5-7.5 mmol/L，随机波动
+      data.push(+(5.5 + Math.random() * 2).toFixed(1))
+    } else if (type === 'heartRate') {
+      // 心率：70-85 bpm
+      data.push(Math.round(70 + Math.random() * 15))
+    } else if (type === 'weight') {
+      // 体重：缓慢下降趋势
+      const baseWeight = days === 7 ? 68.8 : 69.5
+      const step = days === 7 ? 0.02 : 0.05
+      const baseValue = baseWeight - ((days - 1 - i) * step)
+      data.push(+(baseValue + (Math.random() * 0.4 - 0.2)).toFixed(1))
+    } else if (type === 'sleep') {
+      // 睡眠：6-9小时
+      data.push(+(6 + Math.random() * 3).toFixed(1))
+    }
+  }
+
+  return { data, labels }
+}
+
+// 初始化缓存
+onMounted(() => {
+  initTrendDataCache()
+})
 
 // Initialize user tags when selected user changes
 watch(selectedUser, (newUserId) => {
@@ -3280,6 +3974,25 @@ const getCoachMaxLoad = (coachId?: string) => {
   if (!coachId) return 0
   const coach = getEmployeeById(coachId)
   return coach?.maxLoad || 0
+}
+
+// 计算干预天数
+const calculateInterventionDays = (startDate: string, endDate?: string): number => {
+  const start = new Date(startDate)
+  const end = endDate ? new Date(endDate) : new Date() // 如果未结束，使用今天
+  const diffTime = Math.abs(end.getTime() - start.getTime())
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  return diffDays
+}
+
+// 格式化日期显示
+const formatDateRange = (startDate: string, endDate?: string): string => {
+  const start = new Date(startDate).toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
+  if (endDate) {
+    const end = new Date(endDate).toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
+    return `${start} - ${end}`
+  }
+  return `${start} - 至今`
 }
 
 // 群组类型定义
@@ -3903,9 +4616,34 @@ const formatFullDateTime = (date: Date) => {
 
 // 趋势图表数据
 const trendCharts = [
-  { label: '空腹血糖变化', icon: Droplet, iconColor: 'text-orange-500', value: '6.4', unit: 'mmol/L (平均)', status: '偏高', statusColor: 'bg-orange-100 text-orange-700 border-orange-200', data: [5.8, 6.0, 7.5, 6.2, 5.9, 7.2, 6.2], strokeClass: 'stroke-orange-500', fillClass: 'fill-orange-500/10', dotClass: 'stroke-orange-500', msg: '展开血糖详细分析大图' },
-  { label: '静息心率波动', icon: Activity, iconColor: 'text-rose-500', value: '75.7', unit: 'bpm (平均)', status: '正常', statusColor: 'bg-green-100 text-green-700 border-green-200', data: [72, 75, 71, 78, 82, 74, 78], strokeClass: 'stroke-rose-500', fillClass: 'fill-rose-500/10', dotClass: 'stroke-rose-500', msg: '展开静息心率详情' }
+  { label: '空腹血糖变化', icon: Droplet, iconColor: 'text-orange-500', value: '6.4', unit: 'mmol/L (平均)', status: '偏高', statusColor: 'bg-orange-100 text-orange-700 border-orange-200', data: [5.8, 6.0, 7.5, 6.2, 5.9, 7.2, 6.2], strokeClass: 'stroke-orange-500', fillClass: 'fill-orange-500/10', dotClass: 'stroke-orange-500', msg: '展开血糖详细分析大图', type: 'glucose' },
+  { label: '静息心率波动', icon: Activity, iconColor: 'text-rose-500', value: '75.7', unit: 'bpm (平均)', status: '正常', statusColor: 'bg-green-100 text-green-700 border-green-200', data: [72, 75, 71, 78, 82, 74, 78], strokeClass: 'stroke-rose-500', fillClass: 'fill-rose-500/10', dotClass: 'stroke-rose-500', msg: '展开静息心率详情', type: 'heartRate' },
+  { label: '体重变化趋势', icon: Target, iconColor: 'text-teal-500', value: '68.5', unit: 'kg (平均)', status: '正常', statusColor: 'bg-green-100 text-green-700 border-green-200', data: [69.2, 69.0, 68.8, 68.5, 68.3, 68.6, 68.5], strokeClass: 'stroke-teal-500', fillClass: 'fill-teal-500/10', dotClass: 'stroke-teal-500', msg: '展开体重详细分析大图', type: 'weight' }
 ]
+
+// 生成趋势数据（从缓存读取，支持7天和30天）
+const generateTrendData = (type: string, days: 7 | 30 = 30) => {
+  const cacheKey = `${type}_${days}days`
+  if (!trendDataCache.value[cacheKey]) {
+    trendDataCache.value[cacheKey] = generateTrendDataUncached(type, days)
+  }
+  return trendDataCache.value[cacheKey]
+}
+
+// 兼容性函数：generate30DayData映射到generateTrendData
+const generate30DayData = (type: string) => generateTrendData(type, 30)
+
+// 打开趋势图详情模态框
+const openTrendDetail = (chart: any) => {
+  selectedTrendChart.value = chart
+  trendTimeRange.value = '30days' // 重置为30天
+  showTrendDetailModal.value = true
+}
+
+// 获取睡眠30天数据（用于睡眠卡片）
+const getSleep30DayData = () => {
+  return generate30DayData('sleep')
+}
 
 // 快捷操作配置
 const quickActions = [
@@ -4045,6 +4783,48 @@ const getChartData = (data: number[]) => {
   return { points, areaPoints, dataNodes }
 }
 
+// 工具方法：获取折线图绘制数据（支持7天和30天）
+const getTrendChartData = (type: string, days: 7 | 30 = 30) => {
+  const data = generateTrendData(type, days).data
+  const max = Math.max(...data) * 1.05
+  const min = Math.min(...data) * 0.95
+  const range = max - min || 1
+  const width = 1000
+  const height = 180
+
+  const points = data.map((val, i) => {
+    const x = (i / (data.length - 1)) * width
+    const y = height - ((val - min) / range) * height
+    return `${x},${y}`
+  }).join(' ')
+
+  const areaPoints = `0,${height} ${points} ${width},${height}`
+  const dataNodes = data.map((val, i) => ({
+    x: (i / (data.length - 1)) * width,
+    y: height - ((val - min) / range) * height
+  }))
+
+  return { points, areaPoints, dataNodes }
+}
+
+// 兼容性函数：get30DayChartData映射到getTrendChartData
+const get30DayChartData = (type: string) => getTrendChartData(type, 30)
+
+// 工具方法：获取趋势方向
+const getTrendDirection = (type: string) => {
+  const data = generate30DayData(type).data
+  const firstHalf = data.slice(0, 15).reduce((a, b) => a + b, 0) / 15
+  const secondHalf = data.slice(15).reduce((a, b) => a + b, 0) / 15
+
+  if (type === 'weight') {
+    // 体重下降是好的
+    return secondHalf < firstHalf ? 'down' : 'up'
+  } else {
+    // 其他指标上升需要注意
+    return secondHalf > firstHalf ? 'up' : 'down'
+  }
+}
+
 // 工具方法：获取柱状图睡眠数据
 const getSleepChartData = (data: number[]) => {
   const max = Math.max(...data) > 8 ? Math.max(...data) : 8
@@ -4123,17 +4903,17 @@ const filterTabs = computed(() => [
 
 // Mock User Data Map
 const userDataMap = ref<{ [key: string]: UserData }>({
-  '1': { todayTasks: 8, todayCompleted: 5, pendingTasks: 3, compliance: 8.5, metabolicRisk: 75, weeklyRate: 82, streak: 12, lastGlucose: 7.2, lastWeight: 84.5, lastBP: '125/82', lastDeviceSync: new Date(), mealUploadCount: 3, calorieIntake: 1450, nutrientProtein: 65, nutrientCarbs: 180, nutrientFat: 45, coursesCompleted: 5, coursesTotal: 12, interventionStartDate: new Date('2026-02-15') },
-  '2': { todayTasks: 6, todayCompleted: 7, pendingTasks: 0, compliance: 9.2, metabolicRisk: 45, weeklyRate: 90, streak: 18, lastGlucose: 6.8, lastWeight: 68.2, lastBP: '118/75', lastDeviceSync: new Date(Date.now() - 86400000), mealUploadCount: 4, calorieIntake: 1650, nutrientProtein: 72, nutrientCarbs: 195, nutrientFat: 50, coursesCompleted: 8, coursesTotal: 12, interventionStartDate: new Date('2026-01-20') },
-  '3': { todayTasks: 10, todayCompleted: 2, pendingTasks: 8, compliance: 6.5, metabolicRisk: 85, weeklyRate: 55, streak: 3, lastGlucose: 9.5, lastWeight: 92.1, lastBP: '145/92', lastDeviceSync: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000), mealUploadCount: 1, calorieIntake: 2100, nutrientProtein: 55, nutrientCarbs: 280, nutrientFat: 70, coursesCompleted: 2, coursesTotal: 12, interventionStartDate: new Date('2026-03-01') },
-  '4': { todayTasks: 7, todayCompleted: 4, pendingTasks: 3, compliance: 8.8, metabolicRisk: 55, weeklyRate: 85, streak: 15, lastGlucose: 6.5, lastWeight: 58.3, lastBP: '112/70', lastDeviceSync: new Date(), mealUploadCount: 3, calorieIntake: 1380, nutrientProtein: 58, nutrientCarbs: 170, nutrientFat: 42, coursesCompleted: 6, coursesTotal: 12, interventionStartDate: new Date('2026-02-01') },
-  '5': { todayTasks: 5, todayCompleted: 0, pendingTasks: 5, compliance: 4.5, metabolicRisk: 60, weeklyRate: 40, streak: 0, lastGlucose: 0, lastWeight: 0, lastBP: '', lastDeviceSync: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000), mealUploadCount: 0, calorieIntake: 0, nutrientProtein: 0, nutrientCarbs: 0, nutrientFat: 0, coursesCompleted: 1, coursesTotal: 12, interventionStartDate: new Date('2026-03-10') },
-  '6': { todayTasks: 8, todayCompleted: 6, pendingTasks: 2, compliance: 9.5, metabolicRisk: 35, weeklyRate: 92, streak: 22, lastGlucose: 5.8, lastWeight: 62.5, lastBP: '108/68', lastDeviceSync: new Date(), mealUploadCount: 4, calorieIntake: 1720, nutrientProtein: 78, nutrientCarbs: 205, nutrientFat: 52, coursesCompleted: 10, coursesTotal: 12, interventionStartDate: new Date('2025-12-01') },
-  '7': { todayTasks: 9, todayCompleted: 1, pendingTasks: 8, compliance: 5.8, metabolicRisk: 70, weeklyRate: 50, streak: 5, lastGlucose: 8.1, lastWeight: 88.7, lastBP: '135/88', lastDeviceSync: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000), mealUploadCount: 2, calorieIntake: 1250, nutrientProtein: 45, nutrientCarbs: 150, nutrientFat: 38, coursesCompleted: 3, coursesTotal: 12, interventionStartDate: new Date('2026-02-20') },
-  '8': { todayTasks: 6, todayCompleted: 8, pendingTasks: 0, compliance: 9.0, metabolicRisk: 40, weeklyRate: 88, streak: 20, lastGlucose: 6.2, lastWeight: 55.8, lastBP: '115/72', lastDeviceSync: new Date(), mealUploadCount: 4, calorieIntake: 1550, nutrientProtein: 68, nutrientCarbs: 188, nutrientFat: 48, coursesCompleted: 9, coursesTotal: 12, interventionStartDate: new Date('2026-01-10') },
-  '9': { todayTasks: 6, todayCompleted: 6, pendingTasks: 0, compliance: 9.8, metabolicRisk: 25, weeklyRate: 95, streak: 30, lastGlucose: 5.5, lastWeight: 72.0, lastBP: '115/75', lastDeviceSync: new Date(), mealUploadCount: 5, calorieIntake: 1680, nutrientProtein: 85, nutrientCarbs: 195, nutrientFat: 55, coursesCompleted: 12, coursesTotal: 12, interventionStartDate: new Date('2025-10-01') },
-  '10': { todayTasks: 8, todayCompleted: 8, pendingTasks: 0, compliance: 9.9, metabolicRisk: 20, weeklyRate: 98, streak: 45, lastGlucose: 5.2, lastWeight: 52.3, lastBP: '110/68', lastDeviceSync: new Date(), mealUploadCount: 5, calorieIntake: 1420, nutrientProtein: 82, nutrientCarbs: 175, nutrientFat: 40, coursesCompleted: 12, coursesTotal: 12, interventionStartDate: new Date('2025-09-15') },
-  '11': { todayTasks: 8, todayCompleted: 7, pendingTasks: 1, compliance: 9.3, metabolicRisk: 30, weeklyRate: 93, streak: 28, lastGlucose: 5.9, lastWeight: 78.5, lastBP: '118/72', lastDeviceSync: new Date(Date.now() - 86400000), mealUploadCount: 4, calorieIntake: 1750, nutrientProtein: 80, nutrientCarbs: 210, nutrientFat: 58, coursesCompleted: 11, coursesTotal: 12, interventionStartDate: new Date('2025-11-20') }
+  '1': { todayTasks: 8, todayCompleted: 5, pendingTasks: 3, compliance: 8.5, metabolicRisk: 75, weeklyRate: 82, streak: 12, lastGlucose: 7.2, lastWeight: 84.5, lastBP: '125/82', lastDeviceSync: new Date(), mealUploadCount: 3, calorieIntake: 1450, nutrientProtein: 65, nutrientCarbs: 180, nutrientFat: 45, coursesCompleted: 5, coursesTotal: 12, interventionStartDate: new Date('2026-02-15'), sourceChannel: '抖音推广', paymentAmount: 2980, userGoal: '控制血糖，减轻体重' },
+  '2': { todayTasks: 6, todayCompleted: 7, pendingTasks: 0, compliance: 9.2, metabolicRisk: 45, weeklyRate: 90, streak: 18, lastGlucose: 6.8, lastWeight: 68.2, lastBP: '118/75', lastDeviceSync: new Date(Date.now() - 86400000), mealUploadCount: 4, calorieIntake: 1650, nutrientProtein: 72, nutrientCarbs: 195, nutrientFat: 50, coursesCompleted: 8, coursesTotal: 12, interventionStartDate: new Date('2026-01-20'), sourceChannel: '微信公众号', paymentAmount: 4980, userGoal: '改善睡眠质量' },
+  '3': { todayTasks: 10, todayCompleted: 2, pendingTasks: 8, compliance: 6.5, metabolicRisk: 85, weeklyRate: 55, streak: 3, lastGlucose: 9.5, lastWeight: 92.1, lastBP: '145/92', lastDeviceSync: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000), mealUploadCount: 1, calorieIntake: 2100, nutrientProtein: 55, nutrientCarbs: 280, nutrientFat: 70, coursesCompleted: 2, coursesTotal: 12, interventionStartDate: new Date('2026-03-01'), sourceChannel: '线下讲座', paymentAmount: 1980, userGoal: '全面健康管理' },
+  '4': { todayTasks: 7, todayCompleted: 4, pendingTasks: 3, compliance: 8.8, metabolicRisk: 55, weeklyRate: 85, streak: 15, lastGlucose: 6.5, lastWeight: 58.3, lastBP: '112/70', lastDeviceSync: new Date(), mealUploadCount: 3, calorieIntake: 1380, nutrientProtein: 58, nutrientCarbs: 170, nutrientFat: 42, coursesCompleted: 6, coursesTotal: 12, interventionStartDate: new Date('2026-02-01'), sourceChannel: '朋友推荐', paymentAmount: 3980, userGoal: '预防糖尿病并发症' },
+  '5': { todayTasks: 5, todayCompleted: 0, pendingTasks: 5, compliance: 4.5, metabolicRisk: 60, weeklyRate: 40, streak: 0, lastGlucose: 0, lastWeight: 0, lastBP: '', lastDeviceSync: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000), mealUploadCount: 0, calorieIntake: 0, nutrientProtein: 0, nutrientCarbs: 0, nutrientFat: 0, coursesCompleted: 1, coursesTotal: 12, interventionStartDate: new Date('2026-03-10'), sourceChannel: '小红书', paymentAmount: 0, userGoal: '待设定' },
+  '6': { todayTasks: 8, todayCompleted: 6, pendingTasks: 2, compliance: 9.5, metabolicRisk: 35, weeklyRate: 92, streak: 22, lastGlucose: 5.8, lastWeight: 62.5, lastBP: '108/68', lastDeviceSync: new Date(), mealUploadCount: 4, calorieIntake: 1720, nutrientProtein: 78, nutrientCarbs: 205, nutrientFat: 52, coursesCompleted: 10, coursesTotal: 12, interventionStartDate: new Date('2025-12-01'), sourceChannel: '知乎', paymentAmount: 5980, userGoal: '优化代谢指标' },
+  '7': { todayTasks: 9, todayCompleted: 1, pendingTasks: 8, compliance: 5.8, metabolicRisk: 70, weeklyRate: 50, streak: 5, lastGlucose: 8.1, lastWeight: 88.7, lastBP: '135/88', lastDeviceSync: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000), mealUploadCount: 2, calorieIntake: 1250, nutrientProtein: 45, nutrientCarbs: 150, nutrientFat: 38, coursesCompleted: 3, coursesTotal: 12, interventionStartDate: new Date('2026-02-20'), sourceChannel: '抖音推广', paymentAmount: 2980, userGoal: '建立健康生活习惯' },
+  '8': { todayTasks: 6, todayCompleted: 8, pendingTasks: 0, compliance: 9.0, metabolicRisk: 40, weeklyRate: 88, streak: 20, lastGlucose: 6.2, lastWeight: 55.8, lastBP: '115/72', lastDeviceSync: new Date(), mealUploadCount: 4, calorieIntake: 1550, nutrientProtein: 68, nutrientCarbs: 188, nutrientFat: 48, coursesCompleted: 9, coursesTotal: 12, interventionStartDate: new Date('2026-01-10'), sourceChannel: '线上广告', paymentAmount: 4980, userGoal: '长期血糖管理' },
+  '9': { todayTasks: 6, todayCompleted: 6, pendingTasks: 0, compliance: 9.8, metabolicRisk: 25, weeklyRate: 95, streak: 30, lastGlucose: 5.5, lastWeight: 72.0, lastBP: '115/75', lastDeviceSync: new Date(), mealUploadCount: 5, calorieIntake: 1680, nutrientProtein: 85, nutrientCarbs: 195, nutrientFat: 55, coursesCompleted: 12, coursesTotal: 12, interventionStartDate: new Date('2025-10-01'), sourceChannel: '线下转介绍', paymentAmount: 6980, userGoal: '减重10公斤' },
+  '10': { todayTasks: 8, todayCompleted: 8, pendingTasks: 0, compliance: 9.9, metabolicRisk: 20, weeklyRate: 98, streak: 45, lastGlucose: 5.2, lastWeight: 52.3, lastBP: '110/68', lastDeviceSync: new Date(), mealUploadCount: 5, calorieIntake: 1420, nutrientProtein: 82, nutrientCarbs: 175, nutrientFat: 40, coursesCompleted: 12, coursesTotal: 12, interventionStartDate: new Date('2025-09-15'), sourceChannel: '朋友推荐', paymentAmount: 3980, userGoal: '维持理想体重' },
+  '11': { todayTasks: 8, todayCompleted: 7, pendingTasks: 1, compliance: 9.3, metabolicRisk: 30, weeklyRate: 93, streak: 28, lastGlucose: 5.9, lastWeight: 78.5, lastBP: '118/72', lastDeviceSync: new Date(Date.now() - 86400000), mealUploadCount: 4, calorieIntake: 1750, nutrientProtein: 80, nutrientCarbs: 210, nutrientFat: 58, coursesCompleted: 11, coursesTotal: 12, interventionStartDate: new Date('2025-11-20'), sourceChannel: '微信公众号', paymentAmount: 4980, userGoal: '降低血糖波动' }
 })
 
 // Blockers Data
@@ -4261,25 +5041,136 @@ const userData = computed(() => {
   }
 })
 
-// 计算干预开始日期
+// 计算干预开始日期（优先使用用户设置的日期，否则取最早的教练或医生分配日期）
 const interventionStartDate = computed(() => {
-  if (!userData.value?.interventionStartDate) return '未设置'
-  const date = new Date(userData.value.interventionStartDate)
-  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
+  // 优先使用用户手动设置的干预开始日期
+  if (userData.value?.interventionStartDate) {
+    const date = new Date(userData.value.interventionStartDate)
+    return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
+  }
+
+  // 如果没有手动设置，从教练和医生分配信息中计算
+  if (!userAssignment.value) return '未设置'
+
+  // 收集所有教练的开始日期
+  const coachDates = userAssignment.value.coaches
+    ?.filter(c => c.startDate)
+    .map(c => new Date(c.startDate).getTime()) || []
+
+  // 收集医生开始日期
+  const doctorDate = userAssignment.value.doctorStartDate
+    ? new Date(userAssignment.value.doctorStartDate).getTime()
+    : null
+
+  // 合并所有日期
+  const allDates = [...coachDates]
+  if (doctorDate !== null) allDates.push(doctorDate)
+
+  if (allDates.length === 0) return '未设置'
+
+  // 取最早的日期
+  const earliestDate = new Date(Math.min(...allDates))
+  return `${earliestDate.getFullYear()}年${earliestDate.getMonth() + 1}月${earliestDate.getDate()}日`
 })
 
-// 计算干预结束日期（如果未结束则用今天）
+// 计算干预结束日期（如果所有教练和医生都已结束，使用最晚的结束日期；否则使用今天）
 const interventionEndDate = computed(() => {
   const today = new Date()
-  return `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`
+
+  if (!userAssignment.value) {
+    return `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`
+  }
+
+  // 收集所有教练的结束日期（已结束的）
+  const coachEndDates = userAssignment.value.coaches
+    ?.filter(c => c.endDate)
+    .map(c => new Date(c.endDate).getTime()) || []
+
+  // 收集医生结束日期
+  const doctorEndDate = userAssignment.value.doctorEndDate
+    ? new Date(userAssignment.value.doctorEndDate).getTime()
+    : null
+
+  // 合并所有结束日期
+  const allEndDates = [...coachEndDates]
+  if (doctorEndDate !== null) allEndDates.push(doctorEndDate)
+
+  // 检查是否还有未结束的教练或医生
+  const hasActiveCoach = userAssignment.value.coaches?.some(c => !c.endDate)
+  const hasActiveDoctor = userAssignment.value.doctorId && !userAssignment.value.doctorEndDate
+
+  // 如果还有未结束的，返回今天
+  if (hasActiveCoach || hasActiveDoctor || allEndDates.length === 0) {
+    return `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`
+  }
+
+  // 如果都已结束，返回最晚的结束日期
+  const latestEndDate = new Date(Math.max(...allEndDates))
+  return `${latestEndDate.getFullYear()}年${latestEndDate.getMonth() + 1}月${latestEndDate.getDate()}日`
 })
 
 // 计算已干预天数
 const interventionDays = computed(() => {
-  if (!userData.value?.interventionStartDate) return 0
-  const startDate = new Date(userData.value.interventionStartDate)
-  const today = new Date()
-  const diffTime = Math.abs(today.getTime() - startDate.getTime())
+  // 优先使用用户手动设置的干预开始日期
+  let startDate: Date | null = null
+  if (userData.value?.interventionStartDate) {
+    startDate = new Date(userData.value.interventionStartDate)
+  } else {
+    // 如果没有手动设置，从教练和医生分配信息中计算
+    if (!userAssignment.value) return 0
+
+    // 收集所有教练的开始日期
+    const coachDates = userAssignment.value.coaches
+      ?.filter(c => c.startDate)
+      .map(c => new Date(c.startDate).getTime()) || []
+
+    // 收集医生开始日期
+    const doctorDate = userAssignment.value.doctorStartDate
+      ? new Date(userAssignment.value.doctorStartDate).getTime()
+      : null
+
+    // 合并所有日期
+    const allDates = [...coachDates]
+    if (doctorDate !== null) allDates.push(doctorDate)
+
+    if (allDates.length === 0) return 0
+
+    // 取最早的日期作为开始
+    startDate = new Date(Math.min(...allDates))
+  }
+
+  // 确定结束日期（如果用户设置了干预开始日期，则默认使用今天）
+  let endDate: Date
+  if (userData.value?.interventionStartDate) {
+    // 如果用户手动设置了开始日期，默认结束日期为今天
+    endDate = new Date()
+  } else {
+    // 否则从教练和医生分配信息中确定
+    const coachEndDates = userAssignment.value?.coaches
+      ?.filter(c => c.endDate)
+      .map(c => new Date(c.endDate).getTime()) || []
+
+    const doctorEndDate = userAssignment.value?.doctorEndDate
+      ? new Date(userAssignment.value.doctorEndDate).getTime()
+      : null
+
+    const allEndDates = [...coachEndDates]
+    if (doctorEndDate !== null) allEndDates.push(doctorEndDate)
+
+    const hasActiveCoach = userAssignment.value?.coaches?.some(c => !c.endDate)
+    const hasActiveDoctor = userAssignment.value?.doctorId && !userAssignment.value?.doctorEndDate
+
+    if (hasActiveCoach || hasActiveDoctor || allEndDates.length === 0) {
+      endDate = new Date()
+    } else {
+      endDate = new Date(Math.max(...allEndDates))
+    }
+  }
+
+  if (!startDate) return 0
+
+  // 计算天数差
+  const diffTime = endDate.getTime() - startDate.getTime()
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   return diffDays
 })
@@ -4984,6 +5875,97 @@ const goToConfig = () => {
       action: 'open-learning-config'
     }
   })
+}
+
+const goToDevicesTab = () => {
+  if (!selectedUser.value) {
+    toastRef.value?.warning('请先选择一个用户')
+    return
+  }
+  router.push({
+    path: `/client-profile/${selectedUser.value}`,
+    query: {
+      from: route.fullPath,
+      tab: 'devices',
+      action: 'open-device-config'
+    }
+  })
+}
+
+// 从生理特征数据弹窗跳转到硬件设备
+const goToDevicesFromVitalModal = () => {
+  if (!selectedUser.value) {
+    toastRef.value?.warning('请先选择一个用户')
+    return
+  }
+  // 关闭生理特征数据弹窗
+  showVitalDataModal.value = false
+  // 跳转到硬件设备页面
+  router.push({
+    path: `/client-profile/${selectedUser.value}`,
+    query: {
+      from: route.fullPath,
+      tab: 'devices',
+      action: 'open-device-config'
+    }
+  })
+}
+
+// 基础信息编辑功能
+const openBasicInfoEditModal = () => {
+  if (!selectedUser.value) return
+  const userData = userDataMap.value[selectedUser.value]
+  const currentUserData = users.value.find(u => u.id === selectedUser.value)
+  if (userData || currentUserData) {
+    basicInfoForm.value = {
+      gender: currentUserData?.gender || '',
+      age: currentUserData?.age || 0,
+      compliance: getUserCompliance(selectedUser.value),
+      sourceChannel: userData?.sourceChannel || '',
+      paymentAmount: userData?.paymentAmount || 0,
+      userGoal: userData?.userGoal || '',
+      interventionStartDate: userData?.interventionStartDate
+        ? new Date(userData.interventionStartDate).toISOString().split('T')[0]
+        : ''
+    }
+  }
+  showBasicInfoEditModal.value = true
+}
+
+const saveBasicInfo = () => {
+  if (!selectedUser.value) {
+    toastRef.value?.warning('请先选择一个用户')
+    return
+  }
+
+  // 更新 userDataMap
+  if (userDataMap.value[selectedUser.value]) {
+    userDataMap.value[selectedUser.value] = {
+      ...userDataMap.value[selectedUser.value],
+      sourceChannel: basicInfoForm.value.sourceChannel || undefined,
+      paymentAmount: basicInfoForm.value.paymentAmount || undefined,
+      userGoal: basicInfoForm.value.userGoal || undefined,
+      interventionStartDate: basicInfoForm.value.interventionStartDate
+        ? new Date(basicInfoForm.value.interventionStartDate)
+        : undefined
+    }
+  }
+
+  // 更新用户性别和年龄
+  const userIndex = users.value.findIndex(u => u.id === selectedUser.value)
+  if (userIndex !== -1) {
+    users.value[userIndex] = {
+      ...users.value[userIndex],
+      gender: basicInfoForm.value.gender || undefined,
+      age: basicInfoForm.value.age || undefined
+    }
+  }
+
+  // 更新依从度
+  setUserCompliance(selectedUser.value, basicInfoForm.value.compliance)
+
+  showBasicInfoEditModal.value = false
+  toastRef.value?.success('基础信息已更新')
 }
 
 // 预约服务模态框

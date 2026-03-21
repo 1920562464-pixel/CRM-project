@@ -534,6 +534,10 @@
           <ConversationLabeling />
         </div>
 
+        <div v-else-if="activeTab === 'devices'" id="devices-section">
+          <Devices :clientId="clientId" />
+        </div>
+
         <div v-else-if="activeTab === 'config'" id="config-section">
           <ContentConfig />
         </div>
@@ -954,10 +958,14 @@ import {
   UtensilsCrossed,
   Dumbbell,
   Moon,
-  UserCog
+  UserCog,
+  Watch,
+  Package,
+  AlertTriangle
 } from 'lucide-vue-next'
 import InterventionManager from '../components/InterventionManager.vue'
 import HealthData from '../components/HealthData.vue'
+import Devices from '../components/Devices.vue'
 import DataCenter from '../components/DataCenter.vue'
 import ConversationLabeling from '../components/ConversationLabeling.vue'
 import ContentConfig from '../components/ContentConfig.vue'
@@ -1279,6 +1287,16 @@ watch(() => route.query, (newQuery) => {
         router.replace({ query: { ...newQuery, action: undefined } })
         break
 
+      case 'open-device-config':
+        // 硬件设备 - 滚动到硬件设备区域
+        const devicesElement = document.getElementById('devices-section')
+        if (devicesElement) {
+          devicesElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          toastRef.value?.show('已跳转到硬件设备配置', 'success')
+        }
+        router.replace({ query: { ...newQuery, action: undefined } })
+        break
+
       default:
         break
     }
@@ -1381,6 +1399,7 @@ const TABS = [
   { id: 'overview', label: '档案概览', icon: User },
   { id: 'intervention', label: '干预管理', icon: BrainCircuit },
   { id: 'health', label: '健康指标', icon: Activity },
+  { id: 'devices', label: '硬件设备', icon: Watch },
   { id: 'datacenter', label: '数据中心', icon: null },
   { id: 'labeling', label: '对话标注', icon: null },
   { id: 'config', label: '内容配置', icon: Settings }

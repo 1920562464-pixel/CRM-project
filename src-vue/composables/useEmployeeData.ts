@@ -32,7 +32,8 @@ export interface CoachAssignmentDetail {
   coachId: string
   coachName: string
   serviceType: 'basic' | 'deep'
-  firstServiceDate: string
+  startDate: string // 开始干预日期
+  endDate?: string // 结束干预日期，如果未结束则为undefined
   isNewClient: boolean
   assignedAt: string
 }
@@ -44,52 +45,103 @@ export interface ClientAssignment {
   coaches: CoachAssignmentDetail[] // 支持多个教练
   doctorId?: string
   doctorName?: string
+  doctorStartDate?: string // 医生开始干预日期
+  doctorEndDate?: string // 医生结束干预日期
   assignedAt: string
   updatedAt: string
 }
 
 const clientAssignments = ref<ClientAssignment[]>([
   {
-    clientId: 'client_001',
-    clientName: '王小明',
+    clientId: '1',
+    clientName: '王磊',
     coaches: [
       {
         coachId: 'coach_1',
         coachName: '李教练',
         serviceType: 'deep',
-        firstServiceDate: '2025-11-01',
-        isNewClient: true,
-        assignedAt: '2025-11-01T10:00:00'
+        startDate: '2026-02-15',
+        endDate: undefined, // 尚未结束
+        isNewClient: false,
+        assignedAt: '2026-02-15T10:00:00'
       }
     ],
     doctorId: 'doctor_1',
     doctorName: '陈医生',
-    assignedAt: '2025-11-01T10:00:00',
-    updatedAt: '2025-11-01T10:00:00'
+    doctorStartDate: '2026-02-15',
+    doctorEndDate: undefined, // 尚未结束
+    assignedAt: '2026-02-15T10:00:00',
+    updatedAt: '2026-02-15T10:00:00'
   },
   {
-    clientId: 'client_002',
-    clientName: '李小红',
+    clientId: '2',
+    clientName: '李淑芬',
     coaches: [
       {
         coachId: 'coach_2',
         coachName: '张教练',
         serviceType: 'basic',
-        firstServiceDate: '2024-06-15',
+        startDate: '2026-01-20',
+        endDate: undefined, // 尚未结束
         isNewClient: false,
-        assignedAt: '2024-06-15T14:30:00'
+        assignedAt: '2026-01-20T14:30:00'
       },
       {
         coachId: 'coach_3',
         coachName: '王教练',
         serviceType: 'basic',
-        firstServiceDate: '2024-08-20',
+        startDate: '2026-02-01',
+        endDate: '2026-03-10', // 已结束
         isNewClient: false,
-        assignedAt: '2024-08-20T09:00:00'
+        assignedAt: '2026-02-01T09:00:00'
       }
     ],
-    assignedAt: '2024-06-15T14:30:00',
-    updatedAt: '2024-08-20T09:00:00'
+    doctorStartDate: '2026-01-20',
+    doctorEndDate: undefined, // 尚未结束
+    assignedAt: '2026-01-20T14:30:00',
+    updatedAt: '2026-03-10T09:00:00'
+  },
+  {
+    clientId: '4',
+    clientName: '陈静',
+    coaches: [
+      {
+        coachId: 'coach_1',
+        coachName: '李教练',
+        serviceType: 'deep',
+        startDate: '2026-02-01',
+        endDate: undefined, // 尚未结束
+        isNewClient: false,
+        assignedAt: '2026-02-01T10:00:00'
+      }
+    ],
+    doctorId: 'doctor_2',
+    doctorName: '刘医生',
+    doctorStartDate: '2026-02-01',
+    doctorEndDate: undefined, // 尚未结束
+    assignedAt: '2026-02-01T10:00:00',
+    updatedAt: '2026-02-01T10:00:00'
+  },
+  {
+    clientId: '9',
+    clientName: '马云龙',
+    coaches: [
+      {
+        coachId: 'coach_2',
+        coachName: '张教练',
+        serviceType: 'basic',
+        startDate: '2025-10-01',
+        endDate: undefined, // 尚未结束
+        isNewClient: false,
+        assignedAt: '2025-10-01T14:30:00'
+      }
+    ],
+    doctorId: 'doctor_3',
+    doctorName: '赵医生',
+    doctorStartDate: '2025-10-01',
+    doctorEndDate: undefined, // 尚未结束
+    assignedAt: '2025-10-01T10:00:00',
+    updatedAt: '2025-10-01T10:00:00'
   }
 ])
 
@@ -169,7 +221,7 @@ export const useEmployeeData = () => {
     clientName: string,
     coachId: string,
     serviceType: 'basic' | 'deep',
-    firstServiceDate: string
+    startDate: string
   ): { success: boolean; message?: string; isNewClient?: boolean } => {
     const coach = getEmployeeById(coachId)
     if (!coach || coach.position !== 'coach') {
@@ -188,7 +240,7 @@ export const useEmployeeData = () => {
     }
 
     // 计算是否为新用户（3个月内首次服务）
-    const serviceStartDate = new Date(firstServiceDate)
+    const serviceStartDate = new Date(startDate)
     const threeMonthsAgo = new Date()
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3)
     const isNewClient = serviceStartDate >= threeMonthsAgo
@@ -198,7 +250,8 @@ export const useEmployeeData = () => {
       coachId,
       coachName: coach.name,
       serviceType,
-      firstServiceDate,
+      startDate,
+      endDate: undefined, // 新分配的教练未结束
       isNewClient,
       assignedAt: new Date().toISOString()
     }
@@ -250,23 +303,29 @@ export const useEmployeeData = () => {
     // 释放旧教练负载
     updateEmployeeLoad(oldCoachId, -1)
 
-    // 创建新的教练分配详情，保留原有的服务类型和首次服务日期
+    // 设置旧教练的结束日期为今天
+    const today = new Date().toISOString().split('T')[0]
+    const updatedCoaches = assignment.coaches.map(c => {
+      if (c.coachId === oldCoachId) {
+        return { ...c, endDate: today }
+      }
+      return c
+    })
+
+    // 创建新的教练分配详情
     const newCoachAssignment: CoachAssignmentDetail = {
       coachId: newCoachId,
       coachName: newCoach.name,
       serviceType: oldCoachDetail.serviceType,
-      firstServiceDate: oldCoachDetail.firstServiceDate,
-      isNewClient: oldCoachDetail.isNewClient,
+      startDate: today,
+      endDate: undefined,
+      isNewClient: false, // 更换的教练不算新客户
       assignedAt: new Date().toISOString()
     }
 
-    // 更新教练列表：移除旧教练，添加新教练
-    const updatedCoaches = assignment.coaches
-      .filter(c => c.coachId !== oldCoachId)
-      .concat(newCoachAssignment)
-
+    // 更新教练列表：保留已结束的旧教练，添加新教练
     updateClientAssignment(clientId, {
-      coaches: updatedCoaches
+      coaches: [...updatedCoaches, newCoachAssignment]
     })
 
     // 增加新教练负载
@@ -290,8 +349,16 @@ export const useEmployeeData = () => {
       return { success: false, message: '该用户未分配指定的教练' }
     }
 
-    // 更新教练列表：移除指定的教练
-    const updatedCoaches = assignment.coaches.filter(c => c.coachId !== coachId)
+    const today = new Date().toISOString().split('T')[0]
+
+    // 更新教练列表：设置结束日期而不是完全删除
+    const updatedCoaches = assignment.coaches.map(c => {
+      if (c.coachId === coachId && !c.endDate) {
+        return { ...c, endDate: today }
+      }
+      return c
+    })
+
     updateClientAssignment(clientId, {
       coaches: updatedCoaches
     })
@@ -317,11 +384,15 @@ export const useEmployeeData = () => {
       return { success: false, message: `医生 ${doctor.name} 负载已满` }
     }
 
+    const today = new Date().toISOString().split('T')[0]
+
     // 更新分配
     updateClientAssignment(clientId, {
       clientName,
       doctorId,
-      doctorName: doctor.name
+      doctorName: doctor.name,
+      doctorStartDate: today,
+      doctorEndDate: undefined
     })
 
     // 更新负载
@@ -357,10 +428,14 @@ export const useEmployeeData = () => {
     // 释放旧医生负载
     updateEmployeeLoad(oldDoctorId, -1)
 
-    // 更新分配
+    const today = new Date().toISOString().split('T')[0]
+
+    // 更新分配，设置旧医生的结束日期和新医生的开始日期
     updateClientAssignment(clientId, {
       doctorId: newDoctorId,
-      doctorName: newDoctor.name
+      doctorName: newDoctor.name,
+      doctorStartDate: today,
+      doctorEndDate: undefined
     })
 
     // 增加新医生负载
@@ -381,10 +456,13 @@ export const useEmployeeData = () => {
     const doctorId = assignment.doctorId
     const doctorName = assignment.doctorName
 
-    // 更新分配
+    const today = new Date().toISOString().split('T')[0]
+
+    // 更新分配：设置结束日期，并清空当前医生
     updateClientAssignment(clientId, {
       doctorId: undefined,
-      doctorName: undefined
+      doctorName: undefined,
+      doctorEndDate: assignment.doctorStartDate ? today : undefined
     })
 
     // 释放负载
