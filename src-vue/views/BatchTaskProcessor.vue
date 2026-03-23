@@ -377,16 +377,16 @@
         <div v-else class="flex-1 overflow-y-auto p-1">
           <div class="max-w-7xl mx-auto space-y-3">
             <!-- User Header Card -->
-            <div class="rounded-xl shadow-sm p-1" :style="{
+            <div class="rounded-xl shadow-sm p-2" :style="{
               background: 'var(--card)',
               border: '1px solid var(--border)'
             }">
               <div class="flex items-start justify-between">
                 <div class="flex-1">
                   <div>
-                    <div class="flex items-center gap-2 mb-1 flex-wrap">
-                      <h2 class="text-base font-bold" :style="{ color: 'var(--text-primary)' }">{{ currentUser?.name }}</h2>
-                      <div class="flex items-center gap-1.5 flex-wrap">
+                    <div class="flex items-center gap-3 mb-2 flex-wrap">
+                      <h2 class="text-3xl font-bold" :style="{ color: 'var(--text-primary)' }">{{ currentUser?.name }}</h2>
+                      <div class="flex items-center gap-2 flex-wrap">
                         <!-- 标签列表 - 支持编辑和删除 -->
                         <template v-for="(tag, i) in userTags" :key="i">
                           <!-- 编辑模式 -->
@@ -396,14 +396,14 @@
                             @blur="saveEditingTag"
                             @keydown.enter="saveEditingTag"
                             @keydown.esc="cancelEditingTag"
-                            class="w-20 px-2 py-0.5 text-[10px] border border-indigo-300 rounded focus:outline-none"
+                            class="w-24 px-3 py-1 text-sm border border-indigo-300 rounded-full focus:outline-none"
                             ref="editTagInput"
                           />
                           <!-- 显示模式 -->
                           <div v-else class="group relative">
                             <span
                               @click="startEditingTag(i, tag)"
-                              class="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded-full text-[10px] text-slate-600 font-medium hover:bg-white hover:border-indigo-300 hover:text-indigo-600 transition-colors cursor-pointer"
+                              class="px-4 py-1.5 bg-slate-100 border border-slate-200 rounded-full text-sm text-slate-600 font-medium hover:bg-white hover:border-indigo-300 hover:text-indigo-600 transition-colors cursor-pointer whitespace-nowrap"
                             >
                               #{{ tag }}
                             </span>
@@ -417,111 +417,132 @@
                         </template>
 
                         <!-- 添加新标签 -->
-                        <div v-if="showAddTag" class="flex items-center gap-1">
+                        <div v-if="showAddTag" class="flex items-center gap-2">
                           <input
                             v-model="newTag"
                             @keydown.enter="handleAddTag"
                             type="text"
-                            class="w-20 px-2 py-0.5 text-[10px] border border-indigo-300 rounded focus:outline-none"
+                            class="w-24 px-3 py-1 text-sm border border-indigo-300 rounded-full focus:outline-none"
                             placeholder="输入标签..."
                             ref="addTagInput"
                           />
                           <button @click="handleAddTag" class="text-indigo-600 hover:text-indigo-700">
-                            <CheckCircle :size="12" />
+                            <CheckCircle :size="14" />
                           </button>
                           <button @click="showAddTag = false" class="text-slate-400 hover:text-slate-600">
-                            <X :size="12" />
+                            <X :size="14" />
                           </button>
                         </div>
 
                         <button
                           v-if="!showAddTag"
                           @click="openAddTag"
-                          class="px-1.5 py-0.5 border border-dashed border-slate-300 text-slate-400 rounded-full text-[10px] hover:text-indigo-600 hover:border-indigo-300 transition-colors flex items-center gap-1"
+                          class="px-3 py-1.5 border border-dashed border-slate-300 text-slate-400 rounded-full text-sm hover:text-indigo-600 hover:border-indigo-300 transition-colors flex items-center gap-1"
                         >
-                          <Plus :size="10" /> 添加
+                          <Plus :size="12" /> 添加
                         </button>
                       </div>
                     </div>
 
                     <!-- 基础信息：性别、年龄、依从度、ID、来源渠道、付费金额、用户目标、干预日期 -->
-                    <div class="mt-2 p-2 rounded-lg border border-transparent hover:border-slate-200 transition-colors group" :style="{ background: 'var(--fill-light)' }">
-                      <div class="flex items-center justify-between mb-1.5">
-                        <span class="text-[10px] font-semibold" :style="{ color: 'var(--text-secondary)' }">客情基础信息</span>
+                    <div class="mt-2 w-full bg-slate-50/50 p-4 rounded-lg border border-slate-100 group">
+                      <div class="flex items-center justify-between mb-4">
+                        <span class="text-sm font-bold text-slate-500">客情基础信息</span>
                         <button
                           @click="openBasicInfoEditModal"
-                          class="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-all"
+                          class="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-all"
                           title="编辑基础信息"
                         >
-                          <Edit3 :size="10" />
+                          <Edit3 :size="12" />
                         </button>
                       </div>
-                      <div class="grid grid-cols-5 gap-x-2 gap-y-1">
+                      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[auto_auto_auto_auto_auto] gap-y-4 gap-x-6 w-fit">
                         <!-- 性别 -->
-                        <div class="flex items-center gap-1">
-                          <User :size="10" class="text-slate-400 flex-shrink-0" />
-                          <p class="text-[9px] text-slate-400">性别</p>
-                          <p class="text-[10px] font-medium truncate" :style="{ color: 'var(--text-primary)' }">{{ currentUser?.gender || '未设置' }}</p>
+                        <div class="flex items-center">
+                          <div class="flex items-center gap-1.5 text-slate-400 w-16 flex-shrink-0">
+                            <User :size="14" />
+                            <span class="text-sm">性别</span>
+                          </div>
+                          <span class="text-base font-medium text-slate-800">{{ currentUser?.gender || '未设置' }}</span>
                         </div>
 
                         <!-- 年龄 -->
-                        <div class="flex items-center gap-1">
-                          <Calendar :size="10" class="text-slate-400 flex-shrink-0" />
-                          <p class="text-[9px] text-slate-400">年龄</p>
-                          <p class="text-[10px] font-medium" :style="{ color: 'var(--text-primary)' }">{{ currentUser?.age ? `${currentUser.age}岁` : '未设置' }}</p>
+                        <div class="flex items-center">
+                          <div class="flex items-center gap-1.5 text-slate-400 w-16 flex-shrink-0">
+                            <Calendar :size="14" />
+                            <span class="text-sm">年龄</span>
+                          </div>
+                          <span class="text-base font-medium text-slate-800">{{ currentUser?.age ? `${currentUser.age}岁` : '未设置' }}</span>
                         </div>
 
                         <!-- 依从度 -->
-                        <div class="flex items-center gap-1">
-                          <span
-                            class="px-1 py-0.5 text-[9px] font-bold rounded border"
-                            :style="{
-                              background: getComplianceColor(userComplianceLevel).bg,
-                              color: getComplianceColor(userComplianceLevel).text,
-                              borderColor: getComplianceColor(userComplianceLevel).border
-                            }"
-                          >
-                            {{ userComplianceLevel }}分
-                          </span>
+                        <div class="flex items-center">
+                          <div class="flex items-center gap-1.5 text-slate-400 w-16 flex-shrink-0">
+                            <Activity :size="14" />
+                            <span class="text-sm">依从度</span>
+                          </div>
+                          <div class="flex items-center gap-2">
+                            <span class="text-base font-medium text-slate-800">{{ userComplianceLevel }}分</span>
+                            <span
+                              class="px-2 py-0.5 text-xs font-medium rounded-md border"
+                              :style="{
+                                background: getComplianceColor(userComplianceLevel).bg,
+                                color: getComplianceColor(userComplianceLevel).text,
+                                borderColor: getComplianceColor(userComplianceLevel).border
+                              }"
+                            >
+                              {{ userComplianceLevel <= 2 ? '很差' : userComplianceLevel <= 4 ? '较差' : userComplianceLevel <= 6 ? '一般' : userComplianceLevel <= 8 ? '良好' : '优秀' }}
+                            </span>
+                          </div>
                         </div>
 
                         <!-- 用户ID -->
-                        <div class="flex items-center gap-1">
-                          <Hash :size="10" class="text-slate-400 flex-shrink-0" />
-                          <p class="text-[9px] text-slate-400">ID</p>
-                          <p class="text-[10px] font-medium" :style="{ color: 'var(--text-primary)' }">{{ selectedUser }}</p>
+                        <div class="flex items-center">
+                          <div class="flex items-center gap-1.5 text-slate-400 w-16 flex-shrink-0">
+                            <Hash :size="14" />
+                            <span class="text-sm">ID</span>
+                          </div>
+                          <span class="text-base font-medium text-slate-800">{{ selectedUser }}</span>
                         </div>
 
                         <!-- 来源渠道 -->
-                        <div class="flex items-center gap-1">
-                          <Share2 :size="10" class="text-slate-400 flex-shrink-0" />
-                          <p class="text-[9px] text-slate-400">来源</p>
-                          <p class="text-[10px] font-medium truncate" :style="{ color: 'var(--text-primary)' }">{{ userData?.sourceChannel || '未设置' }}</p>
+                        <div class="flex items-center">
+                          <div class="flex items-center gap-1.5 text-slate-400 w-16 flex-shrink-0">
+                            <Share2 :size="14" />
+                            <span class="text-sm">渠道</span>
+                          </div>
+                          <span class="text-base font-medium text-slate-800">{{ userData?.sourceChannel || '未设置' }}</span>
                         </div>
 
                         <!-- 付费金额 -->
-                        <div class="flex items-center gap-1">
-                          <span class="text-[10px] flex-shrink-0">💰</span>
-                          <p class="text-[9px] text-slate-400">付费</p>
-                          <p class="text-[10px] font-medium" :style="{ color: 'var(--text-primary)' }">
+                        <div class="flex items-center">
+                          <div class="flex items-center gap-1.5 text-slate-400 w-16 flex-shrink-0">
+                            <span class="text-sm">💰</span>
+                            <span class="text-sm">付费</span>
+                          </div>
+                          <span class="text-base font-medium text-slate-800">
                             {{ userData?.paymentAmount ? `¥${userData.paymentAmount.toLocaleString()}` : '未设置' }}
-                          </p>
+                          </span>
                         </div>
 
                         <!-- 用户目标 -->
-                        <div class="flex items-center gap-1 col-span-2">
-                          <Target :size="10" class="text-slate-400 flex-shrink-0" />
-                          <p class="text-[9px] text-slate-400">目标</p>
-                          <p class="text-[10px] font-medium truncate" :style="{ color: 'var(--text-primary)' }">{{ userData?.userGoal || '未设定' }}</p>
+                        <div class="flex items-center">
+                          <div class="flex items-center gap-1.5 text-slate-400 w-16 flex-shrink-0">
+                            <Target :size="14" />
+                            <span class="text-sm">目标</span>
+                          </div>
+                          <span class="text-base font-medium text-slate-800">{{ userData?.userGoal || '未设定' }}</span>
                         </div>
 
                         <!-- 干预日期 -->
-                        <div class="flex items-center gap-1 col-span-2">
-                          <Activity :size="10" class="text-slate-400 flex-shrink-0" />
-                          <p class="text-[9px] text-slate-400">干预</p>
-                          <p class="text-[10px] font-medium" :style="{ color: 'var(--text-primary)' }">
-                            {{ interventionStartDate }}-{{ interventionEndDate }}·{{ interventionDays }}天
-                          </p>
+                        <div class="flex items-center">
+                          <div class="flex items-center gap-1.5 text-slate-400 w-16 flex-shrink-0">
+                            <Clock :size="14" />
+                            <span class="text-sm">干预</span>
+                          </div>
+                          <span class="text-base font-medium text-slate-800">
+                            {{ interventionStartDate }} - {{ interventionEndDate }} · {{ interventionDays }}天
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -533,10 +554,11 @@
                     <!-- 查看备注按钮 -->
                     <button
                       @click="showNotesSidebar = true"
-                      class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors border border-transparent hover:border-indigo-100"
+                      class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg border border-slate-200 hover:border-indigo-200 transition-all"
                       title="查看备注"
                     >
-                      <FileText :size="16" />
+                      <FileText :size="14" />
+                      <span>查看备注</span>
                     </button>
 
                     <!-- 查看档案按钮 -->
@@ -549,37 +571,37 @@
                   </div>
 
                   <!-- 教练和医生分配按钮 - 垂直排列 -->
-                  <div class="flex flex-col gap-1 w-28">
+                  <div class="flex flex-col gap-1.5 w-32">
                     <!-- 教练管理按钮 -->
                     <button
                       @click="showCoachManagementModal = true"
-                      class="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-lg text-[9px] hover:from-emerald-100 hover:to-green-100 transition-all font-medium text-emerald-700"
+                      class="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-lg text-xs hover:from-emerald-100 hover:to-green-100 transition-all font-medium text-emerald-700"
                       title="管理教练分配"
                     >
-                      <span>👨‍⚕️</span>
+                      <span class="text-base">👨‍⚕️</span>
                       <div class="flex-1 text-left">
-                        <div class="text-[8px] opacity-70">教练</div>
-                        <div class="text-[9px] font-semibold truncate max-w-[70px]">
+                        <div class="text-[10px] opacity-70">教练</div>
+                        <div class="text-xs font-semibold truncate">
                           {{ userAssignment?.coaches && userAssignment.coaches.length > 0 ? userAssignment.coaches.map(c => c.coachName).join(', ') : '未分配' }}
                         </div>
                       </div>
-                      <Edit3 :size="9" />
+                      <Edit3 :size="11" />
                     </button>
 
                     <!-- 医生管理按钮 -->
                     <button
                       @click="showDoctorManagementModal = true"
-                      class="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg text-[9px] hover:from-blue-100 hover:to-indigo-100 transition-all font-medium text-blue-700"
+                      class="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg text-xs hover:from-blue-100 hover:to-indigo-100 transition-all font-medium text-blue-700"
                       title="管理医生分配"
                     >
-                      <span>🩺</span>
+                      <span class="text-base">🩺</span>
                       <div class="flex-1 text-left">
-                        <div class="text-[8px] opacity-70">医生</div>
-                        <div class="text-[9px] font-semibold truncate max-w-[70px]">
+                        <div class="text-[10px] opacity-70">医生</div>
+                        <div class="text-xs font-semibold truncate">
                           {{ userAssignment?.doctorId ? userAssignment?.doctorName : '未分配' }}
                         </div>
                       </div>
-                      <Edit3 :size="9" />
+                      <Edit3 :size="11" />
                     </button>
                   </div>
                 </div>
@@ -588,185 +610,186 @@
               <!-- Quick Stats -->
               <div class="mt-2 pt-2 border-t border-slate-200/60">
                 <!-- 第一行：统计卡片 + 快捷按钮 -->
-                <div class="grid grid-cols-12 gap-2 mb-2">
-                  <!-- 今日任务 -->
-                  <div
-                    @click="showTaskDetailModal = true"
-                    class="col-span-2 bg-gradient-to-br from-indigo-50 via-white to-purple-50 rounded border border-indigo-100/80 px-1 py-0.5 shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-105"
-                  >
-                    <div class="flex items-center gap-0.5">
-                      <div class="relative w-6 h-6 flex-shrink-0">
-                        <svg viewBox="0 0 36 36" class="w-full h-full transform -rotate-90">
-                          <path
-                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                            fill="none"
-                            stroke="#e2e8f0"
-                            stroke-width="3"
-                          />
-                          <path
-                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                            fill="none"
-                            :stroke="userData?.todayTasks > 0 && (userData?.todayCompleted || 0) >= userData?.todayTasks ? '#22c55e' : '#6366f1'"
-                            stroke-width="3"
-                            :stroke-dasharray="`${userData?.todayTasks > 0 ? ((userData?.todayCompleted || 0) / userData?.todayTasks * 100) : 0}, 100`"
-                            class="transition-all duration-500"
-                          />
-                        </svg>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center">
-                          <span class="text-[10px] font-bold text-slate-700 leading-none">{{ userData?.todayCompleted || 0 }}</span>
-                          <span class="text-[8px] text-slate-400 leading-none">/ {{ userData?.todayTasks || 0 }}</span>
+                <div class="flex w-full items-center justify-between gap-4 py-2">
+                  <!-- 左侧卡片组 -->
+                  <div class="flex flex-shrink-0 items-center gap-2">
+                    <!-- 今日任务 -->
+                    <div
+                      @click="showTaskDetailModal = true"
+                      class="w-fit bg-gradient-to-br from-indigo-50/50 via-white to-purple-50/50 rounded border border-indigo-100/50 p-2 shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-105"
+                    >
+                      <div class="flex items-center justify-center gap-1.5">
+                        <div class="relative w-6 h-6 flex-shrink-0">
+                          <svg viewBox="0 0 36 36" class="w-full h-full transform -rotate-90">
+                            <path
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              fill="none"
+                              stroke="#e2e8f0"
+                              stroke-width="3"
+                            />
+                            <path
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              fill="none"
+                              :stroke="userData?.todayTasks > 0 && (userData?.todayCompleted || 0) >= userData?.todayTasks ? '#22c55e' : '#6366f1'"
+                              stroke-width="3"
+                              :stroke-dasharray="`${userData?.todayTasks > 0 ? ((userData?.todayCompleted || 0) / userData?.todayTasks * 100) : 0}, 100`"
+                              class="transition-all duration-500"
+                            />
+                          </svg>
+                          <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <span class="text-[10px] font-bold text-slate-700 leading-none">{{ userData?.todayCompleted || 0 }}</span>
+                            <span class="text-[8px] text-slate-400 leading-none">/ {{ userData?.todayTasks || 0 }}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <p class="text-sm font-semibold text-slate-700 leading-none">今日任务</p>
+                          <p class="text-[10px] text-slate-500 leading-none">
+                            {{ userData?.todayTasks > 0 && (userData?.todayCompleted || 0) >= userData?.todayTasks ? '已完成' : '进行中' }}
+                          </p>
                         </div>
                       </div>
-                      <div class="flex-1 min-w-0">
-                        <p class="text-[10px] font-semibold text-slate-700 truncate leading-none">今日任务</p>
-                        <p class="text-[9px] text-slate-500 truncate leading-none">
-                          {{ userData?.todayTasks > 0 && (userData?.todayCompleted || 0) >= userData?.todayTasks ? '已完成' : '进行中' }}
-                        </p>
+                    </div>
+
+                    <!-- 课程学习 -->
+                    <div
+                      @click="showCourseLearningModal = true"
+                      class="w-fit bg-gradient-to-br from-cyan-50/50 via-white to-sky-50/50 rounded border border-cyan-100/50 p-2 shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-105"
+                    >
+                      <div class="flex items-center justify-center gap-1.5">
+                        <div class="relative w-6 h-6 flex-shrink-0">
+                          <svg viewBox="0 0 36 36" class="w-full h-full transform -rotate-90">
+                            <path
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              fill="none"
+                              stroke="#e2e8f0"
+                              stroke-width="3"
+                            />
+                            <path
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              fill="none"
+                              :stroke="courseLearningData.completedCount >= courseLearningData.totalCount ? '#22c55e' : '#14b8a6'"
+                              stroke-width="3"
+                              :stroke-dasharray="`${courseLearningData.totalCount > 0 ? (courseLearningData.completedCount / courseLearningData.totalCount * 100) : 0}, 100`"
+                              class="transition-all duration-500"
+                            />
+                          </svg>
+                          <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <span class="text-[10px] font-bold text-slate-700 leading-none">{{ courseLearningData.completedCount }}</span>
+                            <span class="text-[8px] text-slate-400 leading-none">/ {{ courseLearningData.totalCount }}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <p class="text-sm font-semibold text-cyan-700 leading-none">课程学习</p>
+                          <p class="text-[10px] text-cyan-500 leading-none">
+                            {{ courseLearningData.completedCount >= courseLearningData.totalCount ? '已完成' : '学习中' }}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  <!-- 课程学习 -->
-                  <div
-                    @click="showCourseLearningModal = true"
-                    class="col-span-2 bg-gradient-to-br from-teal-50 via-white to-cyan-50 rounded border border-teal-100/80 px-1 py-0.5 shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-105"
-                  >
-                    <div class="flex items-center gap-0.5">
-                      <div class="relative w-6 h-6 flex-shrink-0">
-                        <svg viewBox="0 0 36 36" class="w-full h-full transform -rotate-90">
-                          <path
-                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                            fill="none"
-                            stroke="#e2e8f0"
-                            stroke-width="3"
-                          />
-                          <path
-                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                            fill="none"
-                            :stroke="courseLearningData.completedCount >= courseLearningData.totalCount ? '#22c55e' : '#14b8a6'"
-                            stroke-width="3"
-                            :stroke-dasharray="`${courseLearningData.totalCount > 0 ? (courseLearningData.completedCount / courseLearningData.totalCount * 100) : 0}, 100`"
-                            class="transition-all duration-500"
-                          />
-                        </svg>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center">
-                          <span class="text-[10px] font-bold text-slate-700 leading-none">{{ courseLearningData.completedCount }}</span>
-                          <span class="text-[8px] text-slate-400 leading-none">/ {{ courseLearningData.totalCount }}</span>
-                        </div>
-                      </div>
-                      <div class="flex-1 min-w-0">
-                        <p class="text-[10px] font-semibold text-slate-700 truncate leading-none">课程学习</p>
-                        <p class="text-[9px] text-slate-500 truncate leading-none">
-                          {{ courseLearningData.completedCount >= courseLearningData.totalCount ? '已完成' : '学习中' }}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  <!-- 右侧快捷操作按钮 -->
+                  <div class="flex flex-1 items-center justify-end gap-2 overflow-x-auto no-scrollbar flex-nowrap py-1">
+                    <!-- AI处方 -->
+                    <button
+                      @click="openAIPrescription"
+                      class="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-600 rounded whitespace-nowrap hover:bg-purple-100 transition-all shadow-sm hover:shadow flex-shrink-0"
+                      title="AI生成处方"
+                    >
+                      <BrainCircuit :size="14" class="text-purple-600" />
+                      <span class="text-xs font-medium">AI处方</span>
+                    </button>
 
-                  <!-- 快捷操作按钮区域 -->
-                  <div class="col-span-8 flex items-center">
-                    <div class="grid grid-cols-9 gap-1 w-full">
-                      <!-- AI处方 -->
-                      <button
-                        @click="openAIPrescription"
-                        class="px-2 py-1.5 rounded-lg border border-purple-200/60 bg-gradient-to-r from-purple-50 to-purple-100/50 hover:from-purple-100 hover:to-purple-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-1"
-                        title="AI生成处方"
-                      >
-                        <BrainCircuit :size="12" class="text-purple-600" />
-                        <span class="text-[9px] font-medium text-purple-700">AI处方</span>
-                      </button>
+                    <!-- 健康指标 -->
+                    <button
+                      @click="goToHealthTab"
+                      class="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-600 rounded whitespace-nowrap hover:bg-green-100 transition-all shadow-sm hover:shadow flex-shrink-0"
+                      title="查看健康指标"
+                    >
+                      <Activity :size="14" class="text-green-600" />
+                      <span class="text-xs font-medium">健康</span>
+                    </button>
 
-                      <!-- 健康指标 -->
-                      <button
-                        @click="goToHealthTab"
-                        class="px-2 py-1.5 rounded-lg border border-emerald-200/60 bg-gradient-to-r from-emerald-50 to-emerald-100/50 hover:from-emerald-100 hover:to-emerald-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-1"
-                        title="查看健康指标"
-                      >
-                        <Activity :size="12" class="text-emerald-600" />
-                        <span class="text-[9px] font-medium text-emerald-700">健康</span>
-                      </button>
+                    <!-- 数据中心 -->
+                    <button
+                      @click="goToDataCenter"
+                      class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 rounded whitespace-nowrap hover:bg-blue-100 transition-all shadow-sm hover:shadow flex-shrink-0"
+                      title="数据中心"
+                    >
+                      <Database :size="14" class="text-blue-600" />
+                      <span class="text-xs font-medium">数据</span>
+                    </button>
 
-                      <!-- 数据中心 -->
-                      <button
-                        @click="goToDataCenter"
-                        class="px-2 py-1.5 rounded-lg border border-blue-200/60 bg-gradient-to-r from-blue-50 to-blue-100/50 hover:from-blue-100 hover:to-blue-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-1"
-                        title="数据中心"
-                      >
-                        <Database :size="12" class="text-blue-600" />
-                        <span class="text-[9px] font-medium text-blue-700">数据</span>
-                      </button>
+                    <!-- 干预管理 -->
+                    <button
+                      @click="goToIntervention"
+                      class="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 rounded whitespace-nowrap hover:bg-red-100 transition-all shadow-sm hover:shadow flex-shrink-0"
+                      title="干预管理"
+                    >
+                      <Target :size="14" class="text-red-600" />
+                      <span class="text-xs font-medium">干预</span>
+                    </button>
 
-                      <!-- 干预管理 -->
-                      <button
-                        @click="goToIntervention"
-                        class="px-2 py-1.5 rounded-lg border border-red-200/60 bg-gradient-to-r from-red-50 to-red-100/50 hover:from-red-100 hover:to-red-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-1"
-                        title="干预管理"
-                      >
-                        <Target :size="12" class="text-red-600" />
-                        <span class="text-[9px] font-medium text-red-700">干预</span>
-                      </button>
+                    <!-- 对话标注 -->
+                    <button
+                      @click="goToLabeling"
+                      class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-600 rounded whitespace-nowrap hover:bg-amber-100 transition-all shadow-sm hover:shadow flex-shrink-0"
+                      title="对话标注"
+                    >
+                      <MessageSquare :size="14" class="text-amber-600" />
+                      <span class="text-xs font-medium">标注</span>
+                    </button>
 
-                      <!-- 对话标注 -->
-                      <button
-                        @click="goToLabeling"
-                        class="px-2 py-1.5 rounded-lg border border-amber-200/60 bg-gradient-to-r from-amber-50 to-amber-100/50 hover:from-amber-100 hover:to-amber-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-1"
-                        title="对话标注"
-                      >
-                        <MessageSquare :size="12" class="text-amber-600" />
-                        <span class="text-[9px] font-medium text-amber-700">标注</span>
-                      </button>
+                    <!-- 内容配置 -->
+                    <button
+                      @click="goToConfig"
+                      class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-600 rounded whitespace-nowrap hover:bg-slate-100 transition-all shadow-sm hover:shadow flex-shrink-0"
+                      title="内容配置"
+                    >
+                      <Settings :size="14" class="text-slate-600" />
+                      <span class="text-xs font-medium">配置</span>
+                    </button>
 
-                      <!-- 内容配置 -->
-                      <button
-                        @click="goToConfig"
-                        class="px-2 py-1.5 rounded-lg border border-slate-200/60 bg-gradient-to-r from-slate-50 to-slate-100/50 hover:from-slate-100 hover:to-slate-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-1"
-                        title="内容配置"
-                      >
-                        <Settings :size="12" class="text-slate-600" />
-                        <span class="text-[9px] font-medium text-slate-700">配置</span>
-                      </button>
+                    <!-- 硬件设备 -->
+                    <button
+                      @click="goToDevicesTab"
+                      class="flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 text-teal-600 rounded whitespace-nowrap hover:bg-teal-100 transition-all shadow-sm hover:shadow flex-shrink-0"
+                      title="硬件设备"
+                    >
+                      <Watch :size="14" class="text-teal-600" />
+                      <span class="text-xs font-medium">设备</span>
+                    </button>
 
-                      <!-- 硬件设备 -->
-                      <button
-                        @click="goToDevicesTab"
-                        class="px-2 py-1.5 rounded-lg border border-teal-200/60 bg-gradient-to-r from-teal-50 to-teal-100/50 hover:from-teal-100 hover:to-teal-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-1"
-                        title="硬件设备"
-                      >
-                        <Watch :size="12" class="text-teal-600" />
-                        <span class="text-[9px] font-medium text-teal-700">设备</span>
-                      </button>
+                    <!-- 预约服务 -->
+                    <button
+                      @click="openBookingModal"
+                      class="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-50 text-cyan-600 rounded whitespace-nowrap hover:bg-cyan-100 transition-all shadow-sm hover:shadow flex-shrink-0"
+                      title="预约服务"
+                    >
+                      <CalendarCheck :size="14" class="text-cyan-600" />
+                      <span class="text-xs font-medium">预约</span>
+                    </button>
 
-                      <!-- 预约服务 -->
-                      <button
-                        @click="openBookingModal"
-                        class="px-2 py-1.5 rounded-lg border border-cyan-200/60 bg-gradient-to-r from-cyan-50 to-cyan-100/50 hover:from-cyan-100 hover:to-cyan-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-1"
-                        title="预约服务"
-                      >
-                        <CalendarCheck :size="12" class="text-cyan-600" />
-                        <span class="text-[9px] font-medium text-cyan-700">预约</span>
-                      </button>
+                    <!-- 查看报告 -->
+                    <button
+                      @click="openReportModal"
+                      class="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-600 rounded whitespace-nowrap hover:bg-rose-100 transition-all shadow-sm hover:shadow flex-shrink-0"
+                      title="查看体检报告"
+                    >
+                      <FileText :size="14" class="text-rose-600" />
+                      <span class="text-xs font-medium">报告</span>
+                    </button>
 
-                      <!-- 查看报告 -->
-                      <button
-                        @click="openReportModal"
-                        class="px-2 py-1.5 rounded-lg border border-rose-200/60 bg-gradient-to-r from-rose-50 to-rose-100/50 hover:from-rose-100 hover:to-rose-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-1"
-                        title="查看体检报告"
-                      >
-                        <FileText :size="12" class="text-rose-600" />
-                        <span class="text-[9px] font-medium text-rose-700">报告</span>
-                      </button>
-
-                      <!-- 全部阻碍 -->
-                      <button
-                        @click="openObstacleLibrary"
-                        class="px-2 py-1.5 rounded-lg border border-orange-200/60 bg-gradient-to-r from-orange-50 to-amber-100/50 hover:from-orange-100 hover:to-amber-200/70 transition-all shadow-sm hover:shadow flex items-center justify-center gap-1"
-                        title="查看全部阻碍"
-                      >
-                        <AlertTriangle :size="12" class="text-orange-600" />
-                        <span class="text-[9px] font-medium text-orange-700">阻碍</span>
-                        <span class="bg-orange-500 text-white text-[8px] px-1 py-0.5 rounded-full">{{ obstacleLibrary.length }}</span>
-                      </button>
-                    </div>
+                    <!-- 全部阻碍 -->
+                    <button
+                      @click="openObstacleLibrary"
+                      class="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 text-orange-600 rounded whitespace-nowrap hover:bg-orange-100 transition-all shadow-sm hover:shadow flex-shrink-0"
+                      title="查看全部阻碍"
+                    >
+                      <AlertTriangle :size="14" class="text-orange-600" />
+                      <span class="text-xs font-medium">阻碍</span>
+                      <span class="bg-orange-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ obstacleLibrary.length }}</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1154,124 +1177,78 @@
                     <Apple :size="18" class="text-green-500" /> 营养素配置
                   </h3>
 
-                  <!-- 订单状态卡片 -->
-                  <div v-if="currentUserOrder" class="mb-4 p-3 rounded-xl border" :class="getOrderStatusConfig(currentUserOrder.status).color.replace('text-', 'bg-').replace('700', '50') + ' border-' + getOrderStatusConfig(currentUserOrder.status).color.split(' ')[1]">
-                    <div class="flex items-center justify-between mb-2">
-                      <div class="flex items-center gap-1.5">
-                        <span class="text-sm">{{ getOrderStatusConfig(currentUserOrder.status).icon }}</span>
-                        <span class="text-xs font-bold" :class="getOrderStatusConfig(currentUserOrder.status).color.split(' ')[1]">
-                          {{ getOrderStatusConfig(currentUserOrder.status).label }}
-                        </span>
-                      </div>
-                      <span class="text-[10px] text-slate-500">
-                        {{ currentUserOrder.orderDate.split(' ')[0] }}
-                      </span>
+                  <!-- 订购记录列表 -->
+                  <div class="space-y-3 max-h-[320px] overflow-y-auto mb-4 pr-1">
+                    <div v-if="currentUserNutrientOrders.length === 0" class="text-center py-6">
+                      <Package :size="32" class="mx-auto mb-2 text-slate-300" />
+                      <p class="text-xs text-slate-500">暂无订购记录</p>
                     </div>
 
-                    <!-- 订单商品列表 -->
-                    <div class="space-y-1.5 mb-2 max-h-[120px] overflow-y-auto">
-                      <div
-                        v-for="product in currentUserOrderProducts"
-                        :key="product.id"
-                        class="flex items-center gap-2 bg-white/70 rounded-lg p-1.5"
-                      >
-                        <span class="text-sm">{{ product.image }}</span>
-                        <div class="flex-1 min-w-0">
-                          <p class="text-[10px] font-medium text-slate-800 truncate">{{ product.name }}</p>
-                          <p class="text-[8px] text-slate-500">{{ product.specifications }}</p>
-                        </div>
-                        <span class="text-[10px] font-bold text-green-600">¥{{ product.price }}</span>
-                      </div>
-                    </div>
-
-                    <!-- 订单总计 -->
-                    <div class="flex items-center justify-between pt-2 border-t border-slate-200">
-                      <span class="text-[10px] text-slate-600">订单总计</span>
-                      <span class="text-sm font-bold text-green-600">¥{{ currentUserOrder.totalAmount }}</span>
-                    </div>
-
-                    <!-- 订单操作按钮 -->
-                    <div class="flex gap-2 mt-2">
-                      <button
-                        v-if="currentUserOrder.status === 'pending'"
-                        @click="payOrder"
-                        class="flex-1 px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-lg transition-colors"
-                      >
-                        立即支付
-                      </button>
-                      <button
-                        v-if="currentUserOrder.status === 'pending'"
-                        @click="cancelOrder"
-                        class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-600 text-xs font-medium rounded-lg transition-colors"
-                      >
-                        取消订单
-                      </button>
-                      <button
-                        v-if="currentUserOrder.status === 'paid' || currentUserOrder.status === 'shipped'"
-                        @click="showToastMessage('物流信息正在更新...')"
-                        class="flex-1 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition-colors"
-                      >
-                        查看物流
-                      </button>
-                    </div>
-                  </div>
-
-                  <!-- 未配置状态 -->
-                  <div v-else class="mb-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
-                    <div class="flex items-center justify-between mb-2">
-                      <span class="text-xs font-semibold text-slate-700">已配置商品</span>
-                      <span class="text-[10px] px-2 py-0.5 bg-green-500 text-white rounded-full">{{ currentUserProducts.length }} 件</span>
-                    </div>
-                    <div v-if="currentUserProducts.length > 0" class="space-y-2 max-h-[140px] overflow-y-auto">
-                      <div
-                        v-for="product in currentUserProducts"
-                        :key="product.id"
-                        class="flex items-center gap-2 bg-white rounded-lg p-2 border border-green-200"
-                      >
-                        <span class="text-lg">{{ product.image }}</span>
-                        <div class="flex-1 min-w-0">
-                          <p class="text-xs font-medium text-slate-800 truncate">{{ product.name }}</p>
-                          <p class="text-[10px] text-slate-500">{{ product.specifications }}</p>
-                        </div>
-                        <div class="text-right">
-                          <span class="block text-xs font-bold text-green-600">¥{{ product.price }}</span>
-                          <span
-                            class="text-[9px] px-1.5 py-0.5 rounded-full"
-                            :class="getProductTypeColor(product.type)"
-                          >
-                            {{ getProductTypeLabel(product.type) }}
+                    <div
+                      v-for="order in currentUserNutrientOrders"
+                      :key="order.orderNumber"
+                      class="p-3 rounded-xl border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50"
+                    >
+                      <!-- 订购信息头部 -->
+                      <div class="flex items-center justify-between mb-2 pb-2 border-b border-green-200">
+                        <div class="flex items-center gap-2">
+                          <span class="px-2 py-0.5 bg-green-500 text-white text-[10px] font-bold rounded-full">
+                            第{{ order.orderNumber }}次
                           </span>
+                          <span class="text-[10px] text-slate-600">{{ order.orderDate }}</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                          <Calendar :size="12" class="text-slate-400" />
+                          <span class="text-[10px] text-slate-500">订购</span>
                         </div>
                       </div>
-                    </div>
-                    <!-- 配置商品总计 -->
-                    <div v-if="currentUserProducts.length > 0" class="flex items-center justify-between mt-2 pt-2 border-t border-green-200">
-                      <span class="text-[10px] text-slate-600">配置总计</span>
-                      <span class="text-xs font-bold text-green-600">¥{{ getSelectedProductsTotal() }}</span>
-                    </div>
-                    <div v-else class="text-center py-3">
-                      <p class="text-xs text-slate-500">暂未配置任何商品</p>
+
+                      <!-- 营养素配置清单 -->
+                      <div class="space-y-1.5 mb-2">
+                        <p class="text-[10px] font-semibold text-slate-700">配置清单：</p>
+                        <div class="space-y-1">
+                          <div
+                            v-for="product in getOrderProducts(order)"
+                            :key="product.id"
+                            class="flex items-center gap-2 bg-white/80 rounded-lg p-1.5"
+                          >
+                            <span class="text-sm">{{ product.image }}</span>
+                            <div class="flex-1 min-w-0">
+                              <p class="text-[10px] font-medium text-slate-800 truncate">{{ product.name }}</p>
+                              <p class="text-[8px] text-slate-500">{{ product.specifications }}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- 提醒信息 -->
+                      <div class="grid grid-cols-2 gap-2">
+                        <div class="flex items-center gap-1.5 bg-blue-50 rounded-lg p-1.5">
+                          <BrainCircuit :size="12" class="text-blue-500" />
+                          <div class="flex-1 min-w-0">
+                            <p class="text-[8px] text-slate-500">处方提醒</p>
+                            <p class="text-[10px] font-semibold text-blue-700 truncate">{{ order.prescriptionReminder }}</p>
+                          </div>
+                        </div>
+                        <div class="flex items-center gap-1.5 bg-orange-50 rounded-lg p-1.5">
+                          <Bell :size="12" class="text-orange-500" />
+                          <div class="flex-1 min-w-0">
+                            <p class="text-[8px] text-slate-500">复购提醒</p>
+                            <p class="text-[10px] font-semibold text-orange-700 truncate">{{ order.repurchaseReminder }}</p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
                   <!-- 配置按钮 -->
-                  <div class="space-y-2">
-                    <button
-                      v-if="!currentUserOrder && currentUserProducts.length > 0"
-                      @click="createOrder"
-                      class="w-full px-4 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl transition-all shadow-sm hover:shadow text-sm font-medium flex items-center justify-center gap-2"
-                    >
-                      <ShoppingCart :size="16" />
-                      创建订单 (¥{{ getSelectedProductsTotal() }})
-                    </button>
-                    <button
-                      @click="openNutrientLibrary"
-                      class="w-full px-4 py-2.5 bg-gradient-to-r from-slate-100 to-slate-200 hover:from-slate-200 hover:to-slate-300 text-slate-700 rounded-xl transition-all shadow-sm hover:shadow text-sm font-medium flex items-center justify-center gap-2"
-                    >
-                      <Package :size="16" />
-                      {{ currentUserOrder ? '修改配置' : '从商品库选择配置' }}
-                    </button>
-                  </div>
+                  <button
+                    @click="openNutrientLibrary"
+                    class="w-full px-4 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl transition-all shadow-sm hover:shadow text-sm font-medium flex items-center justify-center gap-2"
+                  >
+                    <Package :size="16" />
+                    {{ currentUserNutrientOrders.length > 0 ? '新增订购记录' : '创建首次订购' }}
+                  </button>
                 </div>
 
               </div>
@@ -2311,7 +2288,7 @@
               <div
                 v-for="note in userNotes"
                 :key="note.id"
-                class="p-3 rounded-lg border"
+                class="p-3 rounded-lg border relative"
                 style="background: var(--background); border-color: var(--border);"
               >
                 <div class="flex items-start justify-between mb-2">
@@ -2321,9 +2298,47 @@
                     </div>
                     <span class="text-xs font-medium" style="color: var(--text-primary);">{{ note.author }}</span>
                   </div>
-                  <span class="text-[10px]" style="color: var(--text-secondary);">{{ note.time }}</span>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px]" style="color: var(--text-secondary);">{{ note.time }}</span>
+                    <button
+                      @click="editingNoteId === note.id ? cancelEditNote() : startEditNote(note)"
+                      class="p-1 rounded hover:bg-slate-100 transition-colors"
+                      style="color: var(--text-secondary);"
+                    >
+                      <Edit3 v-if="editingNoteId !== note.id" :size="14" />
+                      <X v-else :size="14" />
+                    </button>
+                  </div>
                 </div>
-                <p class="text-sm leading-relaxed" style="color: var(--text-regular);">
+
+                <!-- 编辑模式 -->
+                <div v-if="editingNoteId === note.id">
+                  <textarea
+                    v-model="editingNoteContent"
+                    rows="3"
+                    class="w-full px-3 py-2 text-sm rounded-lg border resize-none focus:outline-none focus:ring-2"
+                    style="border-color: var(--border); background: var(--fill-light); color: var(--text-primary);"
+                  ></textarea>
+                  <div class="flex justify-end gap-2 mt-2">
+                    <button
+                      @click="cancelEditNote"
+                      class="px-3 py-1 text-xs font-medium rounded-lg transition-colors"
+                      style="background: var(--fill-tertiary); color: var(--text-secondary);"
+                    >
+                      取消
+                    </button>
+                    <button
+                      @click="saveEditNote"
+                      class="px-3 py-1 text-xs font-medium text-white rounded-lg"
+                      style="background: #6366f1;"
+                    >
+                      保存
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 查看模式 -->
+                <p v-else class="text-sm leading-relaxed" style="color: var(--text-regular);">
                   {{ note.content }}
                 </p>
               </div>
@@ -2760,16 +2775,54 @@
           </div>
 
           <!-- 弹窗底部 -->
-          <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-between items-center">
-            <span class="text-xs text-slate-500">
-              已选择 {{ currentUserProducts.length }} 件商品
-            </span>
-            <button
-              @click="showNutrientLibraryModal = false"
-              class="px-5 py-2.5 text-sm font-medium text-white bg-green-500 hover:bg-green-600 rounded-xl transition-colors"
-            >
-              完成
-            </button>
+          <div class="p-4 border-t border-slate-100 bg-slate-50 space-y-3">
+            <!-- 提醒日期设置 -->
+            <div v-if="currentUserProducts.length > 0" class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1.5">
+                  <BrainCircuit :size="12" class="inline mr-1 text-blue-500" />
+                  处方提醒日期
+                </label>
+                <input
+                  v-model="prescriptionReminderDate"
+                  type="date"
+                  class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1.5">
+                  <Bell :size="12" class="inline mr-1 text-orange-500" />
+                  复购提醒日期
+                </label>
+                <input
+                  v-model="repurchaseReminderDate"
+                  type="date"
+                  class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-xs"
+                />
+              </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="flex justify-between items-center gap-3">
+              <span class="text-xs text-slate-500">
+                已选择 {{ currentUserProducts.length }} 件商品
+              </span>
+              <div class="flex gap-2">
+                <button
+                  @click="showNutrientLibraryModal = false"
+                  class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-200 hover:bg-slate-300 rounded-xl transition-colors"
+                >
+                  取消
+                </button>
+                <button
+                  v-if="currentUserProducts.length > 0"
+                  @click="handleCreateNutrientOrder"
+                  class="px-4 py-2 text-sm font-medium text-white bg-green-500 hover:bg-green-600 rounded-xl transition-colors"
+                >
+                  创建订购记录
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -2864,9 +2917,9 @@
                 class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-xs"
               >
                 <option value="">请选择来源渠道</option>
-                <option value="抖音推广">抖音推广</option>
-                <option value="微信公众号">微信公众号</option>
-                <option value="小红书">小红书</option>
+                <option value="瑞承">瑞承</option>
+                <option value="养老院">养老院</option>
+                <option value="五六华旅">五六华旅</option>
                 <option value="线上广告">线上广告</option>
                 <option value="线下讲座">线下讲座</option>
                 <option value="线下转介绍">线下转介绍</option>
@@ -3764,27 +3817,29 @@ const productLibrary = ref([
 // 用户已选择的商品
 const userSelectedProducts = ref<Record<string, string[]>>({})
 
-// 用户订单数据
-const userOrders = ref<Record<string, {
-  orderId: string
-  products: string[]
-  totalAmount: number
-  status: 'pending' | 'paid' | 'shipped' | 'completed'
-  orderDate: string
-  payDate?: string
-}>>({})
+// 用户营养素订购记录
+interface NutrientOrder {
+  orderNumber: number // 第几次订购
+  orderDate: string // 订购时间
+  products: string[] // 营养素配置清单（产品ID列表）
+  prescriptionReminder: string // 处方提醒时间
+  repurchaseReminder: string // 复购提醒时间
+}
 
-// 初始化一些模拟订单数据
+const userNutrientOrders = ref<Record<string, NutrientOrder[]>>({})
+
+// 初始化一些模拟订购记录
 onMounted(() => {
-  // 为用户2创建一个已支付的订单
-  userOrders.value['2'] = {
-    orderId: 'ORD20260315001',
-    products: ['prod001', 'prod003'],
-    totalAmount: 1498,
-    status: 'paid',
-    orderDate: '2026-03-15 10:30',
-    payDate: '2026-03-15 10:35'
-  }
+  // 为用户2创建订购记录
+  userNutrientOrders.value['2'] = [
+    {
+      orderNumber: 1,
+      orderDate: '2026-03-15 10:30',
+      products: ['prod001', 'prod003'],
+      prescriptionReminder: '2026-03-20',
+      repurchaseReminder: '2026-06-15'
+    }
+  ]
 })
 
 // 当前用户选择的商品列表
@@ -3794,82 +3849,58 @@ const currentUserProducts = computed(() => {
   return productLibrary.value.filter(p => productIds.includes(p.id))
 })
 
-// 当前用户的订单
-const currentUserOrder = computed(() => {
-  if (!selectedUser.value) return null
-  return userOrders.value[selectedUser.value] || null
+// 当前用户的订购记录列表
+const currentUserNutrientOrders = computed(() => {
+  if (!selectedUser.value) return []
+  return userNutrientOrders.value[selectedUser.value] || []
 })
-
-// 当前用户订单的商品列表
-const currentUserOrderProducts = computed(() => {
-  if (!currentUserOrder.value) return []
-  return productLibrary.value.filter(p => currentUserOrder.value?.products.includes(p.id))
-})
-
-// 订单状态配置
-const orderStatusConfig = {
-  pending: { label: '待支付', color: 'bg-orange-100 text-orange-700', icon: '⏰' },
-  paid: { label: '已支付', color: 'bg-blue-100 text-blue-700', icon: '💳' },
-  shipped: { label: '配送中', color: 'bg-purple-100 text-purple-700', icon: '🚚' },
-  completed: { label: '已完成', color: 'bg-green-100 text-green-700', icon: '✅' }
-}
-
-// 获取订单状态配置
-const getOrderStatusConfig = (status: string) => {
-  return orderStatusConfig[status as keyof typeof orderStatusConfig] || orderStatusConfig.pending
-}
 
 // 计算配置商品总价格
 const getSelectedProductsTotal = () => {
   return currentUserProducts.value.reduce((total, product) => total + product.price, 0)
 }
 
-// 创建订单
-const createOrder = () => {
+// 创建新的订购记录
+const createNutrientOrder = (prescriptionDate: string, repurchaseDate: string) => {
   if (!selectedUser.value) return
 
   const productIds = userSelectedProducts.value[selectedUser.value] || []
   if (productIds.length === 0) {
-    toastRef.value?.warning('请先选择商品')
+    toastRef.value?.warning('请先选择营养素配置')
     return
   }
 
-  const totalAmount = getSelectedProductsTotal()
-
-  userOrders.value[selectedUser.value] = {
-    orderId: `ORD${Date.now()}`,
-    products: productIds,
-    totalAmount,
-    status: 'pending',
-    orderDate: new Date().toLocaleString('zh-CN')
+  if (!userNutrientOrders.value[selectedUser.value]) {
+    userNutrientOrders.value[selectedUser.value] = []
   }
 
-  toastRef.value?.success('订单创建成功，请完成支付')
+  const orders = userNutrientOrders.value[selectedUser.value]
+  const nextOrderNumber = orders.length + 1
+
+  orders.push({
+    orderNumber: nextOrderNumber,
+    orderDate: new Date().toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
+    products: [...productIds],
+    prescriptionReminder: prescriptionDate,
+    repurchaseReminder: repurchaseDate
+  })
+
+  // 清空已选择的商品
+  userSelectedProducts.value[selectedUser.value] = []
+
+  toastRef.value?.success(`第 ${nextOrderNumber} 次营养素订购记录已创建`)
 }
 
-// 支付订单
-const payOrder = () => {
-  if (!selectedUser.value || !currentUserOrder.value) return
-
-  currentUserOrder.value.status = 'paid'
-  currentUserOrder.value.payDate = new Date().toLocaleString('zh-CN')
-
-  toastRef.value?.success('支付成功！')
-}
-
-// 取消订单
-const cancelOrder = () => {
-  if (!selectedUser.value || !currentUserOrder.value) return
-
-  if (confirm('确定要取消此订单吗？')) {
-    delete userOrders.value[selectedUser.value]
-    toastRef.value?.show('订单已取消')
-  }
+// 获取订购记录的产品详情
+const getOrderProducts = (order: NutrientOrder) => {
+  return productLibrary.value.filter(p => order.products.includes(p.id))
 }
 
 // 营养素库模态框状态
 const showNutrientLibraryModal = ref(false)
 const selectedProductType = ref<'all' | 'medication' | 'supplement'>('all')
+const prescriptionReminderDate = ref('')
+const repurchaseReminderDate = ref('')
 
 // 筛选后的商品列表
 const filteredProducts = computed(() => {
@@ -3886,7 +3917,36 @@ const openNutrientLibrary = () => {
     return
   }
   selectedProductType.value = 'all'
+  // 设置默认提醒日期（处方提醒3天后，复购提醒3个月后）
+  const today = new Date()
+  const prescriptionDate = new Date(today)
+  prescriptionDate.setDate(today.getDate() + 3)
+  const repurchaseDate = new Date(today)
+  repurchaseDate.setMonth(today.getMonth() + 3)
+
+  prescriptionReminderDate.value = prescriptionDate.toISOString().split('T')[0]
+  repurchaseReminderDate.value = repurchaseDate.toISOString().split('T')[0]
+
   showNutrientLibraryModal.value = true
+}
+
+// 处理创建订购记录
+const handleCreateNutrientOrder = () => {
+  if (!selectedUser.value) return
+
+  const productIds = userSelectedProducts.value[selectedUser.value] || []
+  if (productIds.length === 0) {
+    toastRef.value?.warning('请先选择营养素配置')
+    return
+  }
+
+  if (!prescriptionReminderDate.value || !repurchaseReminderDate.value) {
+    toastRef.value?.warning('请设置处方提醒和复购提醒日期')
+    return
+  }
+
+  createNutrientOrder(prescriptionReminderDate.value, repurchaseReminderDate.value)
+  showNutrientLibraryModal.value = false
 }
 
 // 切换商品选择状态
@@ -6366,6 +6426,8 @@ const userNotes = computed(() => {
 })
 
 const newNote = ref('')
+const editingNoteId = ref<string | null>(null)
+const editingNoteContent = ref('')
 
 const addNote = () => {
   if (!selectedUser.value || !newNote.value.trim()) return
@@ -6383,6 +6445,30 @@ const addNote = () => {
 
   newNote.value = ''
   toastRef.value?.success('备注已添加')
+}
+
+const startEditNote = (note: Note) => {
+  editingNoteId.value = note.id
+  editingNoteContent.value = note.content
+}
+
+const saveEditNote = () => {
+  if (!selectedUser.value || !editingNoteId.value || !editingNoteContent.value.trim()) return
+
+  const notes = userNotesMap.value[selectedUser.value]
+  const noteIndex = notes.findIndex(n => n.id === editingNoteId.value)
+
+  if (noteIndex !== -1) {
+    notes[noteIndex].content = editingNoteContent.value.trim()
+    toastRef.value?.success('备注已修改')
+  }
+
+  cancelEditNote()
+}
+
+const cancelEditNote = () => {
+  editingNoteId.value = null
+  editingNoteContent.value = ''
 }
 
 // Calendar methods

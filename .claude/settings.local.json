@@ -18,7 +18,10 @@
       "Bash(kill 73402)",
       "Bash(kill 74080)",
       "Bash(kill 75067)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npx vue-tsc:*)",
+      "Bash(awk:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }
