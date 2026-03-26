@@ -1,5 +1,27 @@
 import { ref, computed, watch } from 'vue'
 
+// 单条积分记录
+export interface PointRecord {
+  id: string
+  type: PointType
+  points: number
+  name: string
+  date: string
+  time: string
+  createdAt: string
+  iconClass: string
+}
+
+// 积分类型
+export type PointType =
+  | 'courseReading'
+  | 'mealUpload'
+  | 'healthCheckin'
+  | 'obstacleReport'
+  | 'liveWatching'
+  | 'weightLossResult'
+  | 'manualAdjustment'
+
 // 积分类型定义
 export interface UserPoints {
   userId: string
@@ -12,6 +34,7 @@ export interface UserPoints {
   rank: number
   weeklyRank: number
   pointDetails: PointDetails
+  pointRecords: PointRecord[] // 新增：积分记录列表
 }
 
 export interface PointDetails {
@@ -40,15 +63,18 @@ const createPointDetails = (): PointDetails => {
   }
 }
 
-// 计算总分
-const getTotalPoints = (details: PointDetails): number => {
-  return details.courseReading +
-         details.mealUpload +
-         details.healthCheckin +
-         details.obstacleReport +
-         details.liveWatching +
-         details.weightLossResult +
-         details.manualAdjustment
+// 计算总分（从积分记录列表计算）
+const getTotalPoints = (records: PointRecord[]): number => {
+  return records.reduce((sum, record) => sum + record.points, 0)
+}
+
+// 根据积分记录计算pointDetails
+const calculatePointDetails = (records: PointRecord[]): PointDetails => {
+  const details = createPointDetails()
+  records.forEach(record => {
+    details[record.type] = (details[record.type] || 0) + record.points
+  })
+  return details
 }
 
 // 排行榜类型

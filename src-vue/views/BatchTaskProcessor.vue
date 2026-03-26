@@ -777,7 +777,7 @@
                       title="查看体检报告"
                     >
                       <FileText :size="14" class="text-rose-600" />
-                      <span class="text-xs font-medium">报告</span>
+                      <span class="text-xs font-medium">体检报告</span>
                     </button>
 
                     <!-- 全部阻碍 -->
@@ -959,13 +959,22 @@
                           晚
                         </button>
                       </div>
-                      <button
-                        @click="calculateAINutrition"
-                        class="text-sm text-indigo-600 hover:text-indigo-800 flex items-center px-2 py-1 rounded-md hover:bg-indigo-50 transition-colors"
-                      >
-                        <BrainCircuit :size="14" class="mr-1" />
-                        AI一键测算热量、营养素
-                      </button>
+                      <div class="flex gap-2">
+                        <button
+                          @click="calculateAINutrition"
+                          class="text-sm text-indigo-600 hover:text-indigo-800 flex items-center px-2 py-1 rounded-md hover:bg-indigo-50 transition-colors"
+                        >
+                          <BrainCircuit :size="14" class="mr-1" />
+                          AI测热量、营养素
+                        </button>
+                        <button
+                          @click="generateAIMealReview"
+                          class="text-sm text-emerald-600 hover:text-emerald-800 flex items-center px-2 py-1 rounded-md hover:bg-emerald-50 transition-colors"
+                        >
+                          <MessageSquare :size="14" class="mr-1" />
+                          AI生成餐评
+                        </button>
+                      </div>
                       <button
                         @click="isDietLogOpen = true"
                         class="text-sm text-slate-500 hover:text-slate-700 flex items-center px-2 py-1 rounded-md hover:bg-slate-50 transition-colors"
@@ -975,29 +984,86 @@
                     </div>
                   </div>
 
+                  <!-- 餐食列表 -->
                   <div class="flex flex-col gap-3">
-                    <div class="flex flex-col gap-3 max-h-[260px] overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full">
-                      <div v-for="meal in filteredMeals" :key="meal.id" @click="showToastMessage(`查看 ${meal.time} 的营养成分详情`)" class="flex gap-4 p-3 rounded-xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-indigo-100 hover:shadow-sm transition-all cursor-pointer group">
-                        <div class="relative overflow-hidden rounded-lg shrink-0">
-                          <img :src="meal.img" :alt="meal.time" class="w-20 h-20 object-cover group-hover:scale-110 transition-transform duration-300" />
-                          <div class="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors"></div>
-                        </div>
-                        <div class="flex-1 flex flex-col justify-center">
-                          <div class="flex justify-between items-start mb-1.5">
-                            <span class="font-bold text-slate-800 text-sm">{{ meal.time }}</span>
-                            <span class="text-xs font-semibold text-orange-600 bg-orange-100 px-2 py-0.5 rounded border border-orange-200">{{ meal.cal }} kcal</span>
+                    <div class="flex flex-col gap-3">
+                      <div v-for="meal in filteredMeals" :key="meal.id" class="rounded-xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-indigo-100 hover:shadow-sm transition-all group">
+                        <!-- 餐食基本信息 -->
+                        <div @click="showToastMessage(`查看 ${meal.time} 的营养成分详情`)" class="flex gap-4 p-3 cursor-pointer">
+                          <div class="relative overflow-hidden rounded-lg shrink-0">
+                            <img :src="meal.img" :alt="meal.time" class="w-20 h-20 object-cover group-hover:scale-110 transition-transform duration-300" />
+                            <div class="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors"></div>
                           </div>
-                          <p class="text-xs text-slate-500 line-clamp-2 leading-relaxed">{{ meal.desc }}</p>
+                          <div class="flex-1 flex flex-col justify-center">
+                            <div class="flex justify-between items-start mb-1.5">
+                              <div class="flex items-center gap-2">
+                                <span class="font-bold text-slate-800 text-sm">{{ meal.time }}</span>
+                                <span v-if="meal.mealTime" class="text-xs text-slate-400 flex items-center gap-1">
+                                  <Clock :size="10" />
+                                  {{ meal.mealTime }}
+                                </span>
+                                <span v-if="isMealCalculatedToday(meal)" class="text-[10px] flex items-center gap-0.5 text-green-500 bg-green-50 px-1.5 py-0.5 rounded border border-green-200">
+                                  <Check :size="8" />
+                                  已测算
+                                </span>
+                              </div>
+                              <span v-if="meal.cal > 0" class="text-xs font-semibold text-orange-600 bg-orange-100 px-2 py-0.5 rounded border border-orange-200">{{ meal.cal }} kcal</span>
+                              <span v-else class="text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">待测算</span>
+                            </div>
+                            <p class="text-xs text-slate-500 line-clamp-2 leading-relaxed">{{ meal.desc }}</p>
+                          </div>
+                        </div>
+
+                        <!-- AI餐评区域 -->
+                        <div class="mx-3 mb-3 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg p-3 border border-emerald-100">
+                          <div class="flex items-center justify-between mb-2">
+                            <h5 class="font-semibold text-emerald-700 text-xs flex items-center gap-1.5">
+                              <MessageSquare :size="12" class="text-emerald-600" />
+                              AI餐评
+                            </h5>
+                            <div class="flex gap-1">
+                              <button
+                                @click.stop="copySingleMealReview(meal.time)"
+                                class="text-[10px] flex items-center gap-0.5 px-1.5 py-1 bg-white rounded text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                title="复制"
+                              >
+                                <Copy :size="10" />
+                              </button>
+                              <button
+                                @click.stop="toggleEditReview(meal.time)"
+                                class="text-[10px] flex items-center gap-0.5 px-1.5 py-1 bg-white rounded text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                :title="editingMealType === meal.time ? '完成' : '编辑'"
+                              >
+                                <Edit :size="10" />
+                              </button>
+                            </div>
+                          </div>
+
+                          <div
+                            v-if="editingMealType !== meal.time"
+                            class="text-xs text-slate-700 leading-relaxed"
+                          >
+                            <p v-if="mealReviews[meal.time]" class="whitespace-pre-wrap">{{ mealReviews[meal.time] }}</p>
+                            <p v-else class="text-slate-400 italic">暂无{{ meal.time }}餐评，点击"AI生成餐评"生成</p>
+                          </div>
+
+                          <textarea
+                            v-else
+                            v-model="mealReviews[meal.time]"
+                            @click.stop
+                            class="w-full min-h-[60px] p-2 text-xs text-slate-700 bg-white rounded border border-emerald-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-transparent resize-none"
+                            placeholder="编辑餐评内容..."
+                          ></textarea>
                         </div>
                       </div>
                     </div>
 
                     <div
                       @click="isAddMealOpen = true"
-                      class="mt-2 w-full py-3 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50 flex justify-center items-center gap-2 hover:bg-indigo-50 hover:border-indigo-300 transition-all cursor-pointer text-slate-500 hover:text-indigo-600 active:scale-[0.99]"
+                      class="w-full py-3 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50 flex justify-center items-center gap-2 hover:bg-indigo-50 hover:border-indigo-300 transition-all cursor-pointer text-slate-500 hover:text-indigo-600 active:scale-[0.99]"
                     >
                       <Plus :size="18" />
-                      <span class="text-sm font-medium">补充餐食记录</span>
+                      <span class="text-sm font-medium">添加餐食记录</span>
                     </div>
                   </div>
                 </div>
@@ -1259,12 +1325,12 @@
       </div>
     </main>
 
-    <!-- 弹窗：补充餐食记录 -->
+    <!-- 弹窗：添加餐食记录 -->
     <Teleport to="body">
       <div v-if="isAddMealOpen" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
           <div class="flex justify-between items-center p-5 border-b border-slate-100">
-            <h3 class="font-bold text-lg text-slate-800">补充加餐记录</h3>
+            <h3 class="font-bold text-lg text-slate-800">添加餐食记录</h3>
             <button @click="isAddMealOpen = false" class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-1.5 rounded-lg transition-colors">
               <X :size="20" />
             </button>
@@ -1290,21 +1356,39 @@
 
             <div class="space-y-4">
               <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">餐食类型 <span class="text-red-500">*</span></label>
+                <div class="flex gap-2">
+                  <button
+                    v-for="type in ['早餐', '午餐', '晚餐', '加餐']"
+                    :key="type"
+                    @click="selectMealType(type)"
+                    :class="[
+                      'flex-1 py-2.5 text-sm font-medium rounded-xl transition-all',
+                      newMealForm.mealType === type
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ]"
+                  >
+                    {{ type }}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">餐食时间 <span class="text-red-500">*</span></label>
+                <input
+                  type="time"
+                  v-model="newMealForm.mealTime"
+                  class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+                <p class="text-[10px] text-slate-400 mt-1">选择用餐时间，可自动填充或手动修改</p>
+              </div>
+              <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-2">内容描述 <span class="text-red-500">*</span></label>
                 <textarea
                   v-model="newMealForm.desc"
                   placeholder="例：无糖酸奶一杯，每日坚果一包..."
                   class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none h-20"
                 ></textarea>
-              </div>
-              <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-2">预估热量 (kcal)</label>
-                <input
-                  type="number"
-                  v-model="newMealForm.cal"
-                  placeholder="选填，默认150"
-                  class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                />
               </div>
             </div>
           </div>
@@ -1863,6 +1947,14 @@
                   删除
                 </button>
                 <button
+                  v-if="selectedReport"
+                  @click="openComparisonModal"
+                  class="px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex items-center gap-1"
+                >
+                  <Activity :size="14" />
+                  数据对比
+                </button>
+                <button
                   @click="showReportModal = false"
                   class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
                 >
@@ -1897,6 +1989,135 @@
                   </div>
                   <p class="text-sm text-slate-500">请从左侧选择一份报告查看详情</p>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- 报告数据对比弹窗 -->
+    <Teleport to="body">
+      <div v-if="showComparisonModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[85vh] overflow-hidden animate-in zoom-in-95 duration-200 flex">
+          <!-- 左侧：历史报告列表 -->
+          <div class="w-72 border-r border-slate-200 flex flex-col bg-slate-50">
+            <!-- 头部 -->
+            <div class="p-4 border-b border-slate-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm">
+                  <Activity :size="16" class="text-white" />
+                </div>
+                <div>
+                  <h3 class="font-bold text-slate-800">历史报告</h3>
+                  <p class="text-[10px] text-slate-500">选择要对比的报告</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 报告列表 -->
+            <div class="flex-1 overflow-y-auto p-3 space-y-2">
+              <div
+                v-for="report in comparisonReports"
+                :key="report.id"
+                @click="toggleComparisonReport(report.id)"
+                class="p-3 rounded-lg cursor-pointer transition-all border"
+                :class="selectedComparisonReports.includes(report.id) ? 'bg-indigo-50 border-indigo-300 shadow-sm' : 'bg-white border-slate-200 hover:border-indigo-200 hover:bg-indigo-50/50'"
+              >
+                <div class="flex items-start gap-2">
+                  <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" :class="getReportIconBg(report.type)">
+                    <component :is="getReportIcon(report.type)" :size="16" class="text-white" />
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-slate-800 truncate">{{ report.name }}</p>
+                    <p class="text-[10px] text-slate-500">{{ report.date }}</p>
+                  </div>
+                  <div v-if="selectedComparisonReports.includes(report.id)" class="flex-shrink-0">
+                    <Check :size="16" class="text-indigo-600" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 底部操作 -->
+            <div class="p-3 border-t border-slate-200 bg-white">
+              <button
+                @click="compareReports"
+                :disabled="selectedComparisonReports.length < 2"
+                class="w-full px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-lg transition-all shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center justify-center gap-2"
+              >
+                <Activity :size="16" />
+                对比选中的报告 ({{ selectedComparisonReports.length }})
+              </button>
+            </div>
+          </div>
+
+          <!-- 右侧：对比结果 -->
+          <div class="flex-1 flex flex-col">
+            <!-- 头部 -->
+            <div class="p-4 border-b border-slate-200 bg-white flex items-center justify-between">
+              <div>
+                <h3 class="font-semibold text-slate-800">指标数据对比</h3>
+                <p class="text-xs text-slate-500 mt-0.5">
+                  {{ comparisonResult.title || '请选择2-3份报告进行对比' }}
+                </p>
+              </div>
+              <button
+                @click="showComparisonModal = false"
+                class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <X :size="20" />
+              </button>
+            </div>
+
+            <!-- 对比结果区域 -->
+            <div class="flex-1 overflow-y-auto bg-slate-50 p-6">
+              <div v-if="comparisonResult.data && comparisonResult.data.length > 0" class="space-y-4">
+                <!-- 每个指标的对比 -->
+                <div v-for="(indicator, idx) in comparisonResult.data" :key="idx" class="bg-white rounded-xl p-4 shadow-sm">
+                  <div class="flex items-center justify-between mb-3">
+                    <h4 class="font-semibold text-slate-800">{{ indicator.name }}</h4>
+                    <span class="text-xs text-slate-500">参考范围：{{ indicator.reference }}</span>
+                  </div>
+
+                  <!-- 对比图表 -->
+                  <div class="space-y-2">
+                    <div
+                      v-for="(item, itemIdx) in indicator.values"
+                      :key="itemIdx"
+                      class="flex items-center gap-3"
+                    >
+                      <div class="w-24 text-xs text-slate-600 flex-shrink-0">{{ item.date }}</div>
+                      <div class="flex-1 flex items-center gap-2">
+                        <div class="flex-1 bg-slate-100 rounded-full h-6 overflow-hidden">
+                          <div
+                            class="h-full rounded-full transition-all duration-500"
+                            :class="item.trend === 'up' ? 'bg-red-500' : item.trend === 'down' ? 'bg-green-500' : 'bg-slate-400'"
+                            :style="{ width: `${item.percent}%` }"
+                          ></div>
+                        </div>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                          <span class="text-sm font-semibold" :class="item.trend === 'up' ? 'text-red-600' : item.trend === 'down' ? 'text-green-600' : 'text-slate-600'">
+                            {{ item.value }}
+                          </span>
+                          <span class="text-xs text-slate-400">{{ item.unit }}</span>
+                          <span v-if="item.change" class="text-xs px-1.5 py-0.5 rounded" :class="item.change > 0 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'">
+                            {{ item.change > 0 ? '↑' : '↓' }} {{ Math.abs(item.change) }}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 空状态 -->
+              <div v-else class="flex flex-col items-center justify-center h-full text-center">
+                <div class="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                  <Activity :size="40" class="text-slate-400" />
+                </div>
+                <h4 class="font-semibold text-slate-800 mb-2">开始对比</h4>
+                <p class="text-sm text-slate-500 max-w-xs">请在左侧选择2-3份相同类型的体检报告进行数据对比</p>
               </div>
             </div>
           </div>
@@ -3310,6 +3531,7 @@ import {
   Moon,
   Smartphone,
   ChevronDown,
+  Download,
   Image as ImageIcon,
   Bell,
   Apple,
@@ -3318,6 +3540,7 @@ import {
   ShoppingCart,
   Trash2,
   Edit,
+  Copy,
   Watch,
   Hash,
   Share2,
@@ -4133,8 +4356,22 @@ const toast = ref<string | null>(null)
 const selectedDate = ref(19)
 const isAddMealOpen = ref(false)
 const isDietLogOpen = ref(false)
-const newMealForm = reactive({ img: null as string | null, desc: '', cal: '' })
+const newMealForm = reactive({
+  img: null as string | null,
+  mealType: '加餐',
+  mealTime: '',
+  desc: ''
+})
 const addMealFileInputRef = ref<HTMLInputElement>()
+
+// AI餐评相关状态
+const mealReviews = reactive({
+  '早餐': '',
+  '午餐': '',
+  '晚餐': '',
+  '加餐': ''
+})
+const editingMealType = ref<string | null>(null)
 
 // 阻碍记录数据
 const obstacles = ref([
@@ -4225,9 +4462,9 @@ const deleteObstacle = (id: number) => {
 
 // 餐食数据
 const meals = ref([
-  { id: 1, time: "早餐", cal: 350, desc: "燕麦片一碗，水煮蛋一个，脱脂牛奶250ml", img: "https://images.unsplash.com/photo-1494390248081-4e521a5940db?auto=format&fit=crop&w=100&q=80", macros: { carbs: 45, protein: 15, fat: 12, fiber: 4 } },
-  { id: 2, time: "午餐", cal: 680, desc: "糙米饭一碗，香煎鸡胸肉，蒜蓉西兰花，少油少盐", img: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=100&q=80", macros: { carbs: 75, protein: 35, fat: 18, fiber: 8 } },
-  { id: 3, time: "晚餐", cal: 420, desc: "清蒸鲈鱼一条，清炒时蔬，半个水煮玉米", img: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=100&q=80", macros: { carbs: 40, protein: 25, fat: 8, fiber: 5 } }
+  { id: 1, time: "早餐", mealTime: "07:30", cal: 350, desc: "燕麦片一碗，水煮蛋一个，脱脂牛奶250ml", img: "https://images.unsplash.com/photo-1494390248081-4e521a5940db?auto=format&fit=crop&w=100&q=80", macros: { carbs: 45, protein: 15, fat: 12, fiber: 4 }, lastCalculatedDate: null },
+  { id: 2, time: "午餐", mealTime: "12:15", cal: 680, desc: "糙米饭一碗，香煎鸡胸肉，蒜蓉西兰花，少油少盐", img: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=100&q=80", macros: { carbs: 75, protein: 35, fat: 18, fiber: 8 }, lastCalculatedDate: null },
+  { id: 3, time: "晚餐", mealTime: "18:45", cal: 420, desc: "清蒸鲈鱼一条，清炒时蔬，半个水煮玉米", img: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=100&q=80", macros: { carbs: 40, protein: 25, fat: 8, fiber: 5 }, lastCalculatedDate: null }
 ])
 
 // 餐食筛选状态
@@ -4744,48 +4981,193 @@ const showToastMessage = (msg: string) => {
 
 // AI一键测算热量和营养素
 const calculateAINutrition = () => {
-  showToastMessage("AI正在分析餐食图片，测算热量和营养素...")
+  // 获取今天的日期（格式：YYYY-MM-DD）
+  const today = new Date().toISOString().split('T')[0]
+
+  // 检查是否有可以测算的餐食（今天未测算过的）
+  const availableMeals = meals.value.filter(meal => meal.lastCalculatedDate !== today)
+
+  if (availableMeals.length === 0) {
+    showToastMessage("今日所有餐食已测算过，请勿重复计算")
+    return
+  }
+
+  showToastMessage(`AI正在分析 ${availableMeals.length} 份餐食，测算热量和营养素...`)
 
   // 模拟AI测算过程
   setTimeout(() => {
+    let calculatedCount = 0
+    let skippedCount = 0
+
     // 为每餐更新更准确的热量和营养素数值
     meals.value = meals.value.map(meal => {
+      // 检查今天是否已经测算过
+      if (meal.lastCalculatedDate === today) {
+        skippedCount++
+        return meal // 今天已测算过，跳过
+      }
+
+      calculatedCount++
       // 根据不同餐食类型生成略有不同的数值
       const baseMultiplier = meal.time === '早餐' ? 1.1 : meal.time === '午餐' ? 1.2 : 1.05
 
       return {
         ...meal,
-        cal: Math.round(meal.cal * baseMultiplier),
+        cal: Math.round(meal.cal * baseMultiplier) || 300, // 如果是0，使用默认值300
         macros: {
-          carbs: Math.round(meal.macros.carbs * baseMultiplier),
-          protein: Math.round(meal.macros.protein * (baseMultiplier + 0.1)),
-          fat: Math.round(meal.macros.fat * baseMultiplier),
-          fiber: Math.round(meal.macros.fiber * baseMultiplier)
-        }
+          carbs: Math.round((meal.macros.carbs || 0) * baseMultiplier) || 40,
+          protein: Math.round((meal.macros.protein || 0) * (baseMultiplier + 0.1)) || 20,
+          fat: Math.round((meal.macros.fat || 0) * baseMultiplier) || 12,
+          fiber: Math.round((meal.macros.fiber || 0) * baseMultiplier) || 5
+        },
+        lastCalculatedDate: today // 记录测算日期
       }
     })
 
-    showToastMessage("AI测算完成！热量和营养素已更新")
+    // 根据测算情况给出不同提示
+    if (skippedCount > 0) {
+      showToastMessage(`AI测算完成！已更新 ${calculatedCount} 份餐食，跳过 ${skippedCount} 份今日已测算的餐食`)
+    } else {
+      showToastMessage(`AI测算完成！已成功测算 ${calculatedCount} 份餐食`)
+    }
   }, 1500)
 }
 
+// AI生成餐评
+const generateAIMealReview = () => {
+  showToastMessage("AI正在分析今日餐食，生成专业餐评...")
+
+  // 模拟AI餐评生成过程
+  setTimeout(() => {
+    // 为每餐类型生成餐评
+    const mealTypes = ['早餐', '午餐', '晚餐', '加餐']
+
+    mealTypes.forEach(mealType => {
+      const mealsOfType = meals.value.filter(m => m.time === mealType)
+
+      if (mealsOfType.length === 0) {
+        mealReviews[mealType] = `今日暂无${mealType}记录`
+        return
+      }
+
+      const totalCal = mealsOfType.reduce((sum, meal) => sum + meal.cal, 0)
+      const avgCal = Math.round(totalCal / mealsOfType.length)
+
+      let review = ''
+      if (mealType === '早餐') {
+        if (totalCal < 350) {
+          review = `${mealType}热量${totalCal}kcal略低。建议增加优质蛋白如鸡蛋、牛奶，搭配全谷物，为一天提供充足能量。`
+        } else if (totalCal > 550) {
+          review = `${mealType}热量${totalCal}kcal偏高。建议减少油炸食品，增加蔬菜水果，保持营养均衡。`
+        } else {
+          review = `${mealType}热量${totalCal}kcal适中。营养搭配良好，建议继续保持丰富的早餐习惯。`
+        }
+      } else if (mealType === '午餐') {
+        if (totalCal < 500) {
+          review = `${mealType}热量${totalCal}kcal不足。建议增加主食和优质蛋白，确保下午工作精力充沛。`
+        } else if (totalCal > 850) {
+          review = `${mealType}热量${totalCal}kcal过高。建议控制食量，减少高油高脂食物，七八分饱即可。`
+        } else {
+          review = `${mealType}热量${totalCal}kcal合理。荤素搭配得当，建议继续保持多样化饮食。`
+        }
+      } else if (mealType === '晚餐') {
+        if (totalCal < 350) {
+          review = `${mealType}热量${totalCal}kcal偏低。晚餐可以适当增加，但要以清淡易消化为主。`
+        } else if (totalCal > 650) {
+          review = `${mealType}热量${totalCal}kcal偏高。建议晚餐减少碳水化合物，增加蔬菜比例，避免影响睡眠。`
+        } else {
+          review = `${mealType}热量${totalCal}kcal适中。清淡少油，有助于消化吸收，建议继续保持。`
+        }
+      } else if (mealType === '加餐') {
+        if (totalCal < 100) {
+          review = `${mealType}热量${totalCal}kcal偏低。建议选择坚果、酸奶等营养密度高的食物。`
+        } else if (totalCal > 250) {
+          review = `${mealType}热量${totalCal}kcal偏高。加餐应控制热量，选择水果、少量坚果即可。`
+        } else {
+          review = `${mealType}热量${totalCal}kcal合理。适量加餐有助于维持血糖稳定，建议继续保持。`
+        }
+      }
+
+      mealReviews[mealType] = review
+    })
+
+    showToastMessage("AI餐评生成完成！")
+  }, 2000)
+}
+
+// 复制单个餐评
+const copySingleMealReview = async (mealType: string) => {
+  const review = mealReviews[mealType]
+  if (!review) {
+    showToastMessage(`暂无${mealType}餐评可复制`)
+    return
+  }
+
+  try {
+    await navigator.clipboard.writeText(review)
+    showToastMessage(`${mealType}餐评已复制到剪贴板！`)
+  } catch (err) {
+    // 降级方案：使用传统方法
+    const textarea = document.createElement('textarea')
+    textarea.value = review
+    document.body.appendChild(textarea)
+    textarea.select()
+    document.execCommand('copy')
+    document.body.removeChild(textarea)
+    showToastMessage(`${mealType}餐评已复制到剪贴板！`)
+  }
+}
+
+// 切换编辑状态
+const toggleEditReview = (mealType: string) => {
+  if (editingMealType.value === mealType) {
+    editingMealType.value = null
+  } else {
+    editingMealType.value = mealType
+  }
+}
+
 const handleSaveNewMeal = () => {
-  if (!newMealForm.img || !newMealForm.desc) {
-    showToastMessage("请上传照片并填写描述哦")
+  if (!newMealForm.img || !newMealForm.desc || !newMealForm.mealTime) {
+    showToastMessage("请上传照片、填写描述和选择时间哦")
     return
   }
   const newMeal = {
     id: Date.now(),
-    time: "加餐",
-    cal: Number(newMealForm.cal) || 150,
+    time: newMealForm.mealType,
+    mealTime: newMealForm.mealTime,
+    cal: 0, // 初始为0，等待AI测算
     desc: newMealForm.desc,
     img: newMealForm.img,
-    macros: { carbs: 15, protein: 8, fat: 10, fiber: 2 }
+    macros: { carbs: 0, protein: 0, fat: 0, fiber: 0 },
+    lastCalculatedDate: null as string | null // 记录最后一次测算的日期
   }
   meals.value.push(newMeal)
-  Object.assign(newMealForm, { img: null, desc: '', cal: '' })
+  Object.assign(newMealForm, { img: null, mealType: '加餐', mealTime: '', desc: '' })
   isAddMealOpen.value = false
-  showToastMessage("餐食记录补充成功！")
+  showToastMessage("餐食记录添加成功！点击'AI测热量、营养素'进行测算")
+}
+
+// 选择餐食类型时自动填充默认时间
+const selectMealType = (type: string) => {
+  newMealForm.mealType = type
+  // 如果时间字段为空，自动设置默认时间
+  if (!newMealForm.mealTime) {
+    const defaultTimes: Record<string, string> = {
+      '早餐': '07:30',
+      '午餐': '12:00',
+      '晚餐': '18:00',
+      '加餐': '15:30'
+    }
+    newMealForm.mealTime = defaultTimes[type] || ''
+  }
+}
+
+// 检查餐食是否在今天测算过
+const isMealCalculatedToday = (meal: any): boolean => {
+  if (!meal.lastCalculatedDate) return false
+  const today = new Date().toISOString().split('T')[0]
+  return meal.lastCalculatedDate === today
 }
 
 const handleModalFileUpload = (e: Event) => {
@@ -6077,8 +6459,9 @@ const submitBooking = () => {
 // 查看报告模态框
 const showReportModal = ref(false)
 const selectedReportId = ref<string | null>(null)
+const showComparisonModal = ref(false)
 
-// 体检报告数据
+// 体检报告数据（包含指标数据）
 const medicalReports = ref([
   {
     id: 'report001',
@@ -6086,7 +6469,13 @@ const medicalReports = ref([
     type: 'blood',
     date: '2026-03-15',
     uploadDate: '2026-03-15 14:30',
-    fileSize: '2.3 MB'
+    fileSize: '2.3 MB',
+    indicators: {
+      '白细胞计数': { value: 6.5, unit: '10^9/L', reference: '4-10' },
+      '红细胞计数': { value: 4.8, unit: '10^12/L', reference: '4-5.5' },
+      '血红蛋白': { value: 145, unit: 'g/L', reference: '120-160' },
+      '血小板计数': { value: 220, unit: '10^9/L', reference: '100-300' }
+    }
   },
   {
     id: 'report002',
@@ -6094,7 +6483,55 @@ const medicalReports = ref([
     type: 'biochemistry',
     date: '2026-03-10',
     uploadDate: '2026-03-10 10:15',
-    fileSize: '1.8 MB'
+    fileSize: '1.8 MB',
+    indicators: {
+      '空腹血糖': { value: 5.8, unit: 'mmol/L', reference: '3.9-6.1' },
+      '总胆固醇': { value: 5.2, unit: 'mmol/L', reference: '<5.2' },
+      '甘油三酯': { value: 1.8, unit: 'mmol/L', reference: '<1.7' },
+      '尿酸': { value: 380, unit: 'μmol/L', reference: '200-420' }
+    }
+  },
+  {
+    id: 'report003',
+    name: '血常规报告',
+    type: 'blood',
+    date: '2026-02-20',
+    uploadDate: '2026-02-20 11:00',
+    fileSize: '2.1 MB',
+    indicators: {
+      '白细胞计数': { value: 7.2, unit: '10^9/L', reference: '4-10' },
+      '红细胞计数': { value: 4.6, unit: '10^12/L', reference: '4-5.5' },
+      '血红蛋白': { value: 138, unit: 'g/L', reference: '120-160' },
+      '血小板计数': { value: 205, unit: '10^9/L', reference: '100-300' }
+    }
+  },
+  {
+    id: 'report004',
+    name: '生化指标报告',
+    type: 'biochemistry',
+    date: '2026-02-15',
+    uploadDate: '2026-02-15 09:30',
+    fileSize: '1.9 MB',
+    indicators: {
+      '空腹血糖': { value: 6.4, unit: 'mmol/L', reference: '3.9-6.1' },
+      '总胆固醇': { value: 5.8, unit: 'mmol/L', reference: '<5.2' },
+      '甘油三酯': { value: 2.3, unit: 'mmol/L', reference: '<1.7' },
+      '尿酸': { value: 415, unit: 'μmol/L', reference: '200-420' }
+    }
+  },
+  {
+    id: 'report005',
+    name: '血常规报告',
+    type: 'blood',
+    date: '2026-01-18',
+    uploadDate: '2026-01-18 15:20',
+    fileSize: '2.0 MB',
+    indicators: {
+      '白细胞计数': { value: 6.8, unit: '10^9/L', reference: '4-10' },
+      '红细胞计数': { value: 4.5, unit: '10^12/L', reference: '4-5.5' },
+      '血红蛋白': { value: 132, unit: 'g/L', reference: '120-160' },
+      '血小板计数': { value: 198, unit: '10^9/L', reference: '100-300' }
+    }
   },
   {
     id: 'report003',
@@ -6162,15 +6599,18 @@ const handleReportUpload = (event: Event) => {
   const files = target.files
   if (!files || files.length === 0) return
 
-  // TODO: 实际应该上传到服务器
+  // TODO: 实际应该上传到服务器并解析PDF提取指标数据
   Array.from(files).forEach((file, index) => {
     const newReport = {
       id: `report${Date.now()}-${index}`,
       name: file.name.replace('.pdf', ''),
-      type: 'other',
+      type: 'other' as const,
       date: new Date().toISOString().split('T')[0],
       uploadDate: new Date().toLocaleString('zh-CN'),
-      fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`
+      fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+      indicators: {
+        '示例指标': { value: 100, unit: '单位', reference: '参考范围' }
+      }
     }
     medicalReports.value.unshift(newReport)
   })
@@ -6197,6 +6637,105 @@ const deleteReport = () => {
     toastRef.value?.success('报告已删除')
   }
 }
+
+// 对比相关状态和函数
+const selectedComparisonReports = ref<string[]>([])
+const comparisonResult = reactive({
+  title: '',
+  data: [] as any[]
+})
+
+// 可用于对比的报告列表（只显示相同类型的报告）
+const comparisonReports = computed(() => {
+  if (!selectedReport.value) return []
+  return medicalReports.value.filter(r => r.type === selectedReport.value!.type)
+})
+
+// 打开对比弹窗
+const openComparisonModal = () => {
+  if (!selectedReport.value) return
+  // 默认选中当前报告和同类型的其他报告
+  selectedComparisonReports.value = [selectedReport.value.id]
+  comparisonResult.title = ''
+  comparisonResult.data = []
+  showComparisonModal.value = true
+}
+
+// 切换报告选择状态
+const toggleComparisonReport = (reportId: string) => {
+  const index = selectedComparisonReports.value.indexOf(reportId)
+  if (index > -1) {
+    // 不能取消选择最后一个
+    if (selectedComparisonReports.value.length > 1) {
+      selectedComparisonReports.value.splice(index, 1)
+    }
+  } else {
+    // 最多选择3份
+    if (selectedComparisonReports.value.length < 3) {
+      selectedComparisonReports.value.push(reportId)
+    } else {
+      toastRef.value?.warning('最多只能选择3份报告进行对比')
+    }
+  }
+}
+
+// 执行对比
+const compareReports = () => {
+  if (selectedComparisonReports.value.length < 2) {
+    toastRef.value?.warning('请至少选择2份报告进行对比')
+    return
+  }
+
+  const reports = medicalReports.value.filter(r => selectedComparisonReports.value.includes(r.id))
+  // 按日期排序
+  reports.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+
+  comparisonResult.title = `${reports[0].name} - ${reports.map(r => r.date).join(' vs ')}`
+
+  // 获取所有指标
+  const allIndicators = Object.keys(reports[0].indicators || {})
+
+  comparisonResult.data = allIndicators.map(indicatorName => {
+    const values = reports.map(report => {
+      const indicator = report.indicators![indicatorName]
+      const prevValue = reports.find(r => r.id === report.id && reports.indexOf(r) > 0)?.indicators![indicatorName]?.value
+
+      let change = 0
+      let trend: 'up' | 'down' | 'stable' = 'stable'
+      let percent = 50
+
+      if (prevValue) {
+        change = ((indicator.value - prevValue) / prevValue) * 100
+        if (Math.abs(change) > 5) {
+          trend = change > 0 ? 'up' : 'down'
+        }
+      }
+
+      // 计算百分比（用于进度条）
+      const maxValue = Math.max(...reports.map(r => r.indicators![indicatorName]?.value || 0))
+      percent = (indicator.value / maxValue) * 100
+
+      return {
+        date: report.date,
+        value: indicator.value,
+        unit: indicator.unit,
+        reference: indicator.reference,
+        change,
+        trend,
+        percent
+      }
+    })
+
+    return {
+      name: indicatorName,
+      reference: values[0].reference,
+      values
+    }
+  })
+
+  toastRef.value?.success('对比完成！')
+}
+
 
 // 分配教练/医生相关方法
 const openAssignCoachModal = () => {
