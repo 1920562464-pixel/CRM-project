@@ -30,6 +30,13 @@
       </div>
       <div class="flex items-center gap-1">
         <button
+          @click="$emit('preview')"
+          class="p-1.5 hover:bg-slate-100 rounded"
+          title="预览"
+        >
+          <Eye :size="14" class="text-slate-500" />
+        </button>
+        <button
           @click="$emit('toggleStar')"
           class="p-1.5 hover:bg-slate-100 rounded"
           title="收藏"
@@ -92,6 +99,7 @@ defineEmits<{
   toggleStar: []
   share: []
   delete: []
+  preview: []
 }>()
 
 const getFileIcon = (type: FileType) => {

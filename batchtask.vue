@@ -150,27 +150,39 @@
         </div>
 
         <!-- 阻碍记录横幅 -->
-        <div v-if="obstacles.length > 0" class="space-y-3 mb-6">
-          <div v-for="obs in obstacles" :key="obs.id" class="bg-amber-50 border border-amber-100 rounded-xl p-4 flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-4">
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-500">
-                <AlertTriangle :size="20" />
+        <div v-if="obstacles.length > 0" class="mb-6">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-slate-800 flex items-center gap-2">
+              <AlertTriangle :size="18" class="text-amber-500" />
+              阻碍记录
+              <span class="text-xs font-normal text-slate-500">{{ obstacles.length }} 条</span>
+            </h3>
+            <router-link to="/obstacle-identification" class="text-xs text-indigo-500 cursor-pointer hover:text-indigo-700 font-medium bg-indigo-50 px-3 py-1.5 rounded-md transition-all hover:bg-indigo-100">
+              查看全部 →
+            </router-link>
+          </div>
+          <div class="space-y-3">
+            <div v-for="obs in obstacles" :key="obs.id" class="bg-amber-50 border border-amber-100 rounded-xl p-4 flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-4">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-500">
+                  <AlertTriangle :size="20" />
+                </div>
+                <div>
+                  <h4 class="font-bold text-amber-700 flex items-center gap-2">
+                    {{ obs.type }}
+                    <span class="text-[10px] font-normal text-amber-600 bg-amber-100/50 px-1.5 py-0.5 rounded border border-amber-200/50">{{ obs.time }}</span>
+                  </h4>
+                  <p class="text-sm text-amber-600 mt-0.5">患者反馈：{{ obs.desc }}</p>
+                </div>
               </div>
-              <div>
-                <h4 class="font-bold text-amber-700 flex items-center gap-2">
-                  {{ obs.type }}
-                  <span class="text-[10px] font-normal text-amber-600 bg-amber-100/50 px-1.5 py-0.5 rounded border border-amber-200/50">{{ obs.time }}</span>
-                </h4>
-                <p class="text-sm text-amber-600 mt-0.5">患者反馈：{{ obs.desc }}</p>
+              <div class="flex items-center gap-3">
+                <button
+                  @click="handleResolveObstacle(obs.id)"
+                  class="px-4 py-1.5 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 shadow-sm active:scale-95 transition-all"
+                >
+                  跟进处理
+                </button>
               </div>
-            </div>
-            <div class="flex items-center gap-3">
-              <button 
-                @click="handleResolveObstacle(obs.id)"
-                class="px-4 py-1.5 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 shadow-sm active:scale-95 transition-all"
-              >
-                跟进处理
-              </button>
             </div>
           </div>
         </div>

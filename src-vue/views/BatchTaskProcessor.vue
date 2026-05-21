@@ -1222,6 +1222,48 @@
                       </div>
                     </div>
 
+                    <!-- 排便记录 -->
+                    <div class="bg-gradient-to-r from-lime-50 to-green-50 rounded-lg p-3 border border-lime-100">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                          <div class="w-7 h-7 rounded-lg bg-lime-500 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                          </div>
+                          <div>
+                            <p class="text-xs font-bold text-lime-800">排便记录</p>
+                            <p class="text-[10px] text-lime-600">每日1次 · 记录排便情况</p>
+                          </div>
+                        </div>
+                        <span class="text-[10px] font-medium text-lime-700 bg-lime-100 px-2 py-0.5 rounded-full">{{ bowelRecordToday?.status || '未记录' }}</span>
+                      </div>
+                      <!-- 排便情况录入 -->
+                      <div class="mt-2 pt-2 border-t border-lime-100">
+                        <div class="flex flex-wrap gap-1.5">
+                          <button
+                            v-for="option in bowelOptions"
+                            :key="option.value"
+                            @click="recordBowel(option.value)"
+                            :class="[
+                              'px-2.5 py-1 text-[10px] font-medium rounded-full transition-all border',
+                              bowelRecordToday?.status === option.value
+                                ? 'bg-lime-500 text-white border-lime-500'
+                                : 'bg-white text-lime-700 border-lime-200 hover:border-lime-400'
+                            ]"
+                          >
+                            {{ option.label }}
+                          </button>
+                        </div>
+                        <div v-if="bowelRecordToday?.status" class="mt-2">
+                          <textarea
+                            v-model="bowelNote"
+                            placeholder="补充备注（可选）..."
+                            rows="2"
+                            class="w-full px-2 py-1.5 text-[11px] rounded-lg border border-lime-200 resize-none focus:outline-none focus:ring-1 focus:ring-lime-400 bg-white"
+                          ></textarea>
+                        </div>
+                      </div>
+                    </div>
+
                     <!-- 运动打卡 -->
                     <div class="bg-gradient-to-r from-rose-50 to-pink-50 rounded-lg p-3 border border-rose-100">
                       <div class="flex items-center gap-2">
@@ -2486,8 +2528,8 @@
             <div class="p-3 rounded-lg" style="background: var(--fill-light);">
               <textarea
                 v-model="newNote"
-                placeholder="添加新备注..."
-                rows="3"
+                placeholder="添加新备注（支持多行输入）..."
+                rows="5"
                 class="w-full px-3 py-2 text-sm rounded-lg border resize-none focus:outline-none focus:ring-2"
                 style="border-color: var(--border); background: var(--background); color: var(--text-primary);"
               ></textarea>
@@ -2536,7 +2578,7 @@
                 <div v-if="editingNoteId === note.id">
                   <textarea
                     v-model="editingNoteContent"
-                    rows="3"
+                    rows="5"
                     class="w-full px-3 py-2 text-sm rounded-lg border resize-none focus:outline-none focus:ring-2"
                     style="border-color: var(--border); background: var(--fill-light); color: var(--text-primary);"
                   ></textarea>
@@ -2559,7 +2601,7 @@
                 </div>
 
                 <!-- 查看模式 -->
-                <p v-else class="text-sm leading-relaxed" style="color: var(--text-regular);">
+                <p v-else class="text-sm leading-relaxed" style="color: var(--text-regular); white-space: pre-line;">
                   {{ note.content }}
                 </p>
               </div>
@@ -3879,6 +3921,32 @@ const showNotesSidebar = ref(false)
 
 // 日程列表展开状态
 const showScheduleList = ref(false)
+
+// 排便记录
+const bowelOptions = [
+  { label: '正常', value: 'normal' },
+  { label: '便秘', value: 'constipation' },
+  { label: '腹泻', value: 'diarrhea' },
+  { label: '未排便', value: 'none' }
+]
+
+const bowelNote = ref('')
+const bowelRecordsMap = ref<{ [key: string]: { status: string; note: string; time: string } }>({})
+
+const bowelRecordToday = computed(() => {
+  const key = `${selectedUser.value}_${new Date().toISOString().slice(0, 10)}`
+  return bowelRecordsMap.value[key] || null
+})
+
+const recordBowel = (status: string) => {
+  if (!selectedUser.value) return
+  const key = `${selectedUser.value}_${new Date().toISOString().slice(0, 10)}`
+  bowelRecordsMap.value[key] = {
+    status,
+    note: bowelNote.value,
+    time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+  }
+}
 
 // 任务详情模态框状态
 const showTaskDetailModal = ref(false)

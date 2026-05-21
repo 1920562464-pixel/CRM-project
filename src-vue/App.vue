@@ -876,7 +876,8 @@ const menuItems = computed(() => {
       title: '客情管理',
       items: [
         { id: 'sales-monitor', label: '大屏监控', icon: Monitor, path: '/sales-monitor' },
-        { id: 'lead-management', label: '客情概览', icon: Briefcase, path: '/lead-management' }
+        { id: 'lead-management', label: '客情概览', icon: Briefcase, path: '/lead-management' },
+        { id: 'coach-admin-dashboard', label: '教练管理员看板', icon: Users, path: '/coach-admin-dashboard' }
       ]
     },
     {

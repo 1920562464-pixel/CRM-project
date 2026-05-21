@@ -121,6 +121,9 @@
                     <div>
                       <p class="font-medium text-slate-800">{{ user.name }}</p>
                       <p class="text-xs text-slate-500">{{ user.email }}</p>
+                      <p v-if="user.phone" class="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                        <Phone :size="10" /> {{ user.phone }}
+                      </p>
                     </div>
                   </div>
                 </td>
@@ -511,6 +514,10 @@
               <label class="block text-sm font-medium text-slate-700 mb-2">邮箱 *</label>
               <input v-model="userForm.email" type="email" placeholder="请输入邮箱" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">手机号 *</label>
+              <input v-model="userForm.phone" type="tel" placeholder="请输入手机号" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-slate-700 mb-2">角色</label>
@@ -634,7 +641,8 @@ import {
   MoreVertical,
   Check,
   Lock,
-  Unlock
+  Unlock,
+  Phone
 } from 'lucide-vue-next'
 import { useToast } from '../composables/useToast'
 import EmployeeManagement from '../components/EmployeeManagement.vue'
@@ -645,6 +653,7 @@ interface User {
   id: string
   name: string
   email: string
+  phone: string
   role: string
   department: string
   status: 'active' | 'inactive'
@@ -751,6 +760,7 @@ const genericDialogTitle = ref('')
 const userForm = ref({
   name: '',
   email: '',
+  phone: '',
   role: '',
   department: '',
   status: 'active' as 'active' | 'inactive'
@@ -780,12 +790,12 @@ const rolePermissionForm = ref<RoleConfig['permissions']>({
 
 // Mock data
 const users = ref<User[]>([
-  { id: '1', name: '张三', email: 'zhangsan@example.com', role: '管理员', department: '技术', status: 'active', lastLogin: '2024-01-15 14:30', avatar: 'ZS' },
-  { id: '2', name: '李四', email: 'lisi@example.com', role: '教练', department: '教练', status: 'active', lastLogin: '2024-01-15 10:20', avatar: 'LS' },
-  { id: '3', name: '王五', email: 'wangwu@example.com', role: '医生', department: '医疗', status: 'active', lastLogin: '2024-01-14 16:45', avatar: 'WW' },
-  { id: '4', name: '赵六', email: 'zhaoliu@example.com', role: '财务', department: '财务', status: 'active', lastLogin: '2024-01-10 09:15', avatar: 'ZL' },
-  { id: '5', name: '孙七', email: 'sunqi@example.com', role: '顾问', department: '销售', status: 'active', lastLogin: '2024-01-12 11:00', avatar: 'SQ' },
-  { id: '6', name: '周八', email: 'zhouba@example.com', role: '前台', department: '前台', status: 'active', lastLogin: '2024-01-13 15:30', avatar: 'ZB' }
+  { id: '1', name: '张三', email: 'zhangsan@example.com', phone: '13800138001', role: '管理员', department: '技术', status: 'active', lastLogin: '2024-01-15 14:30', avatar: 'ZS' },
+  { id: '2', name: '李四', email: 'lisi@example.com', phone: '13800138002', role: '教练', department: '教练', status: 'active', lastLogin: '2024-01-15 10:20', avatar: 'LS' },
+  { id: '3', name: '王五', email: 'wangwu@example.com', phone: '13800138003', role: '医生', department: '医疗', status: 'active', lastLogin: '2024-01-14 16:45', avatar: 'WW' },
+  { id: '4', name: '赵六', email: 'zhaoliu@example.com', phone: '13800138004', role: '财务', department: '财务', status: 'active', lastLogin: '2024-01-10 09:15', avatar: 'ZL' },
+  { id: '5', name: '孙七', email: 'sunqi@example.com', phone: '13800138005', role: '顾问', department: '销售', status: 'active', lastLogin: '2024-01-12 11:00', avatar: 'SQ' },
+  { id: '6', name: '周八', email: 'zhouba@example.com', phone: '13800138006', role: '前台', department: '前台', status: 'active', lastLogin: '2024-01-13 15:30', avatar: 'ZB' }
 ])
 // 使用统一的角色配置
 const roles = ref<Role[]>(
@@ -925,7 +935,7 @@ const totalPermissionsCount = computed(() => {
 // Methods
 const openAddUserDialog = () => {
   editingUser.value = null
-  userForm.value = { name: '', email: '', role: '', department: '', status: 'active' }
+  userForm.value = { name: '', email: '', phone: '', role: '', department: '', status: 'active' }
   showUserDialog.value = true
 }
 

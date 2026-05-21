@@ -95,11 +95,11 @@
         </div>
       </div>
 
-      <!-- Card 2: Allocation -->
+      <!-- Card 2: Obstacles -->
       <div
-        @click="switchView('allocation')"
+        @click="switchView('obstacles')"
         class="cursor-pointer transition-all duration-300 p-4 rounded-xl border shadow-sm relative overflow-hidden group hover:shadow-xl hover:scale-[1.03] hover:-translate-y-1"
-        :style="activeView === 'allocation' ? {
+        :style="activeView === 'obstacles' ? {
           background: 'linear-gradient(to bottom right, #f97316, #ef4444)',
           border: 'transparent',
           boxShadow: '0 0 0 2px #f97316, 0 0 0 4px white, 0 10px 25px rgba(249, 115, 22, 0.25)'
@@ -109,39 +109,40 @@
         }"
       >
         <!-- 背景装饰 -->
-        <div v-if="activeView === 'allocation'" class="absolute inset-0 opacity-10">
+        <div v-if="activeView === 'obstacles'" class="absolute inset-0 opacity-10">
           <div class="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-1/2 translate-x-1/2"></div>
         </div>
 
         <div class="relative flex items-center justify-between mb-2">
-          <span class="text-xs font-medium" :style="{ color: activeView === 'allocation' ? 'rgba(255,255,255,0.9)' : 'var(--text-secondary)' }">待分配用户</span>
-          <div class="p-1.5 rounded-lg" :style="activeView === 'allocation' ? {
+          <span class="text-xs font-medium" :style="{ color: activeView === 'obstacles' ? 'rgba(255,255,255,0.9)' : 'var(--text-secondary)' }">阻碍记录</span>
+          <div class="p-1.5 rounded-lg" :style="activeView === 'obstacles' ? {
             background: 'rgba(255,255,255,0.2)',
             color: 'white'
           } : {
             background: '#ffedd5',
             color: '#f97316'
           }">
-            <UserPlus :size="16" />
+            <AlertTriangle :size="16" />
           </div>
         </div>
-        <div class="relative text-2xl font-bold mb-1" :style="{ color: activeView === 'allocation' ? 'white' : 'var(--text-primary)' }">
-          15 <span class="text-xs font-normal" :style="{ color: activeView === 'allocation' ? 'rgba(255,255,255,0.7)' : 'var(--text-disabled)' }">人</span>
+        <div class="relative text-2xl font-bold mb-1" :style="{ color: activeView === 'obstacles' ? 'white' : 'var(--text-primary)' }">
+          442 <span class="text-xs font-normal" :style="{ color: activeView === 'obstacles' ? 'rgba(255,255,255,0.7)' : 'var(--text-disabled)' }">条</span>
         </div>
         <div class="relative flex items-center gap-2">
-          <div class="text-xs px-2 py-0.5 rounded backdrop-blur-sm" :style="activeView === 'allocation' ? {
+          <div class="text-xs px-2 py-0.5 rounded backdrop-blur-sm" :style="activeView === 'obstacles' ? {
             background: 'rgba(255,255,255,0.2)',
             color: 'white'
           } : {
             background: '#fee2e2',
             color: '#ef4444'
           }">
-            3人超时
+            128条未解决
           </div>
-          <button
-            @click.stop="openBatchAssignModal"
+          <router-link
+            to="/obstacle-identification"
+            @click.stop
             class="text-[10px] px-2 py-0.5 rounded font-medium transition-all hover:scale-105"
-            :style="activeView === 'allocation' ? {
+            :style="activeView === 'obstacles' ? {
               background: 'rgba(255,255,255,0.3)',
               color: 'white'
             } : {
@@ -149,8 +150,8 @@
               color: 'white'
             }"
           >
-            批量分配
-          </button>
+            查看全部
+          </router-link>
         </div>
       </div>
 
@@ -312,29 +313,29 @@
         <div class="p-4 flex justify-between items-center" :style="{ borderBottom: '1px solid var(--border-light)' }">
           <h3 class="font-bold flex items-center gap-2" :style="{ color: 'var(--text-primary)' }">
             <PhoneCall v-if="activeView === 'reservation'" :size="18" :style="{ color: isBlackGold ? '#D4A84A' : '#4f46e5' }" />
-            <UserPlus v-if="activeView === 'allocation'" :size="18" style="color: #f97316;" />
+            <AlertTriangle v-if="activeView === 'obstacles'" :size="18" style="color: #f97316;" />
             <Users v-if="activeView === 'coaches'" :size="18" style="color: #10b981;" />
             <AlertTriangle v-if="activeView === 'alerts'" :size="18" style="color: #ef4444;" />
             <Award v-if="activeView === 'points'" :size="18" style="color: #f59e0b;" />
             <span v-if="activeView === 'reservation'">首通电话预约列表</span>
-            <span v-if="activeView === 'allocation'">待分配用户列表</span>
+            <span v-if="activeView === 'obstacles'">阻碍记录列表</span>
             <span v-if="activeView === 'coaches'">教练在线状态详情</span>
             <span v-if="activeView === 'alerts'">预警中心</span>
             <span v-if="activeView === 'points'">积分排行榜</span>
           </h3>
           <div class="flex items-center gap-3">
-            <!-- 待分配用户视图的教练人工分配按钮 -->
-            <button
-              v-if="activeView === 'allocation'"
-              @click="openBatchAssignModal"
+            <!-- 阻碍记录视图的操作按钮 -->
+            <router-link
+              v-if="activeView === 'obstacles'"
+              to="/obstacle-identification"
               class="flex items-center gap-2 px-5 py-2.5 text-white font-bold rounded-lg shadow-md transition-all hover:shadow-lg hover:scale-105"
               :style="{
                 background: 'linear-gradient(135deg, #facc15 0%, #eab308 100%)'
               }"
             >
-              <UserPlus :size="18" />
-              教练人工分配
-            </button>
+              <AlertTriangle :size="18" />
+              查看全部记录
+            </router-link>
 
             <!-- 预警中心子标签 -->
             <div v-if="activeView === 'alerts'" class="flex p-1 rounded-lg" :style="{ background: 'var(--fill-light)' }">
@@ -966,24 +967,18 @@
           <!-- 其他视图的表格内容 -->
           <div v-else class="p-4">
             <!-- 统计信息栏 -->
-            <div v-if="activeView === 'allocation'" class="mb-4 flex items-center justify-between">
+            <div v-if="activeView === 'obstacles'" class="mb-4 flex items-center justify-between">
               <div class="flex items-center gap-2 text-sm">
                 <span class="font-medium" :style="{ color: 'var(--text-primary)' }">
-                  共 <span class="text-orange-500 font-bold">{{ allocationList.length }}</span> 位等待分配用户
-                </span>
-                <span v-if="searchQuery" class="text-slate-400">
-                  ，筛选结果 <span class="font-medium">{{ filteredAllocationList.length }}</span> 位
+                  共 <span class="text-orange-500 font-bold">442</span> 条阻碍记录
                 </span>
               </div>
               <div class="flex items-center gap-2 text-xs">
                 <span class="px-2 py-1 bg-red-100 text-red-600 rounded">
-                  {{ allocationList.filter(u => u.isOverdue).length }} 超时
-                </span>
-                <span class="px-2 py-1 bg-blue-100 text-blue-600 rounded">
-                  {{ allocationList.filter(u => u.tags.includes('vip')).length }} VIP
+                  128 未解决
                 </span>
                 <span class="px-2 py-1 bg-green-100 text-green-600 rounded">
-                  {{ allocationList.filter(u => u.tags.includes('老客户推荐')).length }} 转介绍
+                  314 已解决
                 </span>
               </div>
             </div>
@@ -1005,30 +1000,19 @@
 
                 <!-- User Tables Header -->
                 <template v-else>
-                  <th v-if="activeView === 'allocation'" class="px-4 py-3 w-14 text-center">
-                    <input
-                      type="checkbox"
-                      :checked="isAllFilteredSelected"
-                      :indeterminate="isSomeFilteredSelected && !isAllFilteredSelected"
-                      @change="toggleSelectAll"
-                      class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                    />
-                  </th>
-                  <th class="px-6 py-3 w-64">用户资料</th>
+                  <th class="px-6 py-3 w-64">阻碍信息</th>
                   <th v-if="activeView === 'reservation'" class="px-6 py-3 w-40">预约时间</th>
                   <th v-if="activeView === 'reservation'" class="px-6 py-3 w-32">跟进教练</th>
-                  <th v-if="activeView === 'allocation'" class="px-6 py-3 w-28">等待时长</th>
-                  <th v-if="activeView === 'allocation'" class="px-6 py-3 w-36">来源/偏好</th>
+                  <th v-if="activeView === 'obstacles'" class="px-6 py-3 w-28">状态</th>
+                  <th v-if="activeView === 'obstacles'" class="px-6 py-3 w-36">类型</th>
                   <th class="px-6 py-3 w-32 text-right">
-                    <div v-if="activeView === 'allocation' && selectedUsersForBatch.length > 0" class="flex items-center justify-end gap-2">
-                      <span class="text-xs text-slate-500">已选 {{ selectedUsersForBatch.length }} 人</span>
-                      <button
-                        @click="openBatchAssignModal"
-                        class="px-3 py-1.5 bg-yellow-400 hover:bg-yellow-500 text-white text-xs font-bold rounded-lg shadow-sm transition-all hover:scale-105"
-                      >
-                        批量分配
-                      </button>
-                    </div>
+                    <router-link
+                      v-if="activeView === 'obstacles'"
+                      to="/obstacle-identification"
+                      class="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                    >
+                      查看全部 →
+                    </router-link>
                     <span v-else>操作</span>
                   </th>
                 </template>
@@ -1129,58 +1113,57 @@
                 </tr>
               </template>
 
-              <!-- Allocation Rows -->
+              <!-- Obstacles Rows -->
               <template v-else>
-                <tr v-for="item in filteredAllocationList" :key="item.id" class="hover:bg-slate-50 group">
-                  <td class="px-4 py-4 text-center">
-                    <input
-                      type="checkbox"
-                      v-model="selectedUsersForBatch"
-                      :value="item.id"
-                      class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                    />
-                  </td>
+                <tr v-for="item in obstaclesList" :key="item.id" class="hover:bg-slate-50 group">
                   <td class="px-6 py-4">
-                    <div class="flex items-center gap-3">
-                      <img :src="item.avatar" class="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
-                      <div class="min-w-0 flex-1">
-                        <div class="font-bold text-slate-800 truncate">{{ item.name }}</div>
-                        <div class="flex gap-1 mt-1 flex-wrap">
-                          <span
-                            v-for="(t, i) in item.tags"
-                            :key="i"
-                            class="text-[10px] bg-indigo-50 text-indigo-600 px-1 rounded whitespace-nowrap"
-                          >
-                            {{ t }}
-                          </span>
+                    <div class="flex items-start gap-3">
+                      <div class="flex-shrink-0 mt-1">
+                        <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <div class="font-medium text-slate-800 mb-1">{{ item.content }}</div>
+                        <div class="flex items-center gap-2 text-sm text-slate-500">
+                          <span>{{ item.userName }}</span>
+                          <span class="text-slate-300">|</span>
+                          <span>{{ item.time }}</span>
                         </div>
                       </div>
                     </div>
                   </td>
                   <td class="px-6 py-4">
-                    <span :class="`font-bold ${item.isOverdue ? 'text-red-500' : 'text-orange-500'}`">{{ item.waitTime }}</span>
-                    <span v-if="item.isOverdue" class="text-xs text-red-400 block">已超时</span>
+                    <span
+                      :class="`px-2.5 py-1 rounded-full text-xs font-medium ${
+                        item.status === '未解决'
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-green-100 text-green-700'
+                      }`"
+                    >
+                      {{ item.status }}
+                    </span>
                   </td>
                   <td class="px-6 py-4">
-                    <div class="text-slate-600">{{ item.prefer }}</div>
-                    <div class="text-xs text-slate-400">{{ item.source }}</div>
+                    <span class="text-slate-600">{{ item.type }}</span>
                   </td>
                   <td class="px-6 py-4 text-right">
-                    <button
-                      @click="handleSingleAssign(item.id)"
-                      class="px-3 py-1.5 bg-yellow-400 hover:bg-yellow-500 text-white text-xs font-bold rounded-lg shadow-sm transition-all hover:scale-105"
+                    <a
+                      href="#"
+                      @click.prevent="viewObstacleDetails(item.id)"
+                      class="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
                     >
-                      立即分配
-                    </button>
+                      查看详情
+                    </a>
                   </td>
                 </tr>
 
                 <!-- 空状态 -->
-                <tr v-if="filteredAllocationList.length === 0">
-                  <td colspan="5" class="px-6 py-12 text-center text-slate-400">
+                <tr v-if="obstaclesList.length === 0">
+                  <td colspan="4" class="px-6 py-12 text-center text-slate-400">
                     <Users :size="48" class="mx-auto mb-4 opacity-50" />
-                    <p class="font-medium">暂无等待分配的用户</p>
-                    <p class="text-sm mt-1">{{ searchQuery ? '尝试其他搜索关键词' : '当前没有待分配的用户' }}</p>
+                    <p class="font-medium">暂无阻碍记录</p>
+                    <p class="text-sm mt-1">{{ searchQuery ? '尝试其他搜索关键词' : '当前没有阻碍记录' }}</p>
                   </td>
                 </tr>
               </template>
@@ -1534,7 +1517,7 @@ const emit = defineEmits<{
 
 // State
 const activeTab = ref('全部')
-const activeView = ref<'reservation' | 'allocation' | 'coaches' | 'alerts' | 'points'>('reservation')
+const activeView = ref<'reservation' | 'obstacles' | 'coaches' | 'alerts' | 'points'>('reservation')
 const alertSubTab = ref<'current' | 'predictive'>('current') // 预警中心子标签
 
 // 路由
@@ -1549,15 +1532,15 @@ watch(() => route.query.tab, (newTab) => {
     activeView.value = 'points'
   } else if (newTab === 'reservation') {
     activeView.value = 'reservation'
-  } else if (newTab === 'allocation') {
-    activeView.value = 'allocation'
+  } else if (newTab === 'obstacles') {
+    activeView.value = 'obstacles'
   } else if (newTab === 'coaches') {
     activeView.value = 'coaches'
   }
 }, { immediate: true })
 
 // 切换 tab 的方法
-const switchView = (view: 'reservation' | 'allocation' | 'coaches' | 'alerts' | 'points') => {
+const switchView = (view: 'reservation' | 'obstacles' | 'coaches' | 'alerts' | 'points') => {
   activeView.value = view
   // 更新路由 query 参数
   router.push({ path: '/sales-monitor', query: { tab: view } })
@@ -2149,6 +2132,50 @@ const coachList = ref([
   { id: 2, name: '张教练 (资深)', type: '产后/瑜伽', load: 8, maxLoad: 15, color: 'bg-emerald-100 text-emerald-600', activeUsers: 5, reportUsers: 3 },
   { id: 3, name: '王教练', type: '康复训练', load: 5, maxLoad: 15, color: 'bg-emerald-100 text-emerald-600', activeUsers: 2, reportUsers: 3 },
   { id: 4, name: '赵教练', type: '增肌', load: 15, maxLoad: 15, color: 'bg-red-100 text-red-600', activeUsers: 10, reportUsers: 5 },
+])
+
+// 阻碍记录列表数据
+const obstaclesList = ref([
+  {
+    id: 'o1',
+    type: '饮食打卡阻碍',
+    content: '喝饮料喝多少合适',
+    status: 'unresolved',
+    userId: 'U001',
+    userName: '张三',
+    time: '13分钟前',
+    priority: 'high'
+  },
+  {
+    id: 'o2',
+    type: '运动打卡阻碍',
+    content: '工作太忙，没有时间运动',
+    status: 'unresolved',
+    userId: 'U002',
+    userName: '李四',
+    time: '1小时前',
+    priority: 'medium'
+  },
+  {
+    id: 'o3',
+    type: '睡眠记录阻碍',
+    content: '失眠导致无法按时记录睡眠时间',
+    status: 'unresolved',
+    userId: 'U003',
+    userName: '王五',
+    time: '4小时前',
+    priority: 'low'
+  },
+  {
+    id: 'o4',
+    type: '饮食打卡阻碍',
+    content: '不清楚食物的热量计算方法',
+    status: 'resolved',
+    userId: 'U004',
+    userName: '赵六',
+    time: '昨天',
+    priority: 'medium'
+  }
 ])
 
 // 预警列表数据

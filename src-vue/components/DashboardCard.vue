@@ -60,7 +60,8 @@ const props = withDefaults(defineProps<Props>(), {
   clickAction: null
 })
 
-defineEmits<{
+// 正确的 emit 定义
+const emit = defineEmits<{
   click: [action: string]
 }>()
 

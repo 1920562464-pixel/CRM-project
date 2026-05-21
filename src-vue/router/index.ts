@@ -4,6 +4,7 @@ import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import Dashboard from '../views/Dashboard.vue'
 import DashboardNew from '../views/DashboardNew.vue'
 import CoachDashboard from '../views/CoachDashboard.vue'
+import CoachAdminDashboard from '../views/CoachAdminDashboard.vue'
 import SalesMonitor from '../views/SalesMonitor.vue'
 import ClientList from '../views/ClientList.vue'
 import ClientProfile from '../views/ClientProfile.vue'
@@ -34,7 +35,7 @@ import AssetManagement from '../views/AssetManagement.vue'
 
 // 智能辅助模块
 import AIChat from '../views/AIChat.vue'
-import KnowledgeBase from '../views/KnowledgeBase.vue'
+import KnowledgeBase from '../views/KnowledgeBaseRefactored.vue'
 
 // 系统管理
 import SystemManagement from '../views/SystemManagement.vue'
@@ -42,6 +43,9 @@ import SystemManagement from '../views/SystemManagement.vue'
 // 预警和风险预测
 import AlertCenter from '../views/AlertCenter.vue'
 import RiskPredictionCenter from '../views/RiskPredictionCenter.vue'
+
+// 阻碍识别
+import ObstacleIdentification from '../views/ObstacleIdentification.vue'
 
 // 采购管理
 import ProcurementHome from '../views/procurement/ProcurementHome.vue'
@@ -69,6 +73,11 @@ const routes: RouteRecordRaw[] = [
     path: '/coach-dashboard',
     name: 'CoachDashboard',
     component: CoachDashboard
+  },
+  {
+    path: '/coach-admin-dashboard',
+    name: 'CoachAdminDashboard',
+    component: CoachAdminDashboard
   },
   // 批量化任务处理
   {
@@ -217,6 +226,12 @@ const routes: RouteRecordRaw[] = [
     path: '/risk-prediction',
     name: 'RiskPredictionCenter',
     component: RiskPredictionCenter
+  },
+  // 阻碍识别
+  {
+    path: '/obstacle-identification',
+    name: 'ObstacleIdentification',
+    component: ObstacleIdentification
   },
   // 血糖详情页
   {

@@ -74,10 +74,15 @@
 
       <!-- 文件图标 -->
       <div
-        class="flex-shrink-0 p-2 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors self-center mb-2"
-        @dblclick="$emit('share')"
+        class="flex-shrink-0 p-2 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors self-center mb-2 relative group/icon"
+        @click="$emit('preview')"
+        title="点击预览"
       >
         <component :is="getFileIcon(file.type)" :size="28" :class="getFileIconColor(file.type)" />
+        <!-- 预览提示 -->
+        <div class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg opacity-0 group-hover/icon:opacity-100 transition-opacity">
+          <Eye :size="20" class="text-white" />
+        </div>
       </div>
 
       <!-- 文件名 -->
@@ -153,6 +158,7 @@ defineEmits<{
   move: [folderId: string | null]
   duplicate: []
   toggleLock: []
+  preview: []
 }>()
 
 const showMenu = ref(false)
