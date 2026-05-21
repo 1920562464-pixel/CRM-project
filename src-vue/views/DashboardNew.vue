@@ -35,8 +35,23 @@
     </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      <!-- 核心指标卡片 -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- 快捷操作（指标卡上方） -->
+      <div class="flex items-center gap-2">
+        <button
+          v-for="action in quickActions"
+          :key="action.id"
+          @click="handleQuickAction(action.id)"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all"
+          :class="action.disabled ? 'border-slate-200 bg-slate-50 opacity-40 cursor-not-allowed' : 'border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 cursor-pointer'"
+          :disabled="action.disabled"
+        >
+          <component :is="action.icon" :size="14" :class="action.iconColor" />
+          <span :class="action.disabled ? 'text-slate-400' : 'text-slate-600'">{{ action.label }}</span>
+        </button>
+      </div>
+
+      <!-- 核心指标卡片（教练管理员已在全宽区域展示KPI） -->
+      <div v-if="currentRole !== 'coach-admin'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <DashboardCard
           v-for="stat in currentStats"
           :key="stat.id"
@@ -53,31 +68,220 @@
         />
       </div>
 
+      <!-- 教练管理员全宽面板 -->
+      <template v-if="currentRole === 'coach-admin'">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <button v-for="tab in coachTimeTabs" :key="tab.value" @click="coachTimeFilter = tab.value"
+              :class="`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${coachTimeFilter === tab.value ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`">
+              {{ tab.label }}
+            </button>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="relative">
+              <Search :size="14" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input v-model="coachSearchQuery" placeholder="搜索教练..." class="pl-8 pr-3 py-1.5 text-xs border border-slate-200 rounded-lg w-40 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+            <button class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200">
+              <Download :size="12" /> 导出
+            </button>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <!-- 教练总数 -->
+          <div @click="handleCardClick('view-coaches-list')" class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 relative overflow-hidden cursor-pointer hover:shadow-md hover:border-indigo-300 transition-all">
+            <div class="absolute top-0 right-0 w-20 h-20 rounded-full opacity-5 -translate-y-1/2 translate-x-1/2 bg-indigo-500"></div>
+            <div class="flex items-center justify-between mb-2"><span class="text-sm text-slate-600">教练总数</span><Users :size="16" class="text-indigo-500" /></div>
+            <div class="text-3xl font-bold text-slate-900">{{ coachAdminStats.totalCoaches }}</div>
+            <div class="flex items-center gap-2 text-xs text-slate-400 mt-1"><span>在职: {{ coachAdminStats.activeCoaches }}</span><span>试用: {{ coachAdminStats.probationCoaches }}</span></div>
+            <div class="text-[10px] text-indigo-400 mt-2 flex items-center gap-0.5">查看详情 <ChevronRight :size="10" /></div>
+          </div>
+          <!-- 平均完成率 -->
+          <div @click="handleCardClick('view-completion-detail')" class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 relative overflow-hidden cursor-pointer hover:shadow-md hover:border-green-300 transition-all">
+            <div class="absolute top-0 right-0 w-20 h-20 rounded-full opacity-5 -translate-y-1/2 translate-x-1/2 bg-green-500"></div>
+            <div class="flex items-center justify-between mb-2"><span class="text-sm text-slate-600">平均完成率</span><TrendingUp :size="16" class="text-green-500" /></div>
+            <div class="text-3xl font-bold text-slate-900">{{ coachAdminStats.avgCompletionRate }}%</div>
+            <div class="flex items-center gap-1 text-xs mt-1" :class="coachAdminStats.completionTrend >= 0 ? 'text-green-600' : 'text-red-600'">
+              <TrendingUp v-if="coachAdminStats.completionTrend >= 0" :size="14" /><TrendingDown v-else :size="14" />
+              <span>{{ coachAdminStats.completionTrend >= 0 ? '+' : '' }}{{ coachAdminStats.completionTrend }}% 较上期</span>
+            </div>
+            <div class="text-[10px] text-green-400 mt-2 flex items-center gap-0.5">查看详情 <ChevronRight :size="10" /></div>
+          </div>
+          <!-- 优秀教练 -->
+          <div @click="handleCardClick('view-top-performers')" class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 relative overflow-hidden cursor-pointer hover:shadow-md hover:border-amber-300 transition-all">
+            <div class="absolute top-0 right-0 w-20 h-20 rounded-full opacity-5 -translate-y-1/2 translate-x-1/2 bg-amber-500"></div>
+            <div class="flex items-center justify-between mb-2"><span class="text-sm text-slate-600">优秀教练</span><Award :size="16" class="text-amber-500" /></div>
+            <div class="text-3xl font-bold text-slate-900">{{ coachAdminStats.topPerformers }}</div>
+            <div class="text-xs text-slate-400 mt-1">完成率 ≥ 85%</div>
+            <div class="text-[10px] text-amber-400 mt-2 flex items-center gap-0.5">查看详情 <ChevronRight :size="10" /></div>
+          </div>
+          <!-- 服务用户 -->
+          <div @click="handleCardClick('view-coach-users')" class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 relative overflow-hidden cursor-pointer hover:shadow-md hover:border-blue-300 transition-all">
+            <div class="absolute top-0 right-0 w-20 h-20 rounded-full opacity-5 -translate-y-1/2 translate-x-1/2 bg-blue-500"></div>
+            <div class="flex items-center justify-between mb-2"><span class="text-sm text-slate-600">服务用户</span><UserCheck :size="16" class="text-blue-500" /></div>
+            <div class="text-3xl font-bold text-slate-900">{{ coachAdminStats.totalUsers }}</div>
+            <div class="text-xs text-slate-400 mt-1">活跃{{ coachAdminStats.todayActiveUsers }}</div>
+            <div class="text-[10px] text-blue-400 mt-2 flex items-center gap-0.5">查看详情 <ChevronRight :size="10" /></div>
+          </div>
+          <!-- 待关注 -->
+          <div @click="handleCardClick('view-attention-needed')" class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 relative overflow-hidden cursor-pointer hover:shadow-md hover:border-red-300 transition-all">
+            <div class="absolute top-0 right-0 w-20 h-20 rounded-full opacity-5 -translate-y-1/2 translate-x-1/2 bg-red-500"></div>
+            <div class="flex items-center justify-between mb-2"><span class="text-sm text-slate-600">待关注</span><AlertTriangle :size="16" class="text-red-500" /></div>
+            <div class="text-3xl font-bold text-slate-900">{{ coachAdminStats.attentionNeeded }}</div>
+            <div class="text-xs text-slate-400 mt-1">完成率 &lt; 60%</div>
+            <div class="text-[10px] text-red-400 mt-2 flex items-center gap-0.5">查看详情 <ChevronRight :size="10" /></div>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+            <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2"><BarChart3 :size="18" class="text-indigo-600" />完成率趋势</h3>
+            <div class="h-48 flex items-end justify-between gap-2 pt-4">
+              <div v-for="(day, index) in coachTrendData" :key="index" class="flex-1 flex flex-col items-center gap-1">
+                <div class="w-full bg-indigo-100 rounded-t-sm relative" :style="{ height: Math.max(day.rate, 2) + '%' }">
+                  <div class="absolute bottom-0 left-0 right-0 rounded-t-sm" :class="day.rate >= 85 ? 'bg-indigo-500' : day.rate >= 60 ? 'bg-amber-400' : 'bg-red-400'" :style="{ height: '100%' }"></div>
+                </div>
+                <span class="text-[10px] text-slate-400">{{ day.label }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+            <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2"><PieChart :size="18" class="text-indigo-600" />任务完成分布</h3>
+            <div class="h-48 flex items-center justify-center gap-8">
+              <div class="relative w-36 h-36">
+                <svg viewBox="0 0 36 36" class="w-full h-full -rotate-90">
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e2e8f0" stroke-width="3" />
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#6366f1" stroke-width="3" stroke-dasharray="65 35" stroke-linecap="round" />
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="20 80" stroke-dashoffset="-65" stroke-linecap="round" />
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#ef4444" stroke-width="3" stroke-dasharray="15 85" stroke-dashoffset="-85" stroke-linecap="round" />
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                  <span class="text-2xl font-bold text-slate-900">{{ sortedCoachList.length }}</span>
+                  <span class="text-[10px] text-slate-400">教练</span>
+                </div>
+              </div>
+              <div class="space-y-2">
+                <div v-for="task in taskDistribution" :key="task.name">
+                  <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full" :class="task.color"></div><span class="text-xs text-slate-600">{{ task.name }}</span><span class="text-xs font-medium text-slate-900 ml-auto">{{ task.count }}</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- 教练干预看板 -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <!-- 头部 -->
+          <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="font-bold text-slate-800 flex items-center gap-2">
+              <Activity :size="18" class="text-indigo-600" />
+              教练干预概览
+            </h3>
+            <div class="flex items-center gap-3 text-xs text-slate-400">
+              <span>平均完成率 <strong class="text-slate-700">{{ coachAdminStats.avgCompletionRate }}%</strong></span>
+              <span>·</span>
+              <span>今日达标 <strong class="text-emerald-600">{{ sortedCoachList.reduce((s, c) => s + c.users.filter(u => u.todayCompleted).length, 0) }}/{{ sortedCoachList.reduce((s, c) => s + c.users.length, 0) }}</strong></span>
+            </div>
+          </div>
+
+          <!-- 教练卡片列表（紧凑模式） -->
+          <div class="divide-y divide-slate-100">
+            <div v-for="(coach, idx) in sortedCoachList" :key="coach.id">
+              <!-- 教练行（点击展开） -->
+              <div class="px-4 py-3 hover:bg-slate-50/50 transition-colors cursor-pointer flex items-center gap-4" @click="toggleCoachExpand(coach.id)">
+                <!-- 排名 -->
+                <div class="w-6 text-center">
+                  <span v-if="idx < 3" class="text-xs font-bold" :class="idx === 0 ? 'text-amber-500' : idx === 1 ? 'text-slate-400' : 'text-amber-700'">{{ idx + 1 }}</span>
+                  <span v-else class="text-xs text-slate-300">{{ idx + 1 }}</span>
+                </div>
+                <!-- 头像+信息 -->
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" :style="{ background: coach.avatarColor }">
+                  {{ coach.name.charAt(0) }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <p class="text-sm font-semibold text-slate-800">{{ coach.name }}</p>
+                    <div class="w-1.5 h-1.5 rounded-full" :class="coach.status === 'active' ? 'bg-emerald-400' : 'bg-slate-300'"></div>
+                  </div>
+                  <p class="text-[11px] text-slate-400">{{ coach.roleLabel }} · {{ coach.userCount }}个用户 · 负载 {{ coach.load }}/{{ coach.maxLoad }}</p>
+                </div>
+                <!-- 5个微型指标条 -->
+                <div class="hidden md:flex items-center gap-3 flex-shrink-0">
+                  <div class="text-center w-12">
+                    <p class="text-xs font-bold" :class="coach.users.filter(u => u.tasks.mealUploaded).length / Math.max(coach.users.length, 1) >= 0.8 ? 'text-emerald-600' : 'text-slate-500'">
+                      {{ coach.users.filter(u => u.tasks.mealUploaded).length }}/{{ coach.users.length }}
+                    </p>
+                    <p class="text-[9px] text-slate-400">餐食</p>
+                  </div>
+                  <div class="text-center w-12">
+                    <p class="text-xs font-bold" :class="coach.users.filter(u => u.tasks.caloriesOnTarget).length / Math.max(coach.users.length, 1) >= 0.8 ? 'text-blue-600' : 'text-slate-500'">
+                      {{ coach.users.filter(u => u.tasks.caloriesOnTarget).length }}/{{ coach.users.length }}
+                    </p>
+                    <p class="text-[9px] text-slate-400">热量</p>
+                  </div>
+                  <div class="text-center w-12">
+                    <p class="text-xs font-bold text-amber-600">{{ Math.round(coach.users.reduce((a, u) => a + u.tasks.habitsCompleted, 0) / Math.max(coach.users.length, 1) * 100 / Math.max(coach.users[0]?.tasks.totalHabits || 4, 1)) }}%</p>
+                    <p class="text-[9px] text-slate-400">习惯</p>
+                  </div>
+                </div>
+                <!-- 完成率进度条 -->
+                <div class="w-24 flex-shrink-0">
+                  <div class="flex items-center justify-between mb-0.5">
+                    <span class="text-[10px] text-slate-400">完成率</span>
+                    <span class="text-xs font-bold" :class="coach.completionRate >= 85 ? 'text-emerald-600' : coach.completionRate >= 60 ? 'text-amber-600' : 'text-red-500'">{{ coach.completionRate }}%</span>
+                  </div>
+                  <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all" :class="coach.completionRate >= 85 ? 'bg-emerald-500' : coach.completionRate >= 60 ? 'bg-amber-400' : 'bg-red-400'" :style="{ width: coach.completionRate + '%' }"></div>
+                  </div>
+                </div>
+                <!-- 展开箭头 -->
+                <ChevronDown :size="16" class="text-slate-300 flex-shrink-0 transition-transform" :class="expandedCoachId === coach.id ? 'rotate-180' : ''" />
+              </div>
+
+              <!-- 展开的用户列表 -->
+              <div v-if="expandedCoachId === coach.id" class="bg-slate-50/50 border-t border-slate-100 px-4 py-3">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-[11px] font-medium text-slate-500">用户完成情况</span>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600">{{ coach.users.filter(u => u.completionRate >= 85).length }} 优秀</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600">{{ coach.users.filter(u => u.completionRate >= 60 && u.completionRate < 85).length }} 良好</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-red-50 text-red-600">{{ coach.users.filter(u => u.completionRate < 60).length }} 落后</span>
+                  </div>
+                </div>
+                <div class="max-h-[240px] overflow-y-auto space-y-1">
+                  <div v-for="user in coach.users" :key="user.id" class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white transition-colors">
+                    <div class="w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0" :style="{ background: user.avatarColor }">
+                      {{ user.name.charAt(0) }}
+                    </div>
+                    <span class="text-[12px] font-medium text-slate-700 w-12 truncate">{{ user.name }}</span>
+                    <span class="text-[10px] text-slate-400 w-8">第{{ user.daysInGroup }}天</span>
+                    <!-- 微型任务状态 -->
+                    <div class="flex items-center gap-0.5">
+                      <div class="w-3.5 h-3.5 rounded flex items-center justify-center" :class="user.tasks.mealUploaded ? 'bg-emerald-100' : 'bg-slate-100'">
+                        <Check v-if="user.tasks.mealUploaded" :size="8" class="text-emerald-500" />
+                      </div>
+                      <div class="w-3.5 h-3.5 rounded flex items-center justify-center" :class="user.tasks.caloriesOnTarget ? 'bg-emerald-100' : 'bg-slate-100'">
+                        <Check v-if="user.tasks.caloriesOnTarget" :size="8" class="text-emerald-500" />
+                      </div>
+                      <span class="text-[9px] text-slate-400 ml-0.5">{{ user.tasks.habitsCompleted }}/{{ user.tasks.totalHabits }}</span>
+                    </div>
+                    <!-- 完成率条 -->
+                    <div class="flex-1 min-w-0">
+                      <div class="h-1 bg-slate-200 rounded-full overflow-hidden">
+                        <div class="h-full rounded-full" :class="user.completionRate >= 85 ? 'bg-emerald-400' : user.completionRate >= 60 ? 'bg-amber-400' : 'bg-red-400'" :style="{ width: user.completionRate + '%' }"></div>
+                      </div>
+                    </div>
+                    <span class="text-[11px] font-semibold w-8 text-right" :class="user.completionRate >= 85 ? 'text-emerald-600' : user.completionRate >= 60 ? 'text-amber-600' : 'text-red-500'">{{ user.completionRate }}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
       <!-- 主内容区域 -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- 左侧：任务列表 (2/3) -->
         <div class="lg:col-span-2 space-y-6">
-          <!-- 快捷操作 -->
-          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-            <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <Zap :size="18" class="text-indigo-600" />
-              快捷操作
-            </h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <button
-                v-for="action in quickActions"
-                :key="action.id"
-                @click="handleQuickAction(action.id)"
-                class="flex flex-col items-center gap-2 p-3 rounded-lg border transition-all hover:shadow-md"
-                :class="action.disabled ? 'border-slate-200 bg-slate-50 opacity-50 cursor-not-allowed' : 'border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 cursor-pointer'"
-                :disabled="action.disabled"
-              >
-                <component :is="action.icon" :size="20" :class="action.iconColor" />
-                <span class="text-xs font-medium" :class="action.disabled ? 'text-slate-400' : 'text-slate-700'">{{ action.label }}</span>
-              </button>
-            </div>
-          </div>
-
           <!-- 医生预约管理 -->
           <div v-if="currentRole === 'doctor'" class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
             <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
@@ -414,459 +618,6 @@
                 >
                   创建新任务
                 </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- 教练管理员视角 -->
-          <div v-if="currentRole === 'coach-admin'" class="space-y-6">
-            <!-- 筛选和搜索栏 -->
-            <div class="flex items-center justify-between">
-              <!-- 时间筛选标签 -->
-              <div class="flex items-center gap-1 p-1 bg-slate-100 rounded-lg">
-                <button
-                  v-for="tab in coachTimeTabs"
-                  :key="tab.value"
-                  @click="coachTimeFilter = tab.value"
-                  class="px-3 py-1.5 text-xs font-medium rounded-md transition-all"
-                  :class="coachTimeFilter === tab.value ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'"
-                >
-                  {{ tab.label }}
-                </button>
-              </div>
-
-              <!-- 搜索和导出 -->
-              <div class="flex items-center gap-3">
-                <div class="relative">
-                  <Search :size="16" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    v-model="coachSearchQuery"
-                    type="text"
-                    placeholder="搜索教练姓名..."
-                    class="pl-9 pr-4 py-2 rounded-lg text-sm w-48 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-                <button
-                  @click="exportCoachData"
-                  class="px-4 py-2 text-sm rounded-lg flex items-center gap-2 text-white bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700"
-                >
-                  <Download :size="16" />
-                  导出报表
-                </button>
-              </div>
-            </div>
-
-            <!-- KPI 卡片 (5个) -->
-            <div class="grid grid-cols-5 gap-4">
-              <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-20 h-20 rounded-full opacity-5 -translate-y-1/2 translate-x-1/2 bg-indigo-500"></div>
-                <div class="flex items-center justify-between mb-2">
-                  <span class="text-sm text-slate-600">教练总数</span>
-                  <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-indigo-100">
-                    <Users :size="20" class="text-indigo-600" />
-                  </div>
-                </div>
-                <div class="text-3xl font-bold text-slate-900">{{ coachAdminStats.totalCoaches }}</div>
-                <div class="flex items-center gap-2 text-xs text-slate-500 mt-1">
-                  <span>在职: {{ coachAdminStats.activeCoaches }}</span>
-                  <span>·</span>
-                  <span>试用: {{ coachAdminStats.probationCoaches }}</span>
-                </div>
-              </div>
-
-              <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-20 h-20 rounded-full opacity-5 -translate-y-1/2 translate-x-1/2 bg-green-500"></div>
-                <div class="flex items-center justify-between mb-2">
-                  <span class="text-sm text-slate-600">平均完成率</span>
-                  <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-green-100">
-                    <TrendingUp :size="20" class="text-green-600" />
-                  </div>
-                </div>
-                <div class="text-3xl font-bold text-slate-900">{{ coachAdminStats.avgCompletionRate }}%</div>
-                <div class="flex items-center gap-1 text-xs mt-1" :class="coachAdminStats.completionTrend >= 0 ? 'text-green-600' : 'text-red-600'">
-                  <TrendingUp v-if="coachAdminStats.completionTrend >= 0" :size="14" />
-                  <TrendingDown v-else :size="14" />
-                  <span>{{ coachAdminStats.completionTrend >= 0 ? '+' : '' }}{{ coachAdminStats.completionTrend }}% 较上期</span>
-                </div>
-              </div>
-
-              <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-20 h-20 rounded-full opacity-5 -translate-y-1/2 translate-x-1/2 bg-amber-500"></div>
-                <div class="flex items-center justify-between mb-2">
-                  <span class="text-sm text-slate-600">优秀教练</span>
-                  <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-amber-100">
-                    <Award :size="20" class="text-amber-600" />
-                  </div>
-                </div>
-                <div class="text-3xl font-bold text-slate-900">{{ coachAdminStats.topPerformers }}</div>
-                <div class="text-xs text-slate-500 mt-1">完成率 ≥ 85%</div>
-              </div>
-
-              <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-20 h-20 rounded-full opacity-5 -translate-y-1/2 translate-x-1/2 bg-purple-500"></div>
-                <div class="flex items-center justify-between mb-2">
-                  <span class="text-sm text-slate-600">服务用户</span>
-                  <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-purple-100">
-                    <UserCircle :size="20" class="text-purple-600" />
-                  </div>
-                </div>
-                <div class="text-3xl font-bold text-slate-900">{{ coachAdminStats.totalUsers }}</div>
-                <div class="text-xs text-slate-500 mt-1">今日活跃 {{ coachAdminStats.todayActiveUsers }}</div>
-              </div>
-
-              <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-20 h-20 rounded-full opacity-5 -translate-y-1/2 translate-x-1/2 bg-red-500"></div>
-                <div class="flex items-center justify-between mb-2">
-                  <span class="text-sm text-slate-600">待关注</span>
-                  <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-red-100">
-                    <AlertCircle :size="20" class="text-red-600" />
-                  </div>
-                </div>
-                <div class="text-3xl font-bold text-red-600">{{ coachAdminStats.attentionNeeded }}</div>
-                <div class="text-xs text-slate-500 mt-1">完成率 < 60%</div>
-              </div>
-            </div>
-
-            <!-- 图表区域 -->
-            <div class="grid grid-cols-3 gap-6">
-              <!-- 完成率趋势图 -->
-              <div class="col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-                <div class="flex items-center justify-between mb-4">
-                  <h3 class="font-bold text-slate-800 flex items-center gap-2">
-                    <BarChart3 :size="18" class="text-indigo-600" />
-                    完成率趋势
-                  </h3>
-                  <div class="flex items-center gap-4 text-xs">
-                    <div class="flex items-center gap-1">
-                      <div class="w-3 h-3 rounded bg-indigo-500"></div>
-                      <span class="text-slate-500">整体平均</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                      <div class="w-3 h-3 rounded bg-green-500"></div>
-                      <span class="text-slate-500">最佳教练</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="h-36 flex items-end gap-2 px-4">
-                  <div
-                    v-for="(item, index) in coachTrendData"
-                    :key="index"
-                    class="flex-1 flex flex-col items-center gap-1"
-                  >
-                    <div class="w-full flex items-end gap-0.5 h-28">
-                      <div
-                        class="flex-1 rounded-t bg-gradient-to-t from-indigo-500/30 to-indigo-500 transition-all"
-                        :style="{ height: `${item.overall}%` }"
-                      ></div>
-                      <div
-                        class="flex-1 rounded-t bg-gradient-to-t from-green-500/30 to-green-500 transition-all"
-                        :style="{ height: `${item.top}%` }"
-                      ></div>
-                    </div>
-                    <span class="text-xs text-slate-500">{{ item.label }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 任务完成分布 -->
-              <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-                <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                  <PieChart :size="18" class="text-indigo-600" />
-                  任务完成分布
-                </h3>
-                <div class="space-y-3">
-                  <div v-for="task in taskDistribution" :key="task.name">
-                    <div class="flex items-center justify-between text-sm mb-1">
-                      <span class="text-slate-600">{{ task.name }}</span>
-                      <span class="font-medium">{{ task.rate }}%</span>
-                    </div>
-                    <div class="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-                      <div
-                        class="h-full rounded-full transition-all"
-                        :style="{ width: `${task.rate}%`, background: task.color }"
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 教练详情下钻视图 -->
-            <div v-if="selectedCoachForDetail" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-              <!-- 详情头部 -->
-              <div class="p-4 border-b border-slate-100 bg-slate-50">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-4">
-                    <button
-                      @click="selectedCoachForDetail = null"
-                      class="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 transition-colors"
-                    >
-                      <ArrowLeft :size="18" class="text-slate-600" />
-                    </button>
-                    <div class="flex items-center gap-3">
-                      <div class="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold" :style="{ background: selectedCoachForDetail.avatarColor }">
-                        {{ selectedCoachForDetail.name.charAt(0) }}
-                      </div>
-                      <div>
-                        <h2 class="text-lg font-bold text-slate-900">{{ selectedCoachForDetail.name }}</h2>
-                        <div class="flex items-center gap-2 text-sm text-slate-500">
-                          <span>{{ selectedCoachForDetail.roleLabel }}</span>
-                          <span>·</span>
-                          <span>{{ selectedCoachForDetail.groupName || '独立教练' }}</span>
-                          <span>·</span>
-                          <span>服务 {{ selectedCoachForDetail.userCount }} 位用户</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button class="px-4 py-2 text-sm rounded-lg flex items-center gap-2 border border-slate-200 bg-white text-slate-700 hover:bg-slate-50">
-                      <MessageSquare :size="16" />
-                      发送消息
-                    </button>
-                    <button class="px-4 py-2 text-sm rounded-lg flex items-center gap-2 text-white bg-indigo-600 hover:bg-indigo-700">
-                      <Settings :size="16" />
-                      管理设置
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 详情内容 -->
-              <div class="p-4 space-y-4">
-                <!-- 性能指标 -->
-                <div class="grid grid-cols-4 gap-4">
-                  <div class="text-center p-4 bg-slate-50 rounded-lg">
-                    <div class="text-2xl font-bold" :class="selectedCoachForDetail.completionRate >= 80 ? 'text-green-600' : selectedCoachForDetail.completionRate >= 60 ? 'text-amber-600' : 'text-red-600'">
-                      {{ selectedCoachForDetail.completionRate }}%
-                    </div>
-                    <div class="text-sm text-slate-500">整体完成率</div>
-                    <div class="text-xs mt-1" :class="selectedCoachForDetail.completionTrend >= 0 ? 'text-green-600' : 'text-red-600'">
-                      {{ selectedCoachForDetail.completionTrend >= 0 ? '+' : '' }}{{ selectedCoachForDetail.completionTrend }}% 较上周
-                    </div>
-                  </div>
-
-                  <div class="text-center p-4 bg-slate-50 rounded-lg">
-                    <div class="text-2xl font-bold text-indigo-600">{{ selectedCoachForDetail.todayActive }}/{{ selectedCoachForDetail.userCount }}</div>
-                    <div class="text-sm text-slate-500">今日活跃</div>
-                    <div class="text-xs text-slate-500 mt-1">活跃率 {{ Math.round(selectedCoachForDetail.todayActive / selectedCoachForDetail.userCount * 100) }}%</div>
-                  </div>
-
-                  <div class="text-center p-4 bg-slate-50 rounded-lg">
-                    <div class="text-2xl font-bold text-purple-600">{{ selectedCoachForDetail.load }}/{{ selectedCoachForDetail.maxLoad }}</div>
-                    <div class="text-sm text-slate-500">当前负载</div>
-                    <div class="text-xs mt-1" :class="selectedCoachForDetail.loadRate >= 0.9 ? 'text-red-600' : selectedCoachForDetail.loadRate >= 0.7 ? 'text-amber-600' : 'text-green-600'">
-                      {{ selectedCoachForDetail.loadRate >= 0.9 ? '负载过高' : selectedCoachForDetail.loadRate >= 0.7 ? '负载适中' : '负载偏低' }}
-                    </div>
-                  </div>
-
-                  <div class="text-center p-4 bg-slate-50 rounded-lg">
-                    <div class="text-2xl font-bold text-amber-600">{{ selectedCoachForDetail.avgResponseTime }}min</div>
-                    <div class="text-sm text-slate-500">平均响应</div>
-                    <div class="text-xs text-slate-500 mt-1">本周数据</div>
-                  </div>
-                </div>
-
-                <!-- 用户列表 -->
-                <div>
-                  <div class="flex items-center justify-between mb-3">
-                    <h3 class="font-bold text-slate-800 flex items-center gap-2">
-                      <Users :size="18" class="text-indigo-600" />
-                      用户列表
-                    </h3>
-                    <select
-                      v-model="coachUserFilter"
-                      class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 focus:outline-none"
-                    >
-                      <option value="all">全部用户</option>
-                      <option value="completed">今日已完成</option>
-                      <option value="pending">今日未完成</option>
-                      <option value="behind">进度落后</option>
-                    </select>
-                  </div>
-
-                  <div class="overflow-x-auto rounded-lg border border-slate-200">
-                    <table class="w-full">
-                      <thead class="bg-slate-50">
-                        <tr class="text-xs text-slate-500">
-                          <th class="px-4 py-3 text-left font-medium">用户</th>
-                          <th class="px-4 py-3 text-center font-medium">今日状态</th>
-                          <th class="px-4 py-3 text-center font-medium">完成率</th>
-                          <th class="px-4 py-3 text-center font-medium">饮食上传</th>
-                          <th class="px-4 py-3 text-center font-medium">热量达标</th>
-                          <th class="px-4 py-3 text-center font-medium">习惯打卡</th>
-                          <th class="px-4 py-3 text-left font-medium">本周趋势</th>
-                          <th class="px-4 py-3 text-center font-medium">操作</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr
-                          v-for="user in filteredCoachUsers"
-                          :key="user.id"
-                          class="border-t border-slate-100 hover:bg-slate-50"
-                        >
-                          <td class="px-4 py-3">
-                            <div class="flex items-center gap-3">
-                              <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold" :style="{ background: user.avatarColor }">
-                                {{ user.name.charAt(0) }}
-                              </div>
-                              <div>
-                                <div class="text-sm font-medium text-slate-800">{{ user.name }}</div>
-                                <div class="text-xs text-slate-500">入组 {{ user.daysInGroup }} 天</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td class="px-4 py-3 text-center">
-                            <div class="flex items-center justify-center gap-1">
-                              <div class="w-2 h-2 rounded-full" :class="user.todayCompleted ? 'bg-green-500' : 'bg-red-500'"></div>
-                              <span class="text-xs text-slate-500">{{ user.todayCompleted ? '已完成' : '未完成' }}</span>
-                            </div>
-                          </td>
-                          <td class="px-4 py-3 text-center">
-                            <span class="text-sm font-bold" :class="user.completionRate >= 80 ? 'text-green-600' : user.completionRate >= 60 ? 'text-amber-600' : 'text-red-600'">
-                              {{ user.completionRate }}%
-                            </span>
-                          </td>
-                          <td class="px-4 py-3 text-center">
-                            <span class="text-xs px-2 py-1 rounded" :class="user.tasks.mealUploaded ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
-                              {{ user.tasks.mealUploaded ? '已上传' : '未上传' }}
-                            </span>
-                          </td>
-                          <td class="px-4 py-3 text-center">
-                            <span class="text-xs px-2 py-1 rounded" :class="user.tasks.caloriesOnTarget ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'">
-                              {{ user.tasks.caloriesOnTarget ? '达标' : '超标' }}
-                            </span>
-                          </td>
-                          <td class="px-4 py-3 text-center">
-                            <span class="text-xs text-slate-600">{{ user.tasks.habitsCompleted }}/{{ user.tasks.totalHabits }}</span>
-                          </td>
-                          <td class="px-4 py-3">
-                            <div class="flex items-end gap-0.5 h-5">
-                              <div v-for="(day, idx) in user.weeklyTrend" :key="idx" class="flex-1 rounded-t" :style="{ height: `${day}%`, background: day >= 80 ? '#10b981' : day >= 50 ? '#f59e0b' : '#ef4444', opacity: day === 0 ? 0.3 : 1 }"></div>
-                            </div>
-                          </td>
-                          <td class="px-4 py-3 text-center">
-                            <button class="text-xs px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100">查看</button>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 教练排行榜 (当没有选中教练时显示) -->
-            <div v-else class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-              <div class="p-4 border-b border-slate-100">
-                <div class="flex items-center justify-between">
-                  <h3 class="font-bold text-slate-800 flex items-center gap-2">
-                    <Trophy :size="18" class="text-amber-600" />
-                    教练排行榜
-                  </h3>
-                  <select
-                    v-model="coachSortBy"
-                    class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="completionRate">按完成率</option>
-                    <option value="userCount">按用户数</option>
-                    <option value="todayActive">按今日活跃</option>
-                    <option value="loadRate">按负载率</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="overflow-x-auto">
-                <table class="w-full">
-                  <thead class="bg-slate-50">
-                    <tr class="text-xs text-slate-500">
-                      <th class="px-4 py-3 text-left font-medium">排名</th>
-                      <th class="px-4 py-3 text-left font-medium">教练</th>
-                      <th class="px-4 py-3 text-left font-medium">角色</th>
-                      <th class="px-4 py-3 text-center font-medium">服务用户</th>
-                      <th class="px-4 py-3 text-center font-medium">今日活跃</th>
-                      <th class="px-4 py-3 text-center font-medium">平均完成率</th>
-                      <th class="px-4 py-3 text-center font-medium">负载</th>
-                      <th class="px-4 py-3 text-center font-medium">状态</th>
-                      <th class="px-4 py-3 text-center font-medium">操作</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr
-                      v-for="(coach, index) in sortedCoachList"
-                      :key="coach.id"
-                      class="border-t border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer"
-                      @click="viewCoachDetail(coach)"
-                    >
-                      <td class="px-4 py-3">
-                        <div v-if="index < 3" class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                          :class="index === 0 ? 'bg-amber-400' : index === 1 ? 'bg-slate-400' : 'bg-amber-600'">
-                          {{ index + 1 }}
-                        </div>
-                        <span v-else class="text-sm text-slate-500">{{ index + 1 }}</span>
-                      </td>
-                      <td class="px-4 py-3">
-                        <div class="flex items-center gap-3">
-                          <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold" :style="{ background: coach.avatarColor }">
-                            {{ coach.name.charAt(0) }}
-                          </div>
-                          <div>
-                            <div class="font-medium text-sm text-slate-800">{{ coach.name }}</div>
-                            <div class="text-xs text-slate-500">{{ coach.groupName || '独立教练' }}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td class="px-4 py-3">
-                        <span class="text-xs px-2 py-1 rounded"
-                          :class="coach.role === 'mentor' ? 'bg-amber-100 text-amber-700' :
-                                 coach.role === 'apprentice' ? 'bg-purple-100 text-purple-700' :
-                                 'bg-indigo-100 text-indigo-700'">
-                          {{ coach.roleLabel }}
-                        </span>
-                      </td>
-                      <td class="px-4 py-3 text-center text-sm text-slate-700">{{ coach.userCount }}</td>
-                      <td class="px-4 py-3 text-center">
-                        <span class="text-sm text-slate-700">{{ coach.todayActive }}</span>
-                        <span class="text-xs text-slate-500">/ {{ coach.userCount }}</span>
-                      </td>
-                      <td class="px-4 py-3 text-center">
-                        <div class="flex items-center justify-center gap-2">
-                          <span class="text-sm font-bold"
-                            :class="coach.completionRate >= 80 ? 'text-green-600' :
-                                   coach.completionRate >= 60 ? 'text-amber-600' : 'text-red-600'">
-                            {{ coach.completionRate }}%
-                          </span>
-                          <div class="w-12 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                            <div class="h-full"
-                              :class="coach.completionRate >= 80 ? 'bg-green-500' :
-                                     coach.completionRate >= 60 ? 'bg-amber-500' : 'bg-red-500'"
-                              :style="{ width: `${coach.completionRate}%` }">
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td class="px-4 py-3 text-center">
-                        <span class="text-xs px-2 py-1 rounded"
-                          :class="coach.loadRate >= 0.9 ? 'bg-red-100 text-red-700' :
-                                 coach.loadRate >= 0.7 ? 'bg-amber-100 text-amber-700' :
-                                 'bg-green-100 text-green-700'">
-                          {{ coach.load }}/{{ coach.maxLoad }}
-                        </span>
-                      </td>
-                      <td class="px-4 py-3 text-center">
-                        <div class="flex items-center justify-center gap-1">
-                          <div class="w-2 h-2 rounded-full" :class="coach.status === 'active' ? 'bg-green-500' : 'bg-slate-300'"></div>
-                          <span class="text-xs text-slate-500">{{ coach.status === 'active' ? '在线' : '离线' }}</span>
-                        </div>
-                      </td>
-                      <td class="px-4 py-3 text-center">
-                        <button class="text-xs px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100">
-                          详情
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
               </div>
             </div>
           </div>
@@ -2679,6 +2430,10 @@ const coachTimeFilter = ref<'today' | 'week' | 'month' | 'quarter'>('today')
 const coachSearchQuery = ref('')
 const coachSortBy = ref<'completionRate' | 'userCount' | 'todayActive' | 'loadRate'>('completionRate')
 const selectedCoachForDetail = ref<CoachAdminCoach | null>(null)
+const expandedCoachId = ref<string | null>(null)
+const toggleCoachExpand = (coachId: string) => {
+  expandedCoachId.value = expandedCoachId.value === coachId ? null : coachId
+}
 const coachUserFilter = ref<'all' | 'completed' | 'pending' | 'behind'>('all')
 
 // 时间筛选标签
