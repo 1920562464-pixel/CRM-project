@@ -278,6 +278,120 @@
         </div>
       </template>
 
+      <!-- 干预阶段看板（SOP） -->
+      <div class="space-y-6">
+        <div class="flex items-center justify-between">
+          <h3 class="font-bold text-slate-800 flex items-center gap-2 text-base">
+            <Activity :size="18" class="text-indigo-600" />
+            干预阶段地图
+            <span class="text-xs font-normal text-slate-400 ml-2">三阶段递进式干预模型</span>
+          </h3>
+          <div class="flex items-center gap-2">
+            <button
+              v-for="tab in sopTabs"
+              :key="tab.key"
+              @click="activeSopTab = tab.key"
+              :class="`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${activeSopTab === tab.key ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`"
+            >{{ tab.label }}</button>
+          </div>
+        </div>
+
+        <!-- 三阶段卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div v-for="phase in interventionPhases" :key="phase.id"
+            class="rounded-xl border shadow-sm overflow-hidden transition-all hover:shadow-md"
+            :class="phase.borderColor">
+            <div class="p-4" :class="phase.bgLight">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold" :class="phase.bgSolid">
+                    {{ phase.icon }}
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-sm text-slate-800">{{ phase.name }}</h4>
+                    <p class="text-[10px] text-slate-500">{{ phase.period }}</p>
+                  </div>
+                </div>
+                <span class="text-[10px] px-2 py-0.5 rounded-full font-medium" :class="phase.badgeClass">{{ phase.label }}</span>
+              </div>
+              <p class="text-xs text-slate-600 mb-3">{{ phase.goal }}</p>
+              <div class="space-y-1.5">
+                <div v-for="(item, i) in phase.items" :key="i" class="flex items-start gap-1.5">
+                  <Check :size="12" class="mt-0.5 flex-shrink-0" :class="phase.iconColor" />
+                  <span class="text-[11px] text-slate-600 leading-tight">{{ item }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 日/周/月 SOP 动作清单 -->
+        <div v-if="activeSopTab === 'sop'" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div v-for="schedule in sopSchedules" :key="schedule.key" class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+            <div class="flex items-center gap-2 mb-3">
+              <component :is="schedule.icon" :size="16" :class="schedule.iconColor" />
+              <h4 class="font-bold text-sm text-slate-800">{{ schedule.title }}</h4>
+              <span class="text-[10px] text-slate-400 ml-auto">{{ schedule.count }}项动作</span>
+            </div>
+            <div class="space-y-2">
+              <div v-for="(action, i) in schedule.actions" :key="i"
+                class="flex items-start gap-2 p-2 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">
+                <span class="w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold flex-shrink-0" :class="schedule.badgeBg">{{ i + 1 }}</span>
+                <span class="text-xs text-slate-700 leading-tight">{{ action }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 体检节点时间线 -->
+        <div v-if="activeSopTab === 'exam'" class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+          <h4 class="font-bold text-sm text-slate-800 mb-4 flex items-center gap-2">
+            <Calendar :size="16" class="text-indigo-600" />
+            年度体检关键节点
+          </h4>
+          <div class="relative">
+            <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-slate-200"></div>
+            <div v-for="(node, i) in examTimeline" :key="i" class="relative pl-10 pb-5 last:pb-0">
+              <div class="absolute left-2.5 w-3 h-3 rounded-full border-2" :class="node.dotClass"></div>
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-800">{{ node.time }}</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded" :class="node.tagClass">{{ node.tag }}</span>
+                  </div>
+                  <p class="text-xs text-slate-600 mt-1">{{ node.action }}</p>
+                </div>
+                <span class="text-[10px] text-slate-400 flex-shrink-0">{{ node.reminder }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 预警机制 -->
+        <div v-if="activeSopTab === 'alert'" class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+          <h4 class="font-bold text-sm text-slate-800 mb-4 flex items-center gap-2">
+            <AlertTriangle :size="16" class="text-red-600" />
+            预警响应机制
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div v-for="level in alertLevels" :key="level.key" class="rounded-lg border p-4" :class="level.borderClass">
+              <div class="flex items-center gap-2 mb-2">
+                <div class="w-6 h-6 rounded-full flex items-center justify-center" :class="level.iconBg">
+                  <component :is="level.icon" :size="12" class="text-white" />
+                </div>
+                <span class="text-xs font-bold" :class="level.textClass">{{ level.title }}</span>
+              </div>
+              <div class="space-y-1">
+                <div v-for="(step, i) in level.steps" :key="i" class="flex items-center gap-2 text-[11px] text-slate-600">
+                  <span class="w-4 h-4 rounded-full bg-slate-100 flex items-center justify-center text-[9px] font-bold text-slate-500 flex-shrink-0">{{ i + 1 }}</span>
+                  {{ step }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 主内容区域 -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- 左侧：任务列表 (2/3) -->
@@ -435,7 +549,7 @@
               <div v-if="appointments.length === 0" class="text-center py-4 text-slate-400">
                 <CalendarPlus :size="30" class="mx-auto mb-1 opacity-50" />
                 <p class="text-xs">暂无预约记录</p>
-                <p class="text-[10px] text-slate-400 mt-1">点击快捷操作中的"预约服务"开始</p>
+                <p class="text-[10px] text-slate-400 mt-1">点击快捷操作中的"预约医生"开始</p>
               </div>
             </div>
           </div>
@@ -2262,7 +2376,7 @@ const quickActions = computed(() => {
   } else if (currentRole.value === 'coach') {
     return [
       { id: 'batch-task', label: '批量处理', icon: Zap, iconColor: 'text-indigo-600', disabled: false },
-      { id: 'book-appointment', label: '预约服务', icon: CalendarPlus, iconColor: 'text-purple-600', disabled: false },
+      { id: 'book-appointment', label: '预约医生', icon: CalendarPlus, iconColor: 'text-purple-600', disabled: false },
       { id: 'make-call', label: '发起回访', icon: Phone, iconColor: 'text-green-600', disabled: false },
       { id: 'view-report', label: '查看报告', icon: FileText, iconColor: 'text-blue-600', disabled: false }
     ]
@@ -2898,6 +3012,227 @@ const newTask = ref<Partial<Task>>({
 })
 
 // 今日统计
+// === SOP 干预看板数据 ===
+const activeSopTab = ref('sop')
+const sopTabs = [
+  { key: 'sop', label: 'SOP动作' },
+  { key: 'exam', label: '体检节点' },
+  { key: 'alert', label: '预警机制' }
+]
+
+const interventionPhases = [
+  {
+    id: 'foundation',
+    name: '习惯奠基期',
+    period: '第1-3个月',
+    icon: '🌱',
+    label: '奠基',
+    goal: '初阶改善：控糖控压、基础减脂，为后续稳定打基础',
+    borderColor: 'border-blue-200',
+    bgLight: 'bg-blue-50/50',
+    bgSolid: 'bg-blue-500',
+    badgeClass: 'bg-blue-100 text-blue-700',
+    iconColor: 'text-blue-500',
+    items: [
+      '饮食：211饮食法指导，主食+蛋白+蔬菜基础配比',
+      '饮水：每日1500-2000ml白开水/柠檬水，分时段提醒',
+      '运动：每日8000步 + 每周≥3次轻中强度20-30分钟',
+      '睡眠：23:00前入睡，7-8小时，固定起床时间',
+      '血糖仪强化干预（前14天），绑定设备数据'
+    ]
+  },
+  {
+    id: 'consolidation',
+    name: '习惯巩固期',
+    period: '第4-6个月',
+    icon: '💪',
+    label: '巩固',
+    goal: '持续优化：肠道菌群改善、稳定指标、改善代谢',
+    borderColor: 'border-green-200',
+    bgLight: 'bg-green-50/50',
+    bgSolid: 'bg-green-500',
+    badgeClass: 'bg-green-100 text-green-700',
+    iconColor: 'text-green-500',
+    items: [
+      '食材优化：推荐低升糖、高纤维食材，补充优质蛋白',
+      '每周1次灵活餐（非放纵餐），引导自主控量',
+      '运动升级：每周≥3次中强度30分钟+每周2次力量训练',
+      '助眠技巧（泡脚、轻音乐）+ 21天冥想社群',
+      '每月视频月复盘 + AI生成28天营养报告'
+    ]
+  },
+  {
+    id: 'stability',
+    name: '习惯稳定期',
+    period: '第7-12个月',
+    icon: '🏆',
+    label: '稳定',
+    goal: '长期维持：指标达标、生活方式固化，形成终身健康模式',
+    borderColor: 'border-purple-200',
+    bgLight: 'bg-purple-50/50',
+    bgSolid: 'bg-purple-500',
+    badgeClass: 'bg-purple-100 text-purple-700',
+    iconColor: 'text-purple-500',
+    items: [
+      '饮食自主把控：按"均衡+适量"原则自主搭配',
+      '每月1-2次放松餐，避免极端节食导致反弹',
+      '运动自主选择：≥3次/周30分钟+，累计≥150分钟/周',
+      '固定作息，兴趣爱好缓解压力，减少情绪性进食',
+      '年度体检报告解读 + 续签规划'
+    ]
+  }
+]
+
+const sopSchedules = [
+  {
+    key: 'daily',
+    title: '每日动作',
+    icon: Calendar,
+    iconColor: 'text-blue-600',
+    badgeBg: 'bg-blue-100 text-blue-700',
+    count: 5,
+    actions: [
+      '早安问候 + 习惯打卡提醒',
+      '知识点/科普短视频推送',
+      '晒餐/打卡积分激励',
+      '不限次答疑（饮食/运动/用药相关）',
+      '设备数据实时同步监控（血糖/血压/体重）'
+    ]
+  },
+  {
+    key: 'weekly',
+    title: '每周动作',
+    icon: BookOpen,
+    iconColor: 'text-green-600',
+    badgeBg: 'bg-green-100 text-green-700',
+    count: 4,
+    actions: [
+      '周主题内容推送',
+      'AI后台截图周报发送',
+      '文字或电话周复盘',
+      '约定下周习惯与目标'
+    ]
+  },
+  {
+    key: 'monthly',
+    title: '每月动作',
+    icon: Video,
+    iconColor: 'text-purple-600',
+    badgeBg: 'bg-purple-100 text-purple-700',
+    count: 5,
+    actions: [
+      '视频连线月复盘',
+      'AI生成28天营养评估报告',
+      '医生复核四大处方（饮食/运动/睡眠/营养素）',
+      '推送下月计划',
+      '体检异常指标跟进转化'
+    ]
+  }
+]
+
+const examTimeline = [
+  {
+    time: '第0天',
+    tag: '启动',
+    tagClass: 'bg-indigo-100 text-indigo-700',
+    dotClass: 'bg-indigo-500 border-indigo-300',
+    action: '录入初始体检报告，建立基线数据',
+    reminder: '启动日完成'
+  },
+  {
+    time: '第1个月',
+    tag: '复查',
+    tagClass: 'bg-blue-100 text-blue-700',
+    dotClass: 'bg-blue-500 border-blue-300',
+    action: '提醒用户复查基线指标，初步评估干预效果',
+    reminder: '提前7天+当天提醒'
+  },
+  {
+    time: '第3个月',
+    tag: '阶段体检',
+    tagClass: 'bg-green-100 text-green-700',
+    dotClass: 'bg-green-500 border-green-300',
+    action: '阶段性体检（基础生化、血脂等），医生解读报告',
+    reminder: '报告出来3天内解读'
+  },
+  {
+    time: '第6个月',
+    tag: '中期大检',
+    tagClass: 'bg-amber-100 text-amber-700',
+    dotClass: 'bg-amber-500 border-amber-300',
+    action: '年度体检提醒（提前7天、3天、当天三重提醒），全面报告解读',
+    reminder: '三重提醒'
+  },
+  {
+    time: '第12个月',
+    tag: '年度总结',
+    tagClass: 'bg-purple-100 text-purple-700',
+    dotClass: 'bg-purple-500 border-purple-300',
+    action: '年度大体检 + 报告解读 + 健康数据总结 + 续签/转化',
+    reminder: '年度闭环'
+  }
+]
+
+const alertLevels = [
+  {
+    key: 'critical',
+    title: '紧急预警 — 血糖/血压/心率异常',
+    icon: AlertTriangle,
+    iconBg: 'bg-red-500',
+    textClass: 'text-red-700',
+    borderClass: 'border-red-200 bg-red-50/30',
+    steps: [
+      'AI立即识别异常并提醒教练',
+      '教练10分钟内响应，联系用户',
+      '无法处理 → 转备用教练/驻群医生',
+      '时效要求：10分钟内必须响应'
+    ]
+  },
+  {
+    key: 'warning',
+    title: '关注预警 — 数据波动跟进',
+    icon: Activity,
+    iconBg: 'bg-amber-500',
+    textClass: 'text-amber-700',
+    borderClass: 'border-amber-200 bg-amber-50/30',
+    steps: [
+      '指标波动专项跟进',
+      '提供调整建议，必要时引导就医咨询',
+      '异常指标标记，持续追踪',
+      '用户未反馈自动升级提醒'
+    ]
+  },
+  {
+    key: 'high-risk',
+    title: '高风险转化 — 异常指标引导就医',
+    icon: AlertCircle,
+    iconBg: 'bg-purple-500',
+    textClass: 'text-purple-700',
+    borderClass: 'border-purple-200 bg-purple-50/30',
+    steps: [
+      '特殊疾病标记（动脉斑块/糖尿病/骨质疏松等）',
+      '引导线下问诊（天坛普华等合作机构）',
+      '转化3000-5000元中端产品',
+      '40岁+必加项：肠胃镜、头颅核磁血管成像'
+    ]
+  },
+  {
+    key: 'routine',
+    title: '常规提醒 — 体检/复查提醒',
+    icon: Calendar,
+    iconBg: 'bg-blue-500',
+    textClass: 'text-blue-700',
+    borderClass: 'border-blue-200 bg-blue-50/30',
+    steps: [
+      '定期体检提醒（教练 + CRM系统 + 飞书/邮箱/短信三重）',
+      '体检报告出来3天内医生解读',
+      '按年龄+性别推荐体检项目',
+      '未完成项目自动筛选提醒'
+    ]
+  }
+]
+
+// === 原有数据 ===
 const todayStats = ref({
   checkedIn: 42,
   total: 50,

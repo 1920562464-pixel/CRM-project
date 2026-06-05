@@ -764,7 +764,7 @@
                     <button
                       @click="openBookingModal"
                       class="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-50 text-cyan-600 rounded whitespace-nowrap hover:bg-cyan-100 transition-all shadow-sm hover:shadow flex-shrink-0"
-                      title="预约服务"
+                      title="预约医生"
                     >
                       <CalendarCheck :size="14" class="text-cyan-600" />
                       <span class="text-xs font-medium">预约</span>
@@ -1368,84 +1368,11 @@
     </main>
 
     <!-- 弹窗：添加餐食记录 -->
-    <Teleport to="body">
-      <div v-if="isAddMealOpen" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-          <div class="flex justify-between items-center p-5 border-b border-slate-100">
-            <h3 class="font-bold text-lg text-slate-800">添加餐食记录</h3>
-            <button @click="isAddMealOpen = false" class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-1.5 rounded-lg transition-colors">
-              <X :size="20" />
-            </button>
-          </div>
-
-          <div class="p-6 space-y-5">
-            <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-2">餐食照片 <span class="text-red-500">*</span></label>
-              <input type="file" ref="addMealFileInputRef" class="hidden" accept="image/*" @change="handleModalFileUpload" />
-              <div
-                @click="$refs.addMealFileInputRef.click()"
-                :class="['w-full h-40 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-colors', newMealForm.img ? 'border-transparent' : 'border-slate-300 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300']"
-              >
-                <img v-if="newMealForm.img" :src="newMealForm.img" alt="Preview" class="w-full h-full object-cover" />
-                <template v-else>
-                  <div class="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-indigo-400 mb-2">
-                    <ImageIcon :size="20" />
-                  </div>
-                  <span class="text-sm text-slate-500 font-medium">点击上传照片</span>
-                </template>
-              </div>
-            </div>
-
-            <div class="space-y-4">
-              <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-2">餐食类型 <span class="text-red-500">*</span></label>
-                <div class="flex gap-2">
-                  <button
-                    v-for="type in ['早餐', '午餐', '晚餐', '加餐']"
-                    :key="type"
-                    @click="selectMealType(type)"
-                    :class="[
-                      'flex-1 py-2.5 text-sm font-medium rounded-xl transition-all',
-                      newMealForm.mealType === type
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    ]"
-                  >
-                    {{ type }}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-2">餐食时间 <span class="text-red-500">*</span></label>
-                <input
-                  type="time"
-                  v-model="newMealForm.mealTime"
-                  class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                />
-                <p class="text-[10px] text-slate-400 mt-1">选择用餐时间，可自动填充或手动修改</p>
-              </div>
-              <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-2">内容描述 <span class="text-red-500">*</span></label>
-                <textarea
-                  v-model="newMealForm.desc"
-                  placeholder="例：无糖酸奶一杯，每日坚果一包..."
-                  class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none h-20"
-                ></textarea>
-              </div>
-            </div>
-          </div>
-
-          <div class="p-5 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
-            <button @click="isAddMealOpen = false" class="px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-xl transition-colors">
-              取消
-            </button>
-            <button @click="handleSaveNewMeal" class="px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm shadow-indigo-200 transition-colors">
-              保存记录
-            </button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <MealAddModal
+      v-model="isAddMealOpen"
+      :show-toast="showToastMessage"
+      @save="handleSaveNewMealFromModal"
+    />
 
     <!-- 弹窗：饮食日志历史 -->
     <Teleport to="body">
@@ -3404,6 +3331,7 @@
 import { ref, computed, onMounted, inject, watch, nextTick, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import BookingModal from '../components/batch-task/BookingModal.vue'
+import MealAddModal from '../components/batch-task/MealAddModal.vue'
 import { useTheme } from '../composables/useTheme'
 import { useUserTags } from '../composables/useUserTags'
 import { useUserCompliance } from '../composables/useUserCompliance'
@@ -5113,15 +5041,21 @@ const handleSaveNewMeal = () => {
     id: Date.now(),
     time: newMealForm.mealType,
     mealTime: newMealForm.mealTime,
-    cal: 0, // 初始为0，等待AI测算
+    cal: 0,
     desc: newMealForm.desc,
     img: newMealForm.img,
     macros: { carbs: 0, protein: 0, fat: 0, fiber: 0 },
-    lastCalculatedDate: null as string | null // 记录最后一次测算的日期
+    lastCalculatedDate: null as string | null
   }
   meals.value.push(newMeal)
   Object.assign(newMealForm, { img: null, mealType: '加餐', mealTime: '', desc: '' })
   isAddMealOpen.value = false
+  showToastMessage("餐食记录添加成功！点击'AI测热量、营养素'进行测算")
+}
+
+// MealAddModal 的 save 回调
+const handleSaveNewMealFromModal = (meal: any) => {
+  meals.value.push(meal)
   showToastMessage("餐食记录添加成功！点击'AI测热量、营养素'进行测算")
 }
 
